@@ -39,7 +39,7 @@ class HttpTest(unittest.TestCase):
         req = Request(self.base + path, method=method, data=body, headers=headers)
         try:
             with urlopen(req, timeout=3) as r:
-                return r.status, json.loads(r.read()) if r.status != 202 else None
+                return r.status, json.loads(r.read()) if r.status not in (202, 204) else None
         except HTTPError as e:
             return e.code, json.loads(e.read())
 
@@ -58,7 +58,9 @@ class HttpTest(unittest.TestCase):
         with patch.dict(os.environ, {'SCITOOL_MCP_BEARER_TOKEN': TOKEN}):
             code, result = self.send('POST', '/mcp', req)
         self.assertEqual(code, 200)
-        self.assertEqual(len(result['result']['tools']), 11)
+        self.assertEqual(len(result['result']['tools']), 9)
+        self.assertFalse({'plan_auditor_audit', 'plan_auditor_inspect'} &
+                         {tool['name'] for tool in result['result']['tools']})
 
     def test_call_catalog(self):
         req = {'jsonrpc': '2.0', 'id': 3, 'method': 'tools/call',
@@ -81,6 +83,34 @@ class HttpTest(unittest.TestCase):
         with patch.dict(os.environ, {'SCITOOL_MCP_BEARER_TOKEN': TOKEN}):
             code, _ = self.send('POST', '/mcp', {'jsonrpc': '2.0', 'id': 1,
                                                   'method': 'ping'}, origin='https://evil.example')
+        self.assertEqual(code, 403)
+
+    def test_custom_client_origin_permitted(self):
+        request = {'jsonrpc': '2.0', 'id': 14, 'method': 'ping'}
+        with patch.dict(os.environ, {'SCITOOL_MCP_BEARER_TOKEN': TOKEN,
+                                     'SCITOOL_ALLOWED_ORIGINS': 'https://client.example'}):
+            code, result = self.send('POST', '/mcp', request, origin='https://client.example')
+        self.assertEqual(code, 200)
+        self.assertEqual(result['result'], {})
+
+    def test_custom_origin_denied_by_default(self):
+        with patch.dict(os.environ, {'SCITOOL_MCP_BEARER_TOKEN': TOKEN,
+                                     'SCITOOL_ALLOWED_ORIGINS': ''}):
+            code, _ = self.send('POST', '/mcp',
+                                {'jsonrpc': '2.0', 'id': 1, 'method': 'ping'},
+                                origin='https://claude.ai')
+        self.assertEqual(code, 403)
+
+    def test_preflight_permitted_client(self):
+        with patch.dict(os.environ, {'SCITOOL_ALLOWED_ORIGINS': 'https://client.example'}):
+            code, _ = self.send('OPTIONS', '/mcp', token=None,
+                                origin='https://client.example')
+        self.assertEqual(code, 204)
+
+    def test_preflight_denies_unlisted_origin(self):
+        with patch.dict(os.environ, {'SCITOOL_ALLOWED_ORIGINS': 'https://client.example'}):
+            code, _ = self.send('OPTIONS', '/mcp', token=None,
+                                origin='https://other.example')
         self.assertEqual(code, 403)
 
     def test_requires_mcp_accept(self):

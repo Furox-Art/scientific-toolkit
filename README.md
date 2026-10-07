@@ -1,12 +1,12 @@
 # Furox Scientific Toolkit — MCP Gateway
 
-**One local Model Context Protocol gateway for seven existing Furox-Art public repositories.**
+**Provider-neutral Model Context Protocol gateway for seven existing Furox-Art public repositories.**
 The upstream packages stay independent, with their original names and version histories.
 This repository is an integration hub, not a merge of source trees.
 
-**Status:** local MCP stdio implementation + adapter/transport tests. A remotely hosted
-HTTPS endpoint, deployment, and end-to-end verification against all live upstream packages
-are **not** included or claimed. Upstream packages must be installed separately.
+**Status:** local stdio and authenticated stateless Streamable HTTP transports are
+implemented. There is **no verified public deployment** yet, and end-to-end checks against
+all seven upstream packages are **not yet complete**. Packages are installed separately.
 
 ## Seven upstream repositories
 
@@ -48,7 +48,7 @@ This avoids the shared `axiomize` CLI clashing with standalone Axiomize.
 The final command starts an **MCP stdio process**. It waits for JSON-RPC requests on
 stdin and writes JSON-RPC only to stdout; it is not a text chat or HTTP server.
 
-**Claude Desktop and other local stdio MCP clients:** add this server to your MCP
+**Any compatible local stdio MCP client:** add this server to your MCP
 configuration (adjust `python` or use the absolute path to the correct venv Python):
 
 ```json
@@ -65,6 +65,48 @@ configuration (adjust `python` or use the absolute path to the correct venv Pyth
 In a running MCP client, call `toolkit_catalog` to see all seven repos, and
 `toolkit_doctor` to check which upstream CLIs are installed. Missing packages
 produce explicit `NOT_INSTALLED` errors rather than fabricated data.
+
+## Remote MCP: provider-neutral Streamable HTTP
+
+The same 7-repository catalog can be accessed from compatible remote MCP clients
+through `POST /mcp` (stateless JSON-RPC); `GET /health` is a public health check.
+**There is no hosted endpoint until you deploy the service.** Example:
+
+```sh
+# Generate a long random secret outside the repo and store it as a provider secret.
+# Supply SCITOOL_MCP_BEARER_TOKEN through environment configuration.
+python -m scientific_toolkit_mcp.http_server
+```
+
+Required variable: `SCITOOL_MCP_BEARER_TOKEN` (nonempty, kept outside Git).
+Optional variables: `PORT` (default `8000`) and `SCITOOL_ALLOWED_ORIGINS`
+(comma-separated exact origin URLs). **No web origin is allowed by default.**
+Non-browser clients normally omit `Origin`; browser-origin requests require a
+configured allowlist entry and receive restricted CORS headers. Do not put
+bearer secrets in browser JavaScript or check them into a Git repository.
+Use TLS/HTTPS at the hosting reverse proxy and restrict access to trusted users.
+
+Remote clients must support **MCP Streamable HTTP and an explicit bearer-token
+header**. Use the URL `https://YOUR-HOST/mcp` and set
+`Authorization: Bearer YOUR_SECRET` in that client's supported configuration.
+Some clients require OAuth discovery/registration instead and therefore **cannot
+connect directly** to this bearer-only server without an OAuth-compatible proxy.
+This is a client capability distinction, not a Claude/ChatGPT/Cursor restriction.
+
+The `toolkit_catalog` covers all seven repositories, but the two Plan Auditor
+workspace tools are **local-only** and are not advertised over HTTP (9 remote
+tools out of 11 local tools). Missing upstream CLI packages return
+`NOT_INSTALLED`, never a fabricated PASS. Install the desired upstream packages
+in your deployment and use isolated environments for colliding Axiomize CLIs.
+No hosting fees are necessary to use the local stdio gateway.
+
+### Portability
+
+- Local: Claude Desktop, Cursor, Codex, and other stdio-capable MCP clients
+  (configure each with its own supported launcher settings).
+- Remote: any Streamable-HTTP MCP client that accepts a custom bearer header.
+- Model-agnostic: the MCP server performs no proprietary LLM calls or inference.
+- Cross-application compatibility still requires live client-specific testing.
 
 ## Optional executable overrides
 
@@ -93,7 +135,7 @@ The Plan Auditor `audit` operation executes the plan's configured checks. It is
 assert task completion. All executable commands use fixed allowlisted command
 forms and `subprocess` **without a shell**. No user-selected paths or arbitrary
 command strings are accepted via MCP. Restrict access to the client session:
-this gateway is designed for **local stdio**, not untrusted public exposure.
+the HTTP gateway requires authentication and never exposes workspace audit tools.
 
 ## Scope, evidence, and limitations
 
@@ -104,8 +146,8 @@ this gateway is designed for **local stdio**, not untrusted public exposure.
 - Each subprocess response includes exit code and stdout. Nonzero exit codes
   are MCP errors, and `UNKNOWN` is never promoted to a successful verification.
 - The bundled reasoning tool's thresholds remain uncalibrated reference defaults.
-- Claude is an optional **client/orchestrator**, not the validator: scientific
-  claims still require reproducible numerical and empirical evidence.
+- Any compatible AI client can serve as an **orchestrator**, not the validator:
+  scientific claims still require reproducible numerical and empirical evidence.
 - This repo does not represent an incorporated legal company or promise Claude
   startup program eligibility. No deployment costs have been paid.
 
@@ -127,5 +169,5 @@ Project: https://github.com/Furox-Art/scientific-toolkit
 
 The MCP gateway is licensed under **Apache License 2.0**, as recorded in the
 repository root `LICENSE`. The seven upstream repositories retain their own
-independent licenses, names and version histories. The local MCP service is
-**not** a publicly deployed HTTPS endpoint.
+independent licenses, names and version histories. No publicly hosted MCP
+endpoint is claimed before external health and protocol checks pass.

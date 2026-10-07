@@ -1,7 +1,8 @@
 """Restricted stateless Streamable HTTP transport for the scientific toolkit.
 
-Designed for a trusted Claude connector with an explicit bearer token. HTTPS is
-provided by the hosting reverse proxy. Never expose a local workspace here.
+Provider-neutral MCP transport for clients supporting stateless Streamable HTTP
+and explicit bearer-token headers. HTTPS is provided by the reverse proxy.
+Browser Origins require explicit configuration; no vendor is privileged.
 """
 from __future__ import annotations
 
@@ -20,6 +21,7 @@ MAX_REQUEST = 131072
 RATE_LIMIT = 20
 WINDOW_SECONDS = 60
 MAX_CONCURRENT = 4
+LOCAL_ONLY_TOOLS = frozenset({"plan_auditor_audit", "plan_auditor_inspect"})
 _lock = threading.Lock()
 _hits: dict[str, deque[float]] = defaultdict(deque)
 _semaphore = threading.BoundedSemaphore(MAX_CONCURRENT)
@@ -39,11 +41,27 @@ class Handler(BaseHTTPRequestHandler):
         # Do not accidentally log bearer tokens or client-supplied raw bodies.
         return
 
+    def _allowed_origins(self) -> set[str]:
+        return {origin.strip() for origin in
+                os.environ.get('SCITOOL_ALLOWED_ORIGINS', '').split(',') if origin.strip()}
+
+    def _origin_allowed(self) -> bool:
+        origin = self.headers.get('Origin')
+        return not origin or origin in self._allowed_origins()
+
     def _reply(self, code: int, payload=None, *, mcp=False, headers=None):
         raw = b'' if payload is None else json.dumps(payload, ensure_ascii=False,
                   allow_nan=False).encode('utf-8')
         self.send_response(code)
         self.send_header('Cache-Control', 'no-store')
+        origin = self.headers.get('Origin')
+        if origin and origin in self._allowed_origins():
+            self.send_header('Access-Control-Allow-Origin', origin)
+            self.send_header('Vary', 'Origin')
+            self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+            self.send_header('Access-Control-Allow-Headers',
+                             'Authorization, Content-Type, Accept, MCP-Protocol-Version, '
+                             'Mcp-Session-Id, Last-Event-ID')
         self.send_header('Content-Length', str(len(raw)))
         if payload is not None:
             self.send_header('Content-Type', 'application/json' if mcp else 'application/json; charset=utf-8')
@@ -63,6 +81,14 @@ class Handler(BaseHTTPRequestHandler):
         else:
             self._reply(404, {'error': 'not found'})
 
+    def do_OPTIONS(self):
+        if urlsplit(self.path).path != '/mcp':
+            self._reply(404, {'error': 'not found'})
+        elif not self._origin_allowed():
+            self._reply(403, {'error': 'origin not allowed'})
+        else:
+            self._reply(204)
+
     def do_DELETE(self):
         self._reply(405, {'error': 'stateless endpoint; no MCP session to delete'})
 
@@ -70,10 +96,7 @@ class Handler(BaseHTTPRequestHandler):
         if urlsplit(self.path).path != '/mcp':
             self._reply(404, {'error': 'not found'})
             return
-        origin = self.headers.get('Origin')
-        allowed = {a.strip() for a in os.environ.get('SCITOOL_ALLOWED_ORIGINS',
-                   'https://claude.ai,https://claude.com').split(',')}
-        if origin and origin not in allowed:
+        if not self._origin_allowed():
             self._reply(403, {'error': 'origin not allowed'})
             return
         if not _authorized(self):
@@ -117,14 +140,19 @@ class Handler(BaseHTTPRequestHandler):
                 return
             if isinstance(message, dict) and message.get('method') == 'tools/call':
                 params = message.get('params')
-                if isinstance(params, dict) and params.get('name') in {
-                    'plan_auditor_audit', 'plan_auditor_inspect'}:
+                if isinstance(params, dict) and params.get('name') in LOCAL_ONLY_TOOLS:
                     self._reply(200, {'jsonrpc': '2.0', 'id': message.get('id'),
                         'result': {'content': [{'type': 'text',
                         'text': 'DISABLED: plan workspace actions are local-only'}],
                         'isError': True}}, mcp=True)
                     return
             output = handle(message)
+            # Do not advertise tools that are intentionally unavailable remotely.
+            if (isinstance(message, dict) and message.get('method') == 'tools/list'
+                    and output and 'result' in output):
+                output['result']['tools'] = [
+                    tool for tool in output['result']['tools']
+                    if tool['name'] not in LOCAL_ONLY_TOOLS]
             if output is None:
                 self._reply(202)
             else:
