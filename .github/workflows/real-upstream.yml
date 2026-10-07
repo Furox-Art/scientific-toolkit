@@ -1,0 +1,68 @@
+name: Real upstream MCP integration
+on:
+  push:
+    branches: [main]
+    paths:
+      - scripts/upstream_smoke.py
+      - .github/workflows/real-upstream.yml
+      - scientific_toolkit_mcp/**
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  upstream-cli-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        profile:
+          - axiomize
+          - scientific-computing-system
+          - scientific-computing-system-2.0
+          - plan-auditor
+          - quantum-reasoning-skill
+          - axiomize-quantum-skills-2.0
+          - eq-layer
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e .
+      - name: Install real published package
+        run: python -m pip install "${{ matrix.profile }}"
+      - name: Invoke adapter against installed CLI
+        run: python scripts/upstream_smoke.py "${{ matrix.profile }}"
+  remote-health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Check Render public health and denied anonymous POST
+        run: |
+          python - <<'PY'
+          import json,time,urllib.request,urllib.error
+          url="https://scientific-toolkit.onrender.com"
+          for attempt in range(3):
+              try:
+                  with urllib.request.urlopen(url+"/health",timeout=95) as r:
+                      health=json.load(r)
+                  break
+              except (OSError,ValueError):
+                  if attempt==2: raise
+                  time.sleep(5)
+          assert health.get("status")=="ok",health
+          assert health.get("transport")=="streamable-http",health
+          req=urllib.request.Request(url+"/mcp",
+              data=b'{"jsonrpc":"2.0","id":1,"method":"tools/list"}',
+              headers={"Content-Type":"application/json","Accept":"application/json, text/event-stream"},
+              method="POST")
+          try:
+              urllib.request.urlopen(req,timeout=95)
+          except urllib.error.HTTPError as e:
+              assert e.code==401,f"expected 401, got {e.code}"
+          else:
+              raise AssertionError("Anonymous MCP tools unexpectedly accessible")
+          print("PASS live HTTPS health and anonymous 401")
+          PY
