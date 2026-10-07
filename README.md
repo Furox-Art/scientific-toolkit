@@ -163,6 +163,33 @@ transport. The fake executable tests validate the **integration plumbing**;
 actual upstream numerical correctness remains the responsibility of each
 repository's own tests and a future cross-package integration suite.
 
+## Independent integration evidence
+
+Three CI suites provide progressively stronger, but limited, verification:
+
+1. [Protocol/unit tests](https://github.com/Furox-Art/scientific-toolkit/actions/workflows/tests.yml)
+   check stdio and authenticated HTTP handling, argument validation, safe defaults,
+   and fail-closed errors. Fake CLI tests are plumbing tests, not scientific evidence.
+2. [Published upstream package smoke checks](https://github.com/Furox-Art/scientific-toolkit/actions/workflows/real-upstream.yml)
+   install all seven distributions separately and invoke their real CLIs through
+   the gateway. The Plan Auditor profile checks the installed CLI and refusal
+   to audit an unconfigured plan, *not* successful verification of research.
+   This workflow also checks the live Render `/health` route and ensures that
+   unauthenticated MCP tool calls receive HTTP 401.
+3. [Official SDK interoperability](https://github.com/Furox-Art/scientific-toolkit/actions/workflows/sdk-client.yml)
+   starts a temporary authenticated HTTP server, connects with the official MCP
+   Python client, negotiates a session, enumerates the nine remote-safe tools,
+   and calls `toolkit_catalog`. A generated CI-only token is used.
+
+**Deployment scope:** CI installs upstream packages in separate temporary jobs.
+This **does not** mean the public Render service has those packages installed.
+The Render service is confirmed to respond to health checks and reject anonymous
+requests; an authorized call against each installed upstream program still
+requires a separate production verification. Remote client connections requiring
+OAuth cannot authenticate to the bearer-only endpoint until a trusted OAuth
+authorization server and resource-server validation are configured. Never
+publish or transmit the production bearer secret in GitHub, issues, or screenshots.
+
 ## Repository and license
 
 Project: https://github.com/Furox-Art/scientific-toolkit
