@@ -1,0 +1,26 @@
+name: Official MCP SDK client interoperability
+on:
+  push:
+    branches: [main]
+    paths:
+      - scripts/sdk_client_smoke.py
+      - .github/workflows/sdk-client.yml
+      - scientific_toolkit_mcp/**
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  streamable-http:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install toolkit and official MCP Python SDK
+        run: |
+          python -m pip install -e .
+          python -m pip install "mcp>=1.15,<2"
+      - name: Real client/server MCP session over authenticated loopback HTTP
+        run: python scripts/sdk_client_smoke.py
