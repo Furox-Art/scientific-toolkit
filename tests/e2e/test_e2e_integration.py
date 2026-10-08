@@ -118,7 +118,15 @@ def _standalone_python() -> str | None:
 
 
 def _interpreter_for(executable: str | None) -> str | None:
-    """The interpreter a console script's shebang points at, if it exists."""
+    """The interpreter that can *run* an executable, resolved robustly.
+
+    A shebang of ``#!/usr/bin/env python`` names ``env`` (and a PATH lookup),
+    not a concrete interpreter file — parsing it as a path yields ``/usr/bin/env``,
+    which cannot answer ``importlib.metadata`` queries itself. Resolve through
+    ``sys.executable`` when the shebang is an indirect launcher: the running
+    test interpreter is the one whose environment (site-packages plus any
+    ``PYTHONPATH`` the caller adds) determines visibility.
+    """
     if executable is None:
         return None
     try:
@@ -128,8 +136,13 @@ def _interpreter_for(executable: str | None) -> str | None:
         return None
     if not first_line.startswith("#!"):
         return None
-    interpreter = first_line[2:].strip().split()[0]
-    return interpreter if Path(interpreter).is_file() else None
+    parts = first_line[2:].strip().split()
+    interpreter = parts[0] if parts else None
+    # Indirect launcher (env, or a missing path): fall back to the running
+    # interpreter, which shares the environment the wrapper was built for.
+    if interpreter is None or interpreter.endswith("/env") or not Path(interpreter).is_file():
+        return sys.executable
+    return interpreter
 
 
 def _distribution_installed_in(interpreter: str, distribution: str) -> bool:
