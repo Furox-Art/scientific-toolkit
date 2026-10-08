@@ -253,6 +253,21 @@ PKCE, client registration/metadata and audience-bound access tokens.
 An OAuth login via Claude or ChatGPT is **not yet confirmed** and must not
 be advertised as active without a real IdP and app-specific authentication test.
 
+## Python package and PyPI publishing
+
+The gateway's Python distribution is named `furox-scientific-toolkit-mcp`
+(version `0.1.0` in the repository), with import name `scientific_toolkit_mcp`.
+**Do not assume it is already available on PyPI**: publication requires a successful
+release and the maintainer's Trusted Publisher registration.
+
+The token-free GitHub Actions release workflow includes tests, sdist/wheel
+building, metadata validation, and an installed-wheel smoke test. See
+[PyPI publishing setup](docs/pypi-publishing.md) for the exact publisher fields
+and release procedure.
+
+Installing the gateway does not install the seven upstream scientific tools:
+use `toolkit_doctor` to distinguish available programs from missing ones.
+
 ## Repository and license
 
 Project: https://github.com/Furox-Art/scientific-toolkit
