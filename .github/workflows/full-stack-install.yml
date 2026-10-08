@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - scripts/render-build.sh
+      - scripts/verify_production_probe.py
       - .github/workflows/full-stack-install.yml
       - scientific_toolkit_mcp/tools.py
       - scientific_toolkit_mcp/oauth.py
