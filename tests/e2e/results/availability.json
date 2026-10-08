@@ -1,0 +1,374 @@
+{
+  "report": "scientific-toolkit MCP gateway availability",
+  "generated_by": "scripts/availability_report.py",
+  "environment": {
+    "python_version": "3.12.3",
+    "python_implementation": "CPython",
+    "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+    "machine": "x86_64",
+    "gateway_version": "0.1.0",
+    "cwd": "/home/urkan/github/scientific-toolkit",
+    "executable": "/home/urkan/github/scientific-toolkit/.venv/bin/python",
+    "captured_at_utc": "2026-10-08T21:20:02+00:00",
+    "scope_note": "Availability only. A successful CLI exit code proves the program ran; it is not evidence of scientific correctness."
+  },
+  "gateway": {
+    "protocol_version": "2025-06-18",
+    "server_name": "furox-scientific-toolkit",
+    "server_version": "0.1.0",
+    "tool_count": 11,
+    "tool_names": [
+      "toolkit_catalog",
+      "toolkit_doctor",
+      "axiomize_intake",
+      "axiomize_model",
+      "cds_stats",
+      "cds2_stats",
+      "plan_auditor_inspect",
+      "plan_auditor_audit",
+      "quantum_skill_validate",
+      "axiomize_reason_score",
+      "eq_layer_route"
+    ]
+  },
+  "toolkit_doctor": {
+    "status": "AVAILABLE_TOOLS_REQUIRE_INSTALLED_UPSTREAM_PACKAGES",
+    "repositories": 7,
+    "commands": {
+      "axiomize": {
+        "installed": true,
+        "executable": "/home/urkan/github/scientific-toolkit/.venv/bin/axiomize",
+        "override": "SCITOOL_AXIOMIZE_BIN"
+      },
+      "cds": {
+        "installed": true,
+        "executable": "/home/urkan/github/scientific-toolkit/.venv/bin/cds",
+        "override": "SCITOOL_CDS_BIN"
+      },
+      "cds2": {
+        "installed": true,
+        "executable": "/home/urkan/github/scientific-toolkit/.venv/bin/cds2",
+        "override": "SCITOOL_CDS2_BIN"
+      },
+      "plan-auditor": {
+        "installed": true,
+        "executable": "/home/urkan/github/scientific-toolkit/.venv/bin/plan-auditor",
+        "override": "SCITOOL_AUDITOR_BIN"
+      },
+      "quantum-reasoning": {
+        "installed": true,
+        "executable": "/home/urkan/github/scientific-toolkit/.venv/bin/quantum-reasoning",
+        "override": "SCITOOL_QUANTUM_BIN"
+      },
+      "axiomize-reason": {
+        "installed": true,
+        "executable": "/home/urkan/github/scientific-toolkit/.reason-pkg/bin/axiomize-reason",
+        "override": "SCITOOL_REASON_BIN"
+      },
+      "eq-layer": {
+        "installed": true,
+        "executable": "/home/urkan/github/scientific-toolkit/.venv/bin/eq-layer",
+        "override": "SCITOOL_EQ_BIN"
+      }
+    },
+    "plan_auditor_audit_enabled": false,
+    "workspace_configured": false,
+    "note": "Inspecting availability does not demonstrate model correctness or deployment."
+  },
+  "upstream_tools": [
+    {
+      "repository": "axiomize",
+      "distribution": "axiomize",
+      "gateway_tool": "axiomize_intake",
+      "gateway_cli_key": "axiomize",
+      "proves": "The Axiomize intake CLI runs and returns its own clarification questions.",
+      "distribution_version": "1.12.5",
+      "installed": true,
+      "executable": "/home/urkan/github/scientific-toolkit/.venv/bin/axiomize",
+      "executable_override_env": "SCITOOL_AXIOMIZE_BIN",
+      "cli_self_reported_version": {
+        "reported": true,
+        "flags": [
+          "capabilities"
+        ],
+        "exit_code": 0,
+        "output": "{\n  \"axiomize_version\": \"1.2.1\",\n  \"adaptive_intake\": {\n    \"available\": true,\n    \"levels\": [\n      \"weak\",\n      \"medium\",\n      \"strong\"\n    ],\n    \"question_modes\": [\n      \"one_by_one\",\n      \"all_at_once\",\n      \"adaptive\"\n    ]\n  },\n  \"consumption_guard\": {\n    \"available\": true,\n    \"guarded_actions\": [\n      \"spawn_subtask\",\n      \"repeat_alternative_method\",\n      \"extra_paid_model_call\""
+      },
+      "gateway_call": {
+        "isError": false,
+        "exit_code": 0,
+        "status": "COMMAND_SUCCEEDED",
+        "stdout_first_300_chars": "{\n  \"status\": \"NEEDS_INPUT\",\n  \"idea\": \"How does sample size affect measurement uncertainty?\",\n  \"questions\": [\n    {\n      \"field\": \"system_boundary\",\n      \"question\": \"What exactly are we modeling, and what is outside the system?\"\n    }\n  ],\n  \"remaining_questions\": 5,\n  \"question_mode\": \"one_by_"
+      },
+      "verdict": "AVAILABLE",
+      "gap_detail": null
+    },
+    {
+      "repository": "scientific-computing-system",
+      "distribution": "scientific-computing-system",
+      "gateway_tool": "cds_stats",
+      "gateway_cli_key": "cds",
+      "proves": "The pure-Python cds statistics CLI runs and returns its own statistics.",
+      "distribution_version": "2.2.3",
+      "installed": true,
+      "executable": "/home/urkan/github/scientific-toolkit/.venv/bin/cds",
+      "executable_override_env": "SCITOOL_CDS_BIN",
+      "cli_self_reported_version": {
+        "reported": true,
+        "flags": [
+          "--version"
+        ],
+        "exit_code": 0,
+        "output": "System version 2.2.3"
+      },
+      "gateway_call": {
+        "isError": false,
+        "exit_code": 0,
+        "status": "COMMAND_SUCCEEDED",
+        "stdout_first_300_chars": "Descriptive stats\n+----------+---------+\n| stat     | value   |\n+----------+---------+\n| n        | 5       |\n| mean     | 3       |\n| median   | 3       |\n| min      | 1       |\n| max      | 5       |\n| p25      | 2       |\n| p75      | 4       |\n| stdev    | 1.58114 |\n| variance | 2.5     |\n+-----"
+      },
+      "verdict": "AVAILABLE",
+      "gap_detail": null
+    },
+    {
+      "repository": "scientific-computing-system-2.0",
+      "distribution": "scientific-computing-system-2.0",
+      "gateway_tool": "cds2_stats",
+      "gateway_cli_key": "cds2",
+      "proves": "The NumPy-backed cds2 statistics CLI runs and returns its own statistics.",
+      "distribution_version": "5.3.0",
+      "installed": true,
+      "executable": "/home/urkan/github/scientific-toolkit/.venv/bin/cds2",
+      "executable_override_env": "SCITOOL_CDS2_BIN",
+      "cli_self_reported_version": {
+        "reported": false,
+        "note": "CLI exposes no version subcommand",
+        "last_attempt": {
+          "flags": [
+            "doctor"
+          ],
+          "exit_code": 2,
+          "stdout": "",
+          "stderr": "usage: cds2 [-h]\n            {info,stats,integrate,linsolve,plot,entropy,units,solve,guided-fit,guided-fit-rerun}\n            ...\ncds2: error: argument command: invalid choice: 'doctor' (choose from '"
+        }
+      },
+      "gateway_call": {
+        "isError": false,
+        "exit_code": 0,
+        "status": "COMMAND_SUCCEEDED",
+        "stdout_first_300_chars": "n         5\nmean      3\nstd       1.58114\nmin       1\nq25       2\nmedian    3\nq75       4\nmax       5"
+      },
+      "verdict": "AVAILABLE",
+      "gap_detail": null
+    },
+    {
+      "repository": "plan-auditor",
+      "distribution": "plan-auditor",
+      "gateway_tool": "plan_auditor_inspect",
+      "gateway_cli_key": "plan-auditor",
+      "proves": "The plan-auditor CLI runs; the gateway refuses without SCITOOL_WORKSPACE_DIR.",
+      "distribution_version": "2.4.3",
+      "installed": true,
+      "executable": "/home/urkan/github/scientific-toolkit/.venv/bin/plan-auditor",
+      "executable_override_env": "SCITOOL_AUDITOR_BIN",
+      "cli_self_reported_version": {
+        "reported": true,
+        "flags": [
+          "doctor"
+        ],
+        "exit_code": 0,
+        "output": "{\n  \"workspace\": {\n    \"repository_root\": \"/home/urkan/github/scientific-toolkit\",\n    \"git\": {\n      \"branch\": \"feat/e2e-integration-tests\",\n      \"is_repo\": true,\n      \"head_sha\": \"f89cd3d8acbe2d26bad1240950fbc12884f3a430\",\n      \"dirty_files\": [],\n      \"untracked\": [\n        \"docs/integration-test-methodology.md\",\n        \"examples/\",\n        \"scripts/availability_report.py\",\n        \"scripts"
+      },
+      "gateway_call": {
+        "isError": true,
+        "exit_code": null,
+        "status": null,
+        "stdout_first_300_chars": ""
+      },
+      "verdict": "AVAILABLE",
+      "gap_detail": "CLI installed and reachable. plan_auditor_inspect additionally requires SCITOOL_WORKSPACE_DIR, unset for this bare probe. See the cross-tool workflow for the configured-workspace run."
+    },
+    {
+      "repository": "quantum-reasoning-skill",
+      "distribution": "quantum-reasoning-skill",
+      "gateway_tool": "quantum_skill_validate",
+      "gateway_cli_key": "quantum-reasoning",
+      "proves": "The quantum-reasoning inspector validates its packaged contract.",
+      "distribution_version": "1.1.1",
+      "installed": true,
+      "executable": "/home/urkan/github/scientific-toolkit/.venv/bin/quantum-reasoning",
+      "executable_override_env": "SCITOOL_QUANTUM_BIN",
+      "cli_self_reported_version": {
+        "reported": false,
+        "note": "CLI exposes no version subcommand",
+        "last_attempt": {
+          "flags": [
+            "doctor"
+          ],
+          "exit_code": 2,
+          "stdout": "",
+          "stderr": "usage: quantum-reasoning [-h] [--skill-file SKILL_FILE] [--validate] [--json]\n                         [--quiet]\nquantum-reasoning: error: unrecognized arguments: doctor"
+        }
+      },
+      "gateway_call": {
+        "isError": false,
+        "exit_code": 0,
+        "status": "COMMAND_SUCCEEDED",
+        "stdout_first_300_chars": "{\n  \"body_lines\": 142,\n  \"description\": \"Maintain multiple genuinely different candidate hypotheses or solution paths, test them against evidence and tools, suppress weak or contradictory paths, revive useful alternatives when new evidence appears, and collapse to the best-supported answer only at t"
+      },
+      "verdict": "AVAILABLE",
+      "gap_detail": null
+    },
+    {
+      "repository": "axiomize-quantum-skills-2.0",
+      "distribution": "axiomize-quantum-skills-2.0",
+      "gateway_tool": "axiomize_reason_score",
+      "gateway_cli_key": "axiomize-reason",
+      "proves": "The bundled axiomize-reason branch scorer runs and returns its own verdict.",
+      "distribution_version": "1.2.1",
+      "installed": true,
+      "executable": "/home/urkan/github/scientific-toolkit/.reason-pkg/bin/axiomize-reason",
+      "executable_override_env": "SCITOOL_REASON_BIN",
+      "cli_self_reported_version": {
+        "reported": false,
+        "note": "CLI exposes no version subcommand",
+        "last_attempt": {
+          "flags": [
+            "doctor"
+          ],
+          "exit_code": 2,
+          "stdout": "",
+          "stderr": "usage: axiomize-reason [-h] {score,select,width} ...\naxiomize-reason: error: argument command: invalid choice: 'doctor' (choose from 'score', 'select', 'width')"
+        }
+      },
+      "gateway_call": {
+        "isError": false,
+        "exit_code": 0,
+        "status": "COMMAND_SUCCEEDED",
+        "stdout_first_300_chars": "{\n  \"branch\": \"branch-1\",\n  \"can_collapse\": false,\n  \"reason\": \"leader score below collapse threshold\"\n}"
+      },
+      "verdict": "AVAILABLE",
+      "gap_detail": null
+    },
+    {
+      "repository": "eq-layer",
+      "distribution": "eq-layer",
+      "gateway_tool": "eq_layer_route",
+      "gateway_cli_key": "eq-layer",
+      "proves": "The eq-layer router runs and returns its own control decision.",
+      "distribution_version": "0.1.0",
+      "installed": true,
+      "executable": "/home/urkan/github/scientific-toolkit/.venv/bin/eq-layer",
+      "executable_override_env": "SCITOOL_EQ_BIN",
+      "cli_self_reported_version": {
+        "reported": true,
+        "flags": [
+          "doctor"
+        ],
+        "exit_code": 0,
+        "output": "{\n  \"package\": \"eq-layer\",\n  \"version\": \"0.1.0\",\n  \"python\": \"3.12.3\",\n  \"ml_extra_available\": false\n}"
+      },
+      "gateway_call": {
+        "isError": false,
+        "exit_code": 0,
+        "status": "COMMAND_SUCCEEDED",
+        "stdout_first_300_chars": "{\"runtime_mode\": \"lightweight-local\", \"intent_backend\": \"heuristic\", \"policy\": {\"name\": \"direct_no_padding\", \"register\": \"direct\"}, \"affect\": {\"valence\": 0.15, \"arousal\": 0.35, \"escalation_delta\": 0.0, \"stance\": \"unknown\", \"subtext\": \"question\", \"turn_index\": 1, \"history\": [{\"valence\": 0.0, \"arousal"
+      },
+      "verdict": "AVAILABLE",
+      "gap_detail": null
+    }
+  ],
+  "summary": {
+    "repositories_total": 7,
+    "available": 7,
+    "known_gaps": 0,
+    "available_repositories": [
+      "axiomize",
+      "scientific-computing-system",
+      "scientific-computing-system-2.0",
+      "plan-auditor",
+      "quantum-reasoning-skill",
+      "axiomize-quantum-skills-2.0",
+      "eq-layer"
+    ],
+    "gap_repositories": []
+  },
+  "fail_closed_checks": [
+    {
+      "gateway_tool": "plan_auditor_audit",
+      "arguments": {},
+      "reason": "Audit execution requires explicit local opt-in and stays local-only.",
+      "isError": true,
+      "expected_error_marker": "DISABLED",
+      "marker_present": true,
+      "response_first_200_chars": "DISABLED: plan-auditor audit can execute project commands; set SCITOOL_ALLOW_AUDIT_EXECUTION=1 only for a trusted workspace"
+    },
+    {
+      "gateway_tool": "plan_auditor_inspect",
+      "arguments": {},
+      "reason": "Plan inspection requires SCITOOL_WORKSPACE_DIR to point at a trusted directory.",
+      "isError": true,
+      "expected_error_marker": "NOT_CONFIGURED",
+      "marker_present": true,
+      "response_first_200_chars": "NOT_CONFIGURED: set SCITOOL_WORKSPACE_DIR to a trusted local project directory"
+    },
+    {
+      "gateway_tool": "axiomize_model",
+      "arguments": {
+        "action": "repair",
+        "request": {}
+      },
+      "reason": "The action allowlist intentionally excludes repair and heavy operations.",
+      "isError": true,
+      "expected_error_marker": "INVALID_ARGUMENT",
+      "marker_present": true,
+      "response_first_200_chars": "INVALID_ARGUMENT: action is not in the conservative allowlist"
+    },
+    {
+      "gateway_tool": "axiomize_reason_score",
+      "arguments": {
+        "evidence": 1.5,
+        "verification": 0.5
+      },
+      "reason": "Scores outside the unit interval are rejected before any subprocess runs.",
+      "isError": true,
+      "expected_error_marker": "INVALID_ARGUMENT",
+      "marker_present": true,
+      "response_first_200_chars": "INVALID_ARGUMENT: evidence must be between 0 and 1"
+    },
+    {
+      "gateway_tool": "cds_stats",
+      "arguments": {
+        "values": [
+          1
+        ]
+      },
+      "reason": "Fewer than two values cannot produce a variance, so the call is refused.",
+      "isError": true,
+      "expected_error_marker": "INVALID_ARGUMENT",
+      "marker_present": true,
+      "response_first_200_chars": "INVALID_ARGUMENT: values must be an array of 2..1000 numbers"
+    },
+    {
+      "gateway_tool": "eq_layer_route",
+      "arguments": {
+        "messages": [
+          {
+            "role": "system",
+            "content": "no user turn"
+          }
+        ]
+      },
+      "reason": "A transcript without a user turn cannot be routed.",
+      "isError": true,
+      "expected_error_marker": "INVALID_ARGUMENT",
+      "marker_present": true,
+      "response_first_200_chars": "INVALID_ARGUMENT: messages require a user turn"
+    }
+  ],
+  "not_tested_here": [
+    "Live remote deployment at scientific-toolkit.onrender.com (needs the private bearer credential, which must never be committed).",
+    "OAuth 2.1 sign-in with an external identity provider (no trusted authorization server is configured).",
+    "Scientific correctness of any upstream numerical result."
+  ]
+}
