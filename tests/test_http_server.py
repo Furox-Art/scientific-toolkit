@@ -2,7 +2,9 @@
 import json
 import os
 import threading
+import tempfile
 import unittest
+from pathlib import Path
 from http.server import ThreadingHTTPServer
 from unittest.mock import patch
 from urllib.error import HTTPError
@@ -79,6 +81,21 @@ class HttpTest(unittest.TestCase):
         self.assertEqual(code, 200)
         self.assertTrue(result['result']['isError'])
         self.assertIn('NOT_CONFIGURED', result['result']['content'][0]['text'])
+
+    def test_remote_inspect_calls_only_fixed_readonly_command(self):
+        req = {'jsonrpc': '2.0', 'id': 6, 'method': 'tools/call',
+               'params': {'name': 'plan_auditor_inspect', 'arguments': {}}}
+        with tempfile.TemporaryDirectory() as tmp:
+            with patch.dict(os.environ, {'SCITOOL_MCP_BEARER_TOKEN': TOKEN,
+                                         'SCITOOL_WORKSPACE_DIR': tmp}, clear=True):
+                with patch('scientific_toolkit_mcp.tools._call',
+                           return_value={'status': 'COMMAND_SUCCEEDED', 'exit_code': 0,
+                                         'stdout': '{"plan": "inspected"}'}) as invoke:
+                    code, result = self.send('POST', '/mcp', req)
+            self.assertEqual(code, 200)
+            self.assertFalse(result['result']['isError'])
+            invoke.assert_called_once_with(
+                'plan-auditor', ['plan', 'inspect', str(Path(tmp).resolve())])
 
     def test_remote_audit_forbidden(self):
         req = {'jsonrpc': '2.0', 'id': 4, 'method': 'tools/call',
