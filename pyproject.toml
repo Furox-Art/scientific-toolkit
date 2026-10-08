@@ -19,6 +19,9 @@ classifiers = [
     "Topic :: Scientific/Engineering",
 ]
 
+[project.optional-dependencies]
+oauth = ["PyJWT[crypto]>=2.9,<3"]
+
 [project.scripts]
 scientific-toolkit-mcp = "scientific_toolkit_mcp.server:main"
 
