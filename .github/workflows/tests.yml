@@ -18,3 +18,24 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - run: python -m pip install -e '.[oauth]'
       - run: python -m unittest discover -s tests -v
+
+  package-artifacts:
+    name: Build and smoke-test PyPI artifacts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install packaging tools
+        run: python -m pip install --upgrade build twine
+      - name: Build source and wheel distributions
+        run: python -m build
+      - name: Check package metadata
+        run: python -m twine check dist/*
+      - name: Install built wheel and verify import
+        run: |
+          python -m pip install --force-reinstall dist/*.whl
+          (cd /tmp && python -c 'import importlib.metadata as meta; import scientific_toolkit_mcp; assert meta.version("furox-scientific-toolkit-mcp") == scientific_toolkit_mcp.__version__; import scientific_toolkit_mcp.server; print("Packaged import PASS")')
