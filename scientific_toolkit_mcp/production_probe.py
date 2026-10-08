@@ -54,14 +54,20 @@ def probe(port: int) -> bool:
     succeeded = 0
     failed = 0
 
+    class ProbeFailure(Exception):
+        def __init__(self, code: str):
+            self.code = code
+
     def check(name: str, action) -> None:
         nonlocal succeeded, failed
         try:
             action()
         except Exception as exc:
             failed += 1
-            # Never emit exception messages, request contents, output, or bearer token.
-            print(f"PRODUCTION_MCP_PROBE {name}=FAIL category={type(exc).__name__}",
+            # Codes are constructed solely from validated status / numeric process exits.
+            # Never print exception text, tool output, authorization headers, or secrets.
+            detail = f" detail={exc.code}" if isinstance(exc, ProbeFailure) else ""
+            print(f"PRODUCTION_MCP_PROBE {name}=FAIL category={type(exc).__name__}{detail}",
                   flush=True)
         else:
             succeeded += 1
@@ -123,10 +129,20 @@ def probe(port: int) -> bool:
             output = _post(endpoint, "tools/call",
                            {"name": name, "arguments": arguments}, token)
             if output.get("isError"):
-                raise AssertionError("MCP tool reported an error")
+                try:
+                    payload = json.loads(output["content"][0]["text"])
+                except (ValueError, KeyError, TypeError, IndexError):
+                    raise ProbeFailure("mcp_error_no_json")
+                code = payload.get("exit_code")
+                if type(code) is int and -255 <= code <= 255:
+                    raise ProbeFailure(f"mcp_error_exit_{code}")
+                raise ProbeFailure("mcp_error_nonprocess")
             payload = json.loads(output["content"][0]["text"])
             if payload.get("status") != "COMMAND_SUCCEEDED" or payload.get("exit_code") != 0:
-                raise AssertionError("upstream CLI did not succeed")
+                code = payload.get("exit_code")
+                if type(code) is int and -255 <= code <= 255:
+                    raise ProbeFailure(f"upstream_exit_{code}")
+                raise ProbeFailure("upstream_unknown_failure")
         check(name, execute)
 
     try:
