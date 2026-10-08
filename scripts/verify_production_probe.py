@@ -24,28 +24,28 @@ def main():
     process = subprocess.Popen(
         [sys.executable, "-u", "-m", "scientific_toolkit_mcp.http_server"],
         env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, bufsize=1)
-    states = {}
     outcome = None
+    pending = b""
     try:
         deadline = time.monotonic() + 240
-        while time.monotonic() < deadline:
+        while time.monotonic() < deadline and outcome is None:
             if process.poll() is not None:
                 raise AssertionError(f"server exited with return code {process.returncode}")
             ready, _, _ = select.select([process.stdout], [], [], 4)
             if not ready:
                 continue
-            line = process.stdout.readline().strip()
-            if not line.startswith("PRODUCTION_MCP_PROBE "):
-                continue
-            print(line)
-            for word in line.split()[1:]:
-                if "=" in word:
-                    key, value = word.split("=", 1)
-                    if value in ("PASS", "FAIL"):
-                        states[key] = value
-            if " RESULT=" in line:
-                outcome = line
-                break
+            chunk = os.read(process.stdout.fileno(), 16384)
+            if not chunk:
+                raise AssertionError("production server stdout closed")
+            pending += chunk
+            while b"\\n" in pending:
+                raw, pending = pending.split(b"\\n", 1)
+                line = raw.decode("utf-8", errors="replace").strip()
+                if not line.startswith("PRODUCTION_MCP_PROBE "):
+                    continue
+                print(line)
+                if " RESULT=" in line:
+                    outcome = line
         assert outcome, "no finished production diagnostic was reported"
         assert "RESULT=PASS" in outcome, outcome
         assert "checks_passed=12" in outcome, outcome
