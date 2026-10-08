@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from collections import defaultdict, deque
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-import hmac
 import json
 import os
 import threading
@@ -16,6 +15,7 @@ import time
 from urllib.parse import urlsplit
 
 from .server import handle
+from . import oauth
 
 MAX_REQUEST = 131072
 RATE_LIMIT = 20
@@ -28,9 +28,7 @@ _semaphore = threading.BoundedSemaphore(MAX_CONCURRENT)
 
 
 def _authorized(request: BaseHTTPRequestHandler) -> bool:
-    token = os.environ.get('SCITOOL_MCP_BEARER_TOKEN', '')
-    supplied = request.headers.get('Authorization', '')
-    return bool(token) and hmac.compare_digest(supplied, 'Bearer ' + token)
+    return oauth.authorized(request.headers.get('Authorization', ''))
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -72,7 +70,19 @@ class Handler(BaseHTTPRequestHandler):
             self.wfile.write(raw)
 
     def do_GET(self):
-        if urlsplit(self.path).path == '/health':
+        path = urlsplit(self.path).path
+        if path in ('/.well-known/oauth-protected-resource',
+                    '/.well-known/oauth-protected-resource/mcp'):
+            try:
+                config = oauth.settings()
+            except ValueError:
+                self._reply(503, {'error': 'invalid OAuth configuration'})
+                return
+            if config is None:
+                self._reply(404, {'error': 'OAuth not configured'})
+            else:
+                self._reply(200, oauth.resource_metadata(config))
+        elif path == '/health':
             self._reply(200, {'status': 'ok', 'service': 'scientific-toolkit-mcp',
                               'transport': 'streamable-http'})
         elif urlsplit(self.path).path == '/mcp':
@@ -100,8 +110,16 @@ class Handler(BaseHTTPRequestHandler):
             self._reply(403, {'error': 'origin not allowed'})
             return
         if not _authorized(self):
+            challenge = 'Bearer realm="scientific-toolkit"'
+            try:
+                config = oauth.settings()
+                if config is not None:
+                    challenge += f', resource_metadata="{oauth.metadata_url(config)}"'
+            except ValueError:
+                self._reply(503, {'error': 'invalid OAuth configuration'})
+                return
             self._reply(401, {'error': 'authentication required'}, headers={
-                'WWW-Authenticate': 'Bearer realm="scientific-toolkit"'})
+                'WWW-Authenticate': challenge})
             return
         if self.headers.get('Content-Type', '').split(';', 1)[0].strip().lower() != 'application/json':
             self._reply(415, {'error': 'application/json required'})
@@ -162,8 +180,9 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def main():
-    if not os.environ.get('SCITOOL_MCP_BEARER_TOKEN'):
-        raise RuntimeError('SCITOOL_MCP_BEARER_TOKEN required for remote server')
+    if not os.environ.get('SCITOOL_MCP_BEARER_TOKEN') and oauth.settings() is None:
+        raise RuntimeError('Configure either a bearer secret or an OAuth provider')
+    oauth.settings()  # Incomplete optional OAuth settings must not start the server.
     port = int(os.environ.get('PORT', '8000'))
     server = ThreadingHTTPServer(('0.0.0.0', port), Handler)
     server.daemon_threads = True
