@@ -58,6 +58,26 @@ def probe(port: int) -> bool:
         def __init__(self, code: str):
             self.code = code
 
+    def public_failure_code(payload: dict, prefix: str) -> str:
+        code = payload.get("exit_code")
+        stdout = payload.get("stdout", "")
+        stderr = payload.get("stderr", "")
+        diagnostic = (stdout if isinstance(stdout, str) else "") + " " + (
+            stderr if isinstance(stderr, str) else "")
+        patterns = (
+            ("ModuleNotFoundError", "missing_module"),
+            ("No module named", "missing_module"),
+            ("ImportError", "import_error"),
+            ("MemoryError", "memory_error"),
+            ("SyntaxError", "syntax_error"),
+            ("Permission denied", "permission_denied"),
+            ("usage:", "cli_usage"),
+            ("Traceback", "python_exception"),
+        )
+        kind = next((label for phrase, label in patterns if phrase in diagnostic), "unclassified")
+        exit_name = str(code) if type(code) is int and -255 <= code <= 255 else "unknown"
+        return f"{prefix}_exit_{exit_name}_{kind}"
+
     def check(name: str, action) -> None:
         nonlocal succeeded, failed
         try:
@@ -133,16 +153,10 @@ def probe(port: int) -> bool:
                     payload = json.loads(output["content"][0]["text"])
                 except (ValueError, KeyError, TypeError, IndexError):
                     raise ProbeFailure("mcp_error_no_json")
-                code = payload.get("exit_code")
-                if type(code) is int and -255 <= code <= 255:
-                    raise ProbeFailure(f"mcp_error_exit_{code}")
-                raise ProbeFailure("mcp_error_nonprocess")
+                raise ProbeFailure(public_failure_code(payload, "mcp_error"))
             payload = json.loads(output["content"][0]["text"])
             if payload.get("status") != "COMMAND_SUCCEEDED" or payload.get("exit_code") != 0:
-                code = payload.get("exit_code")
-                if type(code) is int and -255 <= code <= 255:
-                    raise ProbeFailure(f"upstream_exit_{code}")
-                raise ProbeFailure("upstream_unknown_failure")
+                raise ProbeFailure(public_failure_code(payload, "upstream"))
         check(name, execute)
 
     try:
