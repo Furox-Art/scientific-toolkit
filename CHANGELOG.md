@@ -22,6 +22,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   tests failed with `NOT_INSTALLED`.
 - Bundled-distribution detection: the bundled `axiomize-reason` resolves its own
   package through the `.reason-pkg` `PYTHONPATH`, and interpreter resolution is robust.
+- The release workflow installs the seven tool CLIs and points
+  `SCITOOL_REASON_BIN` at `.reason-env/bin/axiomize-reason` before its test gate,
+  so the release build runs the same suite as `tests.yml` (it previously ran the
+  suite with no upstream CLIs installed and failed with `NOT_INSTALLED`).
 
 ### Not proven
 
