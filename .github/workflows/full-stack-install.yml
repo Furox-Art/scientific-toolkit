@@ -9,6 +9,7 @@ on:
       - .github/workflows/full-stack-install.yml
       - scientific_toolkit_mcp/tools.py
       - scientific_toolkit_mcp/oauth.py
+      - scientific_toolkit_mcp/production_probe.py
       - pyproject.toml
 permissions:
   contents: read
