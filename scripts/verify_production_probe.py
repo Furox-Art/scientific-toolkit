@@ -38,8 +38,8 @@ def main():
             if not chunk:
                 raise AssertionError("production server stdout closed")
             pending += chunk
-            while b"\\n" in pending:
-                raw, pending = pending.split(b"\\n", 1)
+            while b"\n" in pending:
+                raw, pending = pending.split(b"\n", 1)
                 line = raw.decode("utf-8", errors="replace").strip()
                 if not line.startswith("PRODUCTION_MCP_PROBE "):
                     continue
