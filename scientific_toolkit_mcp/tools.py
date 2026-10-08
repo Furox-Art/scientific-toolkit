@@ -74,6 +74,10 @@ def _bin(key: str) -> str:
     if not program.strip() or "\x00" in program:
         raise ToolFailure(f"BAD_CONFIGURATION: {env} is invalid")
     found = shutil.which(program)
+    if found is None and key == "axiomize-reason" and env not in os.environ:
+        isolated = Path.cwd() / ".reason-env" / "bin" / "axiomize-reason"
+        if isolated.is_file():
+            found = str(isolated)
     if found is None:
         raise ToolFailure(f"NOT_INSTALLED: {name} is not available (override with {env})")
     return found
@@ -180,6 +184,10 @@ def _doctor(_args: dict) -> dict:
     for key, (env, default) in BINS.items():
         exe = os.environ.get(env, default)
         where = shutil.which(exe) if exe.strip() and "\x00" not in exe else None
+        if where is None and key == "axiomize-reason" and env not in os.environ:
+            isolated = Path.cwd() / ".reason-env" / "bin" / "axiomize-reason"
+            if isolated.is_file():
+                where = str(isolated)
         commands[key] = {"installed": bool(where), "executable": where, "override": env}
     return {
         "status": "AVAILABLE_TOOLS_REQUIRE_INSTALLED_UPSTREAM_PACKAGES",
