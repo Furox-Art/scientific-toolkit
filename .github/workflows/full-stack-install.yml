@@ -23,6 +23,8 @@ jobs:
           python-version: '3.12'
       - run: bash scripts/render-build.sh
       - name: Test seven installed CLI adapters
+        env:
+          SCITOOL_REASON_BIN: ${{ github.workspace }}/.reason-env/bin/axiomize-reason
         run: |
           for profile in axiomize scientific-computing-system scientific-computing-system-2.0 plan-auditor quantum-reasoning-skill axiomize-quantum-skills-2.0 eq-layer; do
             python scripts/upstream_smoke.py "$profile"
