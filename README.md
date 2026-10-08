@@ -100,9 +100,12 @@ Some clients require OAuth discovery/registration instead and therefore **cannot
 connect directly** to this bearer-only server without an OAuth-compatible proxy.
 This is a client capability distinction, not a Claude/ChatGPT/Cursor restriction.
 
-The `toolkit_catalog` covers all seven repositories, but the two Plan Auditor
-workspace tools are **local-only** and are not advertised over HTTP (9 remote
-tools out of 11 local tools). Missing upstream CLI packages return
+The `toolkit_catalog` covers all seven repositories. Authenticated HTTP clients
+may call the **read-only** `plan_auditor_inspect` only after the administrator
+configures `SCITOOL_WORKSPACE_DIR` to a trusted existing project directory.
+`plan_auditor_audit` can execute arbitrary project verification code and therefore
+remains **local-only** (10 remote tools out of 11 local tools). Setting
+`SCITOOL_ALLOW_AUDIT_EXECUTION=1` does **not** override this HTTP safeguard. Missing upstream CLI packages return
 `NOT_INSTALLED`, never a fabricated PASS. Install the desired upstream packages
 in your deployment and use isolated environments for colliding Axiomize CLIs.
 No hosting fees are necessary to use the local stdio gateway.
@@ -142,7 +145,8 @@ The Plan Auditor `audit` operation executes the plan's configured checks. It is
 assert task completion. All executable commands use fixed allowlisted command
 forms and `subprocess` **without a shell**. No user-selected paths or arbitrary
 command strings are accepted via MCP. Restrict access to the client session:
-the HTTP gateway requires authentication and never exposes workspace audit tools.
+the HTTP gateway requires authentication and never exposes the executable audit tool.
+It exposes read-only plan inspection only for a configured trusted workspace.
 
 ## Scope, evidence, and limitations
 
@@ -185,7 +189,7 @@ Three CI suites provide progressively stronger, but limited, verification:
    unauthenticated MCP tool calls receive HTTP 401.
 3. [Official SDK interoperability](https://github.com/Furox-Art/scientific-toolkit/actions/workflows/sdk-client.yml)
    starts a temporary authenticated HTTP server, connects with the official MCP
-   Python client, negotiates a session, enumerates the nine remote-safe tools,
+   Python client, negotiates a session, enumerates the ten remote-safe tools,
    and calls `toolkit_catalog`. A generated CI-only token is used.
 
 **Deployment scope:** CI tests both isolated packages and all seven installed

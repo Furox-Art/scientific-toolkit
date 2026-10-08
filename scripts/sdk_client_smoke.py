@@ -35,15 +35,16 @@ async def exercise(url, token):
             assert initialized.serverInfo.name == "furox-scientific-toolkit", initialized
             tools = await session.list_tools()
             names = {tool.name for tool in tools.tools}
-            assert len(names) == 9, names
+            assert len(names) == 10, names
             assert "toolkit_catalog" in names
+            assert "plan_auditor_inspect" in names
             assert "plan_auditor_audit" not in names
             response = await session.call_tool("toolkit_catalog", {})
             assert not response.isError, response
             catalog = json.loads(response.content[0].text)
             assert catalog["count"] == 7, catalog
-            print("PASS official MCP SDK initialize, list_tools (9), call_tool "
-                  "(7 project catalog), plan audit not exported remotely")
+            print("PASS official MCP SDK initialize, list_tools (10), call_tool "
+                  "(7 project catalog), remote plan inspection only; audit blocked")
 
 
 def main():

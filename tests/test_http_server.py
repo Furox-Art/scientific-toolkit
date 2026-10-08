@@ -58,9 +58,10 @@ class HttpTest(unittest.TestCase):
         with patch.dict(os.environ, {'SCITOOL_MCP_BEARER_TOKEN': TOKEN}):
             code, result = self.send('POST', '/mcp', req)
         self.assertEqual(code, 200)
-        self.assertEqual(len(result['result']['tools']), 9)
-        self.assertFalse({'plan_auditor_audit', 'plan_auditor_inspect'} &
-                         {tool['name'] for tool in result['result']['tools']})
+        self.assertEqual(len(result['result']['tools']), 10)
+        names = {tool['name'] for tool in result['result']['tools']}
+        self.assertIn('plan_auditor_inspect', names)
+        self.assertNotIn('plan_auditor_audit', names)
 
     def test_call_catalog(self):
         req = {'jsonrpc': '2.0', 'id': 3, 'method': 'tools/call',
@@ -69,6 +70,15 @@ class HttpTest(unittest.TestCase):
             code, result = self.send('POST', '/mcp', req)
         self.assertEqual(code, 200)
         self.assertEqual(json.loads(result['result']['content'][0]['text'])['count'], 7)
+
+    def test_remote_inspect_requires_configured_workspace(self):
+        req = {'jsonrpc': '2.0', 'id': 5, 'method': 'tools/call',
+               'params': {'name': 'plan_auditor_inspect', 'arguments': {}}}
+        with patch.dict(os.environ, {'SCITOOL_MCP_BEARER_TOKEN': TOKEN}, clear=True):
+            code, result = self.send('POST', '/mcp', req)
+        self.assertEqual(code, 200)
+        self.assertTrue(result['result']['isError'])
+        self.assertIn('NOT_CONFIGURED', result['result']['content'][0]['text'])
 
     def test_remote_audit_forbidden(self):
         req = {'jsonrpc': '2.0', 'id': 4, 'method': 'tools/call',

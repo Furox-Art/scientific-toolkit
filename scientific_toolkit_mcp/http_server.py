@@ -21,7 +21,9 @@ MAX_REQUEST = 131072
 RATE_LIMIT = 20
 WINDOW_SECONDS = 60
 MAX_CONCURRENT = 4
-LOCAL_ONLY_TOOLS = frozenset({"plan_auditor_audit", "plan_auditor_inspect"})
+# Read-only plan inspection is allowed for authenticated clients. Running an
+# audit executes commands from project plans; keep that action local-only.
+LOCAL_ONLY_TOOLS = frozenset({"plan_auditor_audit"})
 _lock = threading.Lock()
 _hits: dict[str, deque[float]] = defaultdict(deque)
 _semaphore = threading.BoundedSemaphore(MAX_CONCURRENT)

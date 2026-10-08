@@ -112,7 +112,7 @@ def probe(port: int) -> bool:
     def list_remote() -> None:
         result = _post(endpoint, "tools/list", None, token)
         names = {item["name"] for item in result["tools"]}
-        if len(names) != 9 or {"plan_auditor_audit", "plan_auditor_inspect"} & names:
+        if len(names) != 10 or "plan_auditor_audit" in names or "plan_auditor_inspect" not in names:
             raise AssertionError("wrong remote tool inventory")
 
     def catalog() -> None:
