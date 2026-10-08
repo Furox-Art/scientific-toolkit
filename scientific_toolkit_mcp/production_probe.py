@@ -25,7 +25,7 @@ CALLS = [
 
 
 def _post(url: str, method: str, params: dict | None, token: str | None,
-          timeout: float = 45.0) -> dict:
+          timeout: float = 110.0) -> dict:
     message: dict = {"jsonrpc": "2.0", "id": 1, "method": method}
     if params is not None:
         message["params"] = params
