@@ -1,0 +1,29 @@
+name: Full Render build and seven real package checks
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - scripts/render-build.sh
+      - .github/workflows/full-stack-install.yml
+      - scientific_toolkit_mcp/tools.py
+      - scientific_toolkit_mcp/oauth.py
+      - pyproject.toml
+permissions:
+  contents: read
+jobs:
+  full-stack:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: bash scripts/render-build.sh
+      - name: Test seven installed CLI adapters
+        run: |
+          for profile in axiomize scientific-computing-system scientific-computing-system-2.0 plan-auditor quantum-reasoning-skill axiomize-quantum-skills-2.0 eq-layer; do
+            python scripts/upstream_smoke.py "$profile"
+          done
+      - run: python -m unittest discover -s tests -v
