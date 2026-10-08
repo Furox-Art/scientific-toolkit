@@ -186,6 +186,14 @@ def main():
     port = int(os.environ.get('PORT', '8000'))
     server = ThreadingHTTPServer(('0.0.0.0', port), Handler)
     server.daemon_threads = True
+    # Diagnostic is disabled by default; never expose a public diagnostic route.
+    if os.environ.get('SCITOOL_STARTUP_PROBE') == '1':
+        from .production_probe import probe
+        def run_probe():
+            time.sleep(.5)
+            probe(port)
+        threading.Thread(target=run_probe, name='mcp-production-probe',
+                         daemon=True).start()
     server.serve_forever(poll_interval=.2)
 
 
