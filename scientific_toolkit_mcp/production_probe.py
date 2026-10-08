@@ -1,0 +1,141 @@
+"""Opt-in Render startup verification using the server's existing bearer secret.
+
+Runs real loopback MCP HTTP requests; prints only fixed test names and status.
+Does not return a credential, read/write user projects, or claim scientific accuracy.
+"""
+from __future__ import annotations
+
+import json
+import os
+import urllib.error
+import urllib.request
+
+
+ACCEPT = "application/json, text/event-stream"
+CALLS = [
+    ("axiomize_intake", {"idea": "How does sample size affect measurement uncertainty?"}),
+    ("cds_stats", {"values": [1, 2, 3, 4, 5]}),
+    ("cds2_stats", {"values": [1, 2, 3, 4, 5]}),
+    ("quantum_skill_validate", {}),
+    ("axiomize_reason_score", {"evidence": 0.75, "verification": 0.8}),
+    ("eq_layer_route", {"messages": [
+        {"role": "user", "content": "Explain the result clearly."}
+    ], "intent_mode": "heuristic"}),
+]
+
+
+def _post(url: str, method: str, params: dict | None, token: str | None,
+          timeout: float = 45.0) -> dict:
+    message: dict = {"jsonrpc": "2.0", "id": 1, "method": method}
+    if params is not None:
+        message["params"] = params
+    headers = {"Content-Type": "application/json", "Accept": ACCEPT}
+    if token:
+        headers["Authorization"] = "Bearer " + token
+    req = urllib.request.Request(url, data=json.dumps(message).encode("utf-8"),
+                                 method="POST", headers=headers)
+    with urllib.request.urlopen(req, timeout=timeout) as response:
+        if response.status != 200:
+            raise AssertionError("unexpected HTTP response code")
+        result = json.load(response)
+    if result.get("error"):
+        raise AssertionError("JSON-RPC server returned an error")
+    return result["result"]
+
+
+def probe(port: int) -> bool:
+    """Return true only after the real HTTP adapter, six safe CLI calls and guards pass."""
+    token = os.environ.get("SCITOOL_MCP_BEARER_TOKEN", "")
+    if not token:
+        print("PRODUCTION_MCP_PROBE RESULT=BLOCKED reason=no_static_secret", flush=True)
+        return False
+
+    endpoint = f"http://127.0.0.1:{port}/mcp"
+    succeeded = 0
+    failed = 0
+
+    def check(name: str, action) -> None:
+        nonlocal succeeded, failed
+        try:
+            action()
+        except Exception as exc:
+            failed += 1
+            # Never emit exception messages, request contents, output, or bearer token.
+            print(f"PRODUCTION_MCP_PROBE {name}=FAIL category={type(exc).__name__}",
+                  flush=True)
+        else:
+            succeeded += 1
+            print(f"PRODUCTION_MCP_PROBE {name}=PASS", flush=True)
+
+    def unauthorized() -> None:
+        try:
+            _post(endpoint, "ping", None, token=None, timeout=10)
+        except urllib.error.HTTPError as exc:
+            if exc.code == 401:
+                return
+        raise AssertionError("anonymous request did not return HTTP 401")
+
+    def initialization() -> None:
+        result = _post(endpoint, "initialize",
+                       {"protocolVersion": "2025-06-18", "capabilities": {},
+                        "clientInfo": {"name": "production-probe", "version": "1"}},
+                       token)
+        if result.get("serverInfo", {}).get("name") != "furox-scientific-toolkit":
+            raise AssertionError("unexpected MCP serverInfo")
+
+    def list_remote() -> None:
+        result = _post(endpoint, "tools/list", None, token)
+        names = {item["name"] for item in result["tools"]}
+        if len(names) != 9 or {"plan_auditor_audit", "plan_auditor_inspect"} & names:
+            raise AssertionError("wrong remote tool inventory")
+
+    def catalog() -> None:
+        output = _post(endpoint, "tools/call",
+                       {"name": "toolkit_catalog", "arguments": {}}, token)
+        data = json.loads(output["content"][0]["text"])
+        if output.get("isError") or data.get("count") != 7:
+            raise AssertionError("catalog mismatch")
+
+    def doctor() -> None:
+        output = _post(endpoint, "tools/call",
+                       {"name": "toolkit_doctor", "arguments": {}}, token)
+        data = json.loads(output["content"][0]["text"])
+        if output.get("isError") or len(data.get("commands", {})) != 7:
+            raise AssertionError("doctor did not list seven CLIs")
+        if not all(v.get("installed") is True for v in data["commands"].values()):
+            raise AssertionError("one or more upstream commands are not installed")
+
+    def denied_audit() -> None:
+        output = _post(endpoint, "tools/call",
+                       {"name": "plan_auditor_audit", "arguments": {}}, token)
+        if output.get("isError") is not True:
+            raise AssertionError("workspace audit should be blocked remotely")
+
+    check("unauthenticated_denied", unauthorized)
+    check("initialize", initialization)
+    check("remote_tool_inventory", list_remote)
+    check("seven_repository_catalog", catalog)
+    check("seven_upstream_cli_paths", doctor)
+    check("remote_audit_denied", denied_audit)
+
+    for name, arguments in CALLS:
+        def execute(name=name, arguments=arguments):
+            output = _post(endpoint, "tools/call",
+                           {"name": name, "arguments": arguments}, token)
+            if output.get("isError"):
+                raise AssertionError("MCP tool reported an error")
+            payload = json.loads(output["content"][0]["text"])
+            if payload.get("status") != "COMMAND_SUCCEEDED" or payload.get("exit_code") != 0:
+                raise AssertionError("upstream CLI did not succeed")
+        check(name, execute)
+
+    try:
+        from . import oauth
+        state = "PROVIDER_CONFIGURED_NOT_LIVE_TESTED" if oauth.settings() else "PROVIDER_NOT_CONFIGURED"
+    except ValueError:
+        state = "INVALID_CONFIGURATION"
+    print("PRODUCTION_MCP_PROBE oauth_state=" + state, flush=True)
+    print(f"PRODUCTION_MCP_PROBE RESULT={'PASS' if failed == 0 else 'FAIL'} "
+          f"checks_passed={succeeded} checks_failed={failed} "
+          "scope=loopback_http_real_cli_no_scientific_accuracy_claim", flush=True)
+    return failed == 0
