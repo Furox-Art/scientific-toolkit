@@ -29,4 +29,6 @@ jobs:
           for profile in axiomize scientific-computing-system scientific-computing-system-2.0 plan-auditor quantum-reasoning-skill axiomize-quantum-skills-2.0 eq-layer; do
             python scripts/upstream_smoke.py "$profile"
           done
+      - name: Verify authenticated live-process MCP adapters with CI-only token
+        run: python scripts/verify_production_probe.py
       - run: python -m unittest discover -s tests -v
