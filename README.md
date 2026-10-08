@@ -4,11 +4,14 @@
 The upstream packages stay independent, with their original names and version histories.
 This repository is an integration hub, not a merge of source trees.
 
-**Status:** local stdio and authenticated stateless Streamable HTTP transports are
-implemented. The public Render instance has a verified HTTPS health response at
+**Status:** local stdio and authenticated stateless Streamable HTTP transports
+are implemented. The public Render deployment at
 [`https://scientific-toolkit.onrender.com/health`](https://scientific-toolkit.onrender.com/health)
-and denies anonymous MCP calls with HTTP 401. Production installation of all seven
-scientific packages and authorized production tool calls remain **unverified**.
+has been verified on 2026-10-08: 7 installed CLI executables and **12/12
+authenticated loopback MCP HTTP startup checks passed**, including six safe
+scientific CLI adapter calls. This proves deployment plumbing, **not**
+scientific correctness or external Claude/ChatGPT client login. OAuth
+issuer/JWKS remains **not configured**.
 
 ## Seven upstream repositories
 
@@ -185,21 +188,21 @@ Three CI suites provide progressively stronger, but limited, verification:
    Python client, negotiates a session, enumerates the nine remote-safe tools,
    and calls `toolkit_catalog`. A generated CI-only token is used.
 
-**Deployment scope:** CI installs upstream packages in separate temporary jobs.
-This **does not** mean the public Render service has those packages installed.
-The Render service is confirmed to respond to health checks and reject anonymous
-requests; an authorized call against each installed upstream program still
-requires a separate production verification. Remote client connections requiring
-OAuth cannot authenticate to the bearer-only endpoint until a trusted OAuth
-authorization server and resource-server validation are configured. Never
-publish or transmit the production bearer secret in GitHub, issues, or screenshots.
+**Deployment scope:** CI tests both isolated packages and all seven installed
+in one environment. The live Render service also passed 12/12 authenticated
+HTTP tests using its own private bearer credential over loopback; this
+includes six tool-execution paths and the seven-CLI availability check.
+No external ChatGPT/Claude OAuth sign-in was tested. The optional OAuth
+resource verifier is implemented, but a trusted authorization server
+must still be connected before OAuth-based clients can log in. Never
+publish or transmit the production bearer secret in GitHub or screenshots.
 
 ## Deploy all seven upstream packages on Render
 
 The currently published Render service originally installed only the MCP gateway
 with `pip install -e .`. This repository now includes a separate installation
 script that installs six upstream distributions into the system environment and
-the bundled Axiomize variant into an isolated environment. To apply this to the
+the bundled Axiomize variant into an isolated package directory. To apply this to the
 **existing** service, set its **Build Command** in Render to:
 
 ```sh
