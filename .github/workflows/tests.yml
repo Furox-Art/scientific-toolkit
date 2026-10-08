@@ -16,8 +16,13 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - run: python -m pip install -e '.[oauth]'
-      - run: python -m unittest discover -s tests -v
+      # The e2e suite drives the seven real tool CLIs, so CI must install them
+      # exactly like the Render build does (see scripts/render-build.sh).
+      - run: bash scripts/render-build.sh
+      - name: Run tests
+        env:
+          SCITOOL_REASON_BIN: ${{ github.workspace }}/.reason-env/bin/axiomize-reason
+        run: python -m unittest discover -s tests -v
 
   package-artifacts:
     name: Build and smoke-test PyPI artifacts
