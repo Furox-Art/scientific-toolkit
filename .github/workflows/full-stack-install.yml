@@ -15,6 +15,7 @@ jobs:
   full-stack:
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    # Explicitly validate the combined production installation, not only isolated wheels.
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
