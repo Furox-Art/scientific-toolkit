@@ -5,8 +5,10 @@ The upstream packages stay independent, with their original names and version hi
 This repository is an integration hub, not a merge of source trees.
 
 **Status:** local stdio and authenticated stateless Streamable HTTP transports are
-implemented. There is **no verified public deployment** yet, and end-to-end checks against
-all seven upstream packages are **not yet complete**. Packages are installed separately.
+implemented. The public Render instance has a verified HTTPS health response at
+[`https://scientific-toolkit.onrender.com/health`](https://scientific-toolkit.onrender.com/health)
+and denies anonymous MCP calls with HTTP 401. Production installation of all seven
+scientific packages and authorized production tool calls remain **unverified**.
 
 ## Seven upstream repositories
 
@@ -68,9 +70,11 @@ produce explicit `NOT_INSTALLED` errors rather than fabricated data.
 
 ## Remote MCP: provider-neutral Streamable HTTP
 
-The same 7-repository catalog can be accessed from compatible remote MCP clients
-through `POST /mcp` (stateless JSON-RPC); `GET /health` is a public health check.
-**There is no hosted endpoint until you deploy the service.** Example:
+The 7-repository catalog is available through compatible remote MCP clients using
+`POST /mcp` (stateless JSON-RPC), when authenticated. `GET /health` is public.
+A Render deployment currently serves `https://scientific-toolkit.onrender.com/mcp`;
+use the private credential configured in Render and **never publish that token**.
+To run your own instance instead:
 
 ```sh
 # Generate a long random secret outside the repo and store it as a provider secret.
@@ -196,5 +200,6 @@ Project: https://github.com/Furox-Art/scientific-toolkit
 
 The MCP gateway is licensed under **Apache License 2.0**, as recorded in the
 repository root `LICENSE`. The seven upstream repositories retain their own
-independent licenses, names and version histories. No publicly hosted MCP
-endpoint is claimed before external health and protocol checks pass.
+independent licenses, names and version histories. Public Render health and
+anonymous access controls have been checked by CI; authorized production calls
+against upstream scientific programs have not yet been confirmed.
