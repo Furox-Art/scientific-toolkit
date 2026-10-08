@@ -133,12 +133,25 @@ def _interpreter_for(executable: str | None) -> str | None:
 
 
 def _distribution_installed_in(interpreter: str, distribution: str) -> bool:
-    """Whether a given interpreter can resolve an installed distribution."""
+    """Whether a given interpreter can resolve an installed distribution.
+
+    ``axiomize-quantum-skills-2.0`` is installed with ``--target`` into
+    ``.reason-pkg`` rather than into the virtualenv, so the distribution is
+    only resolvable when that directory is on ``sys.path``. The wrapper script
+    puts it there at runtime; here we must do the same explicitly, or the
+    interpreter that owns the wrapper (often the *system* python in CI) cannot
+    see the metadata at all.
+    """
+    env = _clean_environment()
+    target_dir = REPO_ROOT / ".reason-pkg"
+    if target_dir.is_dir():
+        existing = env.get("PYTHONPATH", "")
+        env["PYTHONPATH"] = str(target_dir) + (os.pathsep + existing if existing else "")
     completed = subprocess.run(
         [interpreter, "-c",
          "import importlib.metadata as m, sys;"
          "sys.exit(0 if m.version(sys.argv[1]) else 1)", distribution],
-        capture_output=True, text=True, timeout=30, env=_clean_environment())
+        capture_output=True, text=True, timeout=30, env=env)
     return completed.returncode == 0
 
 
