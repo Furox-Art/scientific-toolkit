@@ -6,16 +6,16 @@
     "python_implementation": "CPython",
     "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
     "machine": "x86_64",
-    "gateway_version": "0.1.0",
+    "gateway_version": "0.2.0",
     "cwd": "/home/urkan/github/scientific-toolkit",
     "executable": "/home/urkan/github/scientific-toolkit/.venv/bin/python",
-    "captured_at_utc": "2026-10-08T21:20:02+00:00",
+    "captured_at_utc": "2026-10-08T21:52:18+00:00",
     "scope_note": "Availability only. A successful CLI exit code proves the program ran; it is not evidence of scientific correctness."
   },
   "gateway": {
     "protocol_version": "2025-06-18",
     "server_name": "furox-scientific-toolkit",
-    "server_version": "0.1.0",
+    "server_version": "0.2.0",
     "tool_count": 11,
     "tool_names": [
       "toolkit_catalog",
@@ -177,7 +177,7 @@
           "doctor"
         ],
         "exit_code": 0,
-        "output": "{\n  \"workspace\": {\n    \"repository_root\": \"/home/urkan/github/scientific-toolkit\",\n    \"git\": {\n      \"branch\": \"feat/e2e-integration-tests\",\n      \"is_repo\": true,\n      \"head_sha\": \"f89cd3d8acbe2d26bad1240950fbc12884f3a430\",\n      \"dirty_files\": [],\n      \"untracked\": [\n        \"docs/integration-test-methodology.md\",\n        \"examples/\",\n        \"scripts/availability_report.py\",\n        \"scripts"
+        "output": "{\n  \"workspace\": {\n    \"repository_root\": \"/home/urkan/github/scientific-toolkit\",\n    \"git\": {\n      \"branch\": \"main\",\n      \"is_repo\": true,\n      \"head_sha\": \"3201297c0cfbe7d88cf745e6ec62610d39286525\",\n      \"dirty_files\": [\n        \"EADME.md\",\n        \"pyproject.toml\",\n        \"scientific_toolkit_mcp/__init__.py\"\n      ],\n      \"untracked\": [\n        \"CHANGELOG.md\"\n      ]\n    },\n    \"exists_f"
       },
       "gateway_call": {
         "isError": true,

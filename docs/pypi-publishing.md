@@ -36,7 +36,7 @@ branches/tags if the repository's plan supports it.
    `scientific_toolkit_mcp/__init__.py`'s `__version__` together.
 2. Verify the full test suite and the distribution build in CI.
 3. On GitHub, create and **publish a release** with tag `v<version>` (for example,
-   `v0.1.0` for version `0.1.0`), targeting the reviewed commit on `main`.
+   `v0.2.0` for version `0.2.0`), targeting the reviewed commit on `main`.
 4. The release workflow checks that the tag, distribution name, and Python version
    match. It runs the tests, builds sdist and wheel, validates the archive metadata,
    and installs and imports the built wheel from outside the repository.
