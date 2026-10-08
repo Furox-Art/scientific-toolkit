@@ -122,7 +122,9 @@ def _stats(args: dict, key: str) -> dict:
     if not isinstance(values, list) or not 2 <= len(values) <= 1000:
         raise ToolFailure("INVALID_ARGUMENT: values must be an array of 2..1000 numbers")
     csv = ",".join(format(_number(x, f"values[{i}]"), ".12g") for i, x in enumerate(values))
-    return _call(key, ["stats", csv])
+    # NumPy/SciPy cold imports can exceed 30s on the 0.1-CPU Render Free tier.
+    # This is an execution timeout only; no scientific acceptance criteria change.
+    return _call(key, ["stats", csv], seconds=90 if key == "cds2" else 30)
 
 
 def _model(args: dict) -> dict:
