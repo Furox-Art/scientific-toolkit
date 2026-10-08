@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- End-to-end integration test suite for the seven-tool MCP gateway: 111 tests, 0 skips.
+- End-to-end integration test suite for the seven-tool MCP gateway: 109 tests, 1 skip
+  (`SdkClientInteropTests` skips when the official MCP SDK is not installed, as in CI).
 - Availability report (`scripts/availability_report.py`) capturing the real installed
   versions of all seven tools.
 - Runnable example workflow (`examples/analysis_pipeline.py`): 8 stages, 0 known gaps,
