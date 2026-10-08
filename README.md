@@ -194,6 +194,58 @@ OAuth cannot authenticate to the bearer-only endpoint until a trusted OAuth
 authorization server and resource-server validation are configured. Never
 publish or transmit the production bearer secret in GitHub, issues, or screenshots.
 
+## Deploy all seven upstream packages on Render
+
+The currently published Render service originally installed only the MCP gateway
+with `pip install -e .`. This repository now includes a separate installation
+script that installs six upstream distributions into the system environment and
+the bundled Axiomize variant into an isolated environment. To apply this to the
+**existing** service, set its **Build Command** in Render to:
+
+```sh
+bash scripts/render-build.sh
+```
+
+Keep its **Start Command** unchanged:
+
+```sh
+python -m scientific_toolkit_mcp.http_server
+```
+
+Do **not** replace or reveal the existing `SCITOOL_MCP_BEARER_TOKEN`.
+Rebuild/redeploy the existing free service after changing the build command.
+The [full-stack installation workflow](https://github.com/Furox-Art/scientific-toolkit/actions/workflows/full-stack-install.yml)
+checks seven real CLI invocations in one CI environment. That does not prove all
+dependencies fit the Render Free 512 MB runtime limit or that production has
+installed them: inspect Render build logs and run authenticated calls separately.
+If the host runs out of memory, use separate workers or a larger instance rather
+than claiming all seven are running.
+
+## Optional OAuth 2.1 resource-server support
+
+The public HTTP gateway supports **opt-in verification** of RS256-signed OAuth
+access tokens from an actual independently configured identity provider. It
+exposes `/.well-known/oauth-protected-resource/mcp` and includes protected
+resource metadata in unauthorized responses **only when configured**.
+
+The OAuth verifier requires `pip install -e '.[oauth]'` (included in the Render
+build script) and all of these private Render environment settings:
+
+| Environment variable | Configuration |
+| --- | --- |
+| `SCITOOL_OAUTH_ISSUER` | Trusted provider's HTTPS issuer URI |
+| `SCITOOL_OAUTH_JWKS_URI` | Provider's HTTPS public JWKS endpoint |
+| `SCITOOL_OAUTH_RESOURCE_URI` | `https://scientific-toolkit.onrender.com/mcp` |
+| `SCITOOL_OAUTH_REQUIRED_SCOPE` | `mcp:tools` (provider must issue it) |
+
+The gateway checks signature, audience, issuer, subject, expiration and scope,
+and still recognizes the administrator's original bearer token. The server
+does **not** issue tokens, run an OAuth consent screen or register clients.
+A production identity provider must separately support proper OAuth 2.1,
+PKCE, client registration/metadata and audience-bound access tokens.
+An OAuth login via Claude or ChatGPT is **not yet confirmed** and must not
+be advertised as active without a real IdP and app-specific authentication test.
+
 ## Repository and license
 
 Project: https://github.com/Furox-Art/scientific-toolkit
