@@ -4,6 +4,9 @@
 The upstream packages stay independent, with their original names and version histories.
 This repository is an integration hub, not a merge of source trees.
 
+Project website: [Furox Scientific Toolkit](https://www.furoxscientifictoolkit.lovie.me/).
+Published Python package: [furox-scientific-toolkit-mcp on PyPI](https://pypi.org/project/furox-scientific-toolkit-mcp/).
+
 **Status:** local stdio and authenticated stateless Streamable HTTP transports
 are implemented. The public Render deployment at
 [`https://scientific-toolkit.onrender.com/health`](https://scientific-toolkit.onrender.com/health)
@@ -32,10 +35,12 @@ communication-control infrastructure, not a scientific data validator.
 
 ## Local installation
 
-Requires **Python 3.10+**. From this repository directory:
+Requires **Python 3.10+**. Install the published MCP gateway from PyPI,
+or install it in editable mode from a source checkout for development:
 
 ```sh
-python -m pip install -e .
+python -m pip install furox-scientific-toolkit-mcp
+# For a source checkout instead: python -m pip install -e .
 # Select upstream packages you actually need:
 python -m pip install axiomize scientific-computing-system
 python -m pip install scientific-computing-system-2.0
@@ -113,7 +118,8 @@ No hosting fees are necessary to use the local stdio gateway.
 ### Portability
 
 - Local: Claude Desktop, Cursor, Codex, and other stdio-capable MCP clients
-  (configure each with its own supported launcher settings).
+  (configure each with its own supported launcher settings). This is protocol-level
+  portability, not proof that a particular client's end-to-end setup was tested.
 - Remote: any Streamable-HTTP MCP client that accepts a custom bearer header.
 - Model-agnostic: the MCP server performs no proprietary LLM calls or inference.
 - Cross-application compatibility still requires live client-specific testing.
@@ -255,10 +261,18 @@ be advertised as active without a real IdP and app-specific authentication test.
 
 ## Python package and PyPI publishing
 
-The gateway's Python distribution is named `furox-scientific-toolkit-mcp`
-(version `0.2.0` in the repository), with import name `scientific_toolkit_mcp`.
-**Do not assume it is already available on PyPI**: publication requires a successful
-release and the maintainer's Trusted Publisher registration.
+The gateway's Python distribution is named [`furox-scientific-toolkit-mcp`](https://pypi.org/project/furox-scientific-toolkit-mcp/)
+(version `0.2.0`), with import name `scientific_toolkit_mcp`. The package has
+been published on PyPI and can be installed with:
+
+```sh
+python -m pip install furox-scientific-toolkit-mcp
+```
+
+Publishing the MCP gateway does not by itself verify integration with Claude
+or any other hosted AI client. Claude may be used as an orchestration client
+where MCP transport and authentication are properly configured; a production
+Claude OAuth sign-in and end-to-end client integration have not been verified.
 
 The token-free GitHub Actions release workflow includes tests, sdist/wheel
 building, metadata validation, and an installed-wheel smoke test. See
