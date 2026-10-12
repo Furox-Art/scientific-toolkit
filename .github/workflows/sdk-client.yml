@@ -1,12 +1,20 @@
 name: Official MCP SDK client interoperability
 on:
   push:
-    branches: [main]
+    branches-ignore: [gh-pages]
+    paths:
+      - scripts/sdk_client_smoke.py
+      - .github/workflows/sdk-client.yml
+      - scientific_toolkit_mcp/**
+  pull_request:
     paths:
       - scripts/sdk_client_smoke.py
       - .github/workflows/sdk-client.yml
       - scientific_toolkit_mcp/**
   workflow_dispatch:
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
@@ -14,8 +22,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - name: Install toolkit and official MCP Python SDK

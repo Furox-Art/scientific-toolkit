@@ -11,6 +11,9 @@ on:
       - scientific_toolkit_mcp/oauth.py
       - scientific_toolkit_mcp/production_probe.py
       - pyproject.toml
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
@@ -19,8 +22,10 @@ jobs:
     timeout-minutes: 25
     # Explicitly validate the combined production installation, not only isolated wheels.
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
       - run: bash scripts/render-build.sh

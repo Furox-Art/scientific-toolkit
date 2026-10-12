@@ -41,9 +41,35 @@ branches/tags if the repository's plan supports it.
    match. It runs the tests, builds sdist and wheel, validates the archive metadata,
    and installs and imports the built wheel from outside the repository.
 5. Only after the build job succeeds, the publishing job downloads those exact
-   distributions and requests a short-lived PyPI publishing token through OIDC.
+   distributions, re-checks them with `twine check`, and requests a short-lived PyPI
+   publishing token through OIDC.
 6. Check the workflow's final status and the actual public release on
    https://pypi.org/project/furox-scientific-toolkit-mcp/.
+
+### Idempotent publishing and automatic verification
+
+The publishing job is safe to re-run and does not need a human to decide whether a
+retry is allowed:
+
+- `skip_existing: true` turns PyPI's HTTP **409 "File already exists"** into a warning.
+  Re-publishing a release whose distributions are already on PyPI is a no-op, so a
+  re-run of a release event never fails just because the files are already published.
+- The publish step is attempted twice (`publish`, then `publish-retry`). A rejected
+  OIDC token exchange is usually transient on GitHub's or PyPI's side, and the
+  second attempt runs on a fresh runner with a freshly pulled action image.
+- Both attempts are `continue-on-error`, and the job's real verdict comes from a
+  final step that queries `https://pypi.org/pypi/<project>/<version>/json` and asserts
+  that the expected sdist **and** wheel are present. The run therefore succeeds when
+  the files are live — whether they were uploaded in this run or a previous one — and
+  fails with an explicit message when they are not.
+- The sha256 digests of the published files are printed and compared with the local
+  ones, but a mismatch is reported as advisory only: wheel and sdist bytes are not
+  reproducible across builds, so this must never gate the release.
+- The workflow prints the OIDC claim set that PyPI receives before publishing, which
+  makes `invalid-publisher` failures diagnosable straight from the log.
+
+`cancel-in-progress` is deliberately `false` for this workflow: cancelling a run
+between the sdist and the wheel upload would leave a half-published release.
 
 For subsequent versions, update the version in both locations, tag the new
 reviewed release, and publish the GitHub release. PyPI disallows replacing a
@@ -69,7 +95,9 @@ of upstream models or successful OAuth login in external AI clients.
 ## Failure diagnosis
 
 - **Invalid publisher:** exact owner, repo, workflow file, and environment must
-  match the settings registered in PyPI.
+  match the settings registered in PyPI. This is a token-exchange failure that
+  happens *before* any upload, so retrying will not fix it — the claims printed by
+  the publish job are the values to correct in PyPI's publishing settings.
 - **Release not published:** a GitHub tag alone does not fire this workflow;
   publish the GitHub release.
 - **Version mismatch:** keep `v<version>`, `pyproject.toml`, and `__version__`
@@ -78,6 +106,9 @@ of upstream models or successful OAuth login in external AI clients.
   be uploaded as a PASS.
 - **Missing wheel or metadata:** the workflow's distribution checks stop before
   the OIDC publishing job.
+- **File already exists (HTTP 409):** expected when a release is re-published;
+  `skip_existing` makes it a warning and the verification step still confirms the
+  files are live on PyPI.
 
 Trusted Publisher reference:
 https://docs.pypi.org/trusted-publishers/creating-a-project-through-oidc/

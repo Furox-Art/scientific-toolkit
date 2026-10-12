@@ -5,6 +5,30 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- The PyPI release workflow is now idempotent and self-verifying: `skip_existing`
+  turns HTTP 409 "File already exists" into a warning, the publish step is retried
+  once on failure, and a final step confirms the sdist and wheel are actually
+  published instead of trusting the publish step's exit code. Re-running a
+  published release no longer fails.
+- The publish job dumps the OIDC claim set PyPI receives, so a trusted-publisher
+  configuration mismatch is diagnosable from the log.
+- CI hardening across all workflows: explicit `concurrency` groups, missing
+  `timeout-minutes`, `fail-fast: false` on the test matrix, `persist-credentials:
+  false`, and current action major versions (`checkout@v7`, `setup-python@v7`,
+  `upload-artifact@v7`, `download-artifact@v8`).
+- `tests.yml` no longer runs the full suite on `gh-pages` pushes.
+- The release build and `package-artifacts` job now audit that exactly one
+  correctly named sdist and one wheel were produced before publishing.
+
+### Not changed
+
+- No workflow step was removed, no test was dropped, and no version was published.
+  Every change either adds a check or removes a failure mode.
+
 ## [0.2.0] - 2026-10-09
 
 ### Added

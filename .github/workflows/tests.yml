@@ -1,19 +1,29 @@
 name: MCP test suite
 on:
   push:
+    # Keep test runs off the docs branch: the GitHub Pages deployment to gh-pages
+    # pushes every docs commit through the full suite for no benefit.
+    branches-ignore: [gh-pages]
   pull_request:
   workflow_dispatch:
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
   unit-tests:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     strategy:
+      fail-fast: false
       matrix:
         python-version: ['3.10', '3.12', '3.13']
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
       # The e2e suite drives the seven real tool CLIs, so CI must install them
@@ -27,11 +37,12 @@ jobs:
   package-artifacts:
     name: Build and smoke-test PyPI artifacts
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - name: Install packaging tools
@@ -40,6 +51,26 @@ jobs:
         run: python -m build
       - name: Check package metadata
         run: python -m twine check dist/*
+      - name: Audit built distribution set
+        run: |
+          python - <<'PY'
+          import re, tomllib
+          from pathlib import Path
+
+          metadata = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))["project"]
+          version = metadata["version"]
+          prefix = re.sub(r"[-_.]+", "_", metadata["name"]) + "-" + version
+          dist = sorted(path.name for path in Path("dist").iterdir() if path.is_file())
+          sdists = [name for name in dist if name.endswith(".tar.gz")]
+          wheels = [name for name in dist if name.endswith(".whl")]
+          assert len(sdists) == 1, f"expected exactly one sdist, found {sdists}"
+          assert len(wheels) == 1, f"expected exactly one wheel, found {wheels}"
+          assert sdists[0] == f"{prefix}.tar.gz", f"unexpected sdist name {sdists[0]!r}"
+          assert wheels[0].startswith(f"{prefix}-") and wheels[0].endswith(".whl"), wheels[0]
+          print(f"Validated distribution set for {metadata['name']} {version}:")
+          for name in dist:
+              print(f"  {name}")
+          PY
       - name: Install built wheel and verify import
         run: |
           python -m pip install --force-reinstall dist/*.whl

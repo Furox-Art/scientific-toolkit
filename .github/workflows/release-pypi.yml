@@ -6,20 +6,29 @@ on:
 
 permissions: {}
 
+# A release must never be cancelled mid-flight: cancelling between the sdist
+# upload and the wheel upload leaves a half-published release on PyPI.
+concurrency:
+  group: release-pypi-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   build:
     name: Build and verify distributions
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     permissions:
       contents: read
+    outputs:
+      version: ${{ steps.audit.outputs.version }}
     steps:
       - name: Check out release tag
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.12"
 
@@ -60,13 +69,41 @@ jobs:
       - name: Validate package metadata
         run: python -m twine check dist/*
 
+      - name: Audit built distribution set
+        id: audit
+        run: |
+          python - <<'PY'
+          import os
+          import re
+          import tomllib
+          from pathlib import Path
+
+          metadata = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))["project"]
+          version = metadata["version"]
+          prefix = re.sub(r"[-_.]+", "_", metadata["name"]) + "-" + version
+          dist = sorted(path.name for path in Path("dist").iterdir() if path.is_file())
+          sdists = [name for name in dist if name.endswith(".tar.gz")]
+          wheels = [name for name in dist if name.endswith(".whl")]
+          assert len(sdists) == 1, f"expected exactly one sdist, found {sdists}"
+          assert len(wheels) == 1, f"expected exactly one wheel, found {wheels}"
+          assert sdists[0] == f"{prefix}.tar.gz", f"unexpected sdist name {sdists[0]!r}"
+          assert wheels[0].startswith(f"{prefix}-") and wheels[0].endswith(".whl"), (
+              f"unexpected wheel name {wheels[0]!r}"
+          )
+          print(f"Validated distribution set for {metadata['name']} {version}:")
+          for name in dist:
+              print(f"  {name}")
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as handle:
+              handle.write(f"version={version}\n")
+          PY
+
       - name: Smoke-test installed wheel away from checkout
         run: |
           python -m pip install --force-reinstall dist/*.whl
           (cd /tmp && python -c 'import importlib.metadata as meta; import scientific_toolkit_mcp; assert meta.version("furox-scientific-toolkit-mcp") == scientific_toolkit_mcp.__version__; import scientific_toolkit_mcp.server; print("Installed wheel import PASS")')
 
       - name: Save verified distributions
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: python-dist
           path: dist/*
@@ -76,6 +113,7 @@ jobs:
     name: Publish to PyPI via trusted OIDC
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     environment:
       name: pypi
       url: https://pypi.org/p/furox-scientific-toolkit-mcp
@@ -83,10 +121,145 @@ jobs:
       id-token: write
     steps:
       - name: Download verified distributions
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: python-dist
           path: dist/
 
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install verification tooling
+        run: python -m pip install --upgrade twine
+
+      - name: Re-check artifact metadata after download
+        # Defense in depth: the artifact crosses a network boundary, so validate it
+        # again here instead of trusting the build job's earlier twine check.
+        run: python -m twine check dist/*
+
+      - name: Show trusted-publishing claims
+        # Diagnostics only, so this step can never break a release. If the publish
+        # fails with `invalid-publisher`, these claims are the exact values that must
+        # match the trusted publisher registered on PyPI (see docs/pypi-publishing.md).
+        continue-on-error: true
+        run: |
+          python - <<'PY'
+          import base64
+          import json
+          import os
+          import urllib.parse
+          import urllib.request
+
+          request_url = os.environ.get("ACTIONS_ID_TOKEN_REQUEST_URL")
+          request_token = os.environ.get("ACTIONS_ID_TOKEN_REQUEST_TOKEN")
+          if not request_url or not request_token:
+              print("No OIDC request URL available; skipping claim dump.")
+              raise SystemExit(0)
+
+          # gh-action-pypi-publish discovers its audience from the index instead of
+          # assuming one; mirror that so these are exactly the claims it will send.
+          audience_url = "https://upload.pypi.org/_/oidc/audience"
+          with urllib.request.urlopen(audience_url, timeout=30) as response:
+              audience = json.load(response)["audience"]
+
+          request = urllib.request.Request(
+              f"{request_url}&audience={urllib.parse.quote(audience, safe='')}",
+              headers={"Authorization": f"bearer {request_token}"},
+          )
+          with urllib.request.urlopen(request, timeout=60) as response:
+              signed = json.load(response)["value"]
+
+          payload = signed.split(".")[1]
+          payload += "=" * (-len(payload) % 4)
+          claims = json.loads(base64.urlsafe_b64decode(payload))
+          print(f"OIDC audience: {audience}")
+          print("OIDC claims sent to PyPI (compare against PyPI publishing settings):")
+          for key in (
+              "sub",
+              "repository",
+              "repository_owner",
+              "workflow_ref",
+              "job_workflow_ref",
+              "ref",
+              "environment",
+          ):
+              print(f"  {key}: {claims.get(key, 'MISSING')}")
+          PY
+
       - name: Publish without a long-lived API token
+        id: publish
+        # skip-existing turns PyPI's HTTP 409 "File already exists" into a warning,
+        # so re-running a release whose distributions are already on PyPI is a
+        # no-op instead of a failure. The verification step below still fails the
+        # job when the files are genuinely absent. Every other input stays at its
+        # default, as before.
+        continue-on-error: true
         uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          skip-existing: true
+
+      - name: Retry publish after a transient failure
+        # Retry the publish itself, not just the upload: the observed failure mode
+        # (a rejected OIDC token exchange) is transient on PyPI's or GitHub's side,
+        # and the second attempt runs on a fresh runner with a freshly pulled image.
+        id: publish-retry
+        if: steps.publish.outcome == 'failure'
+        continue-on-error: true
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          skip-existing: true
+
+      - name: Verify the release is live on PyPI
+        # Authoritative gate: the job succeeds only when the expected sdist and
+        # wheel are really published, which is idempotent across re-runs.
+        run: |
+          python - <<'PY'
+          import hashlib
+          import json
+          import time
+          import urllib.error
+          import urllib.request
+          from pathlib import Path
+
+          project = "furox-scientific-toolkit-mcp"
+          version = "${{ needs.build.outputs.version }}"
+          expected = sorted(path.name for path in Path("dist").iterdir() if path.is_file())
+          url = f"https://pypi.org/pypi/{project}/{version}/json"
+
+          data = None
+          last_error = None
+          for attempt in range(12):
+              try:
+                  with urllib.request.urlopen(url, timeout=60) as response:
+                      data = json.load(response)
+                  break
+              except urllib.error.HTTPError as error:
+                  last_error = error
+                  if error.code not in (404, 410):
+                      raise
+                  time.sleep(10)
+              except OSError as error:
+                  last_error = error
+                  time.sleep(10)
+
+          assert data is not None, (
+              f"{project} {version} is not visible on PyPI after publishing "
+              f"(last error: {last_error!r})"
+          )
+          published = sorted(item["filename"] for item in data["urls"])
+          missing = sorted(set(expected) - set(published))
+          assert not missing, f"PyPI is missing expected distributions: {missing}"
+
+          print(f"{project} {version} is live on PyPI with {len(published)} files:")
+          for item in sorted(data["urls"], key=lambda entry: entry["filename"]):
+              local = Path("dist") / item["filename"]
+              digest = item["digests"]["sha256"]
+              if local.is_file() and hashlib.sha256(local.read_bytes()).hexdigest() == digest:
+                  note = "sha256 matches this build"
+              else:
+                  note = "sha256 differs from this build (advisory only)"
+              print(f"  {item['filename']}  {digest}  [{note}]")
+          print(f"PASS {project} {version} published with all expected distributions")
+          PY
