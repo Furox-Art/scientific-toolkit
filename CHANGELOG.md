@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-10-12
+
 ### Changed
 
 - The PyPI release workflow is now idempotent and self-verifying: `skip_existing`
@@ -26,8 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Not changed
 
-- No workflow step was removed, no test was dropped, and no version was published.
-  Every change either adds a check or removes a failure mode.
+- No workflow step was removed, no test was dropped. Every change either adds a
+  check or removes a failure mode.
 
 ## [0.2.0] - 2026-10-09
 
