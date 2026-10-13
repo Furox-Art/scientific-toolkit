@@ -1,4 +1,4 @@
-name: Publish Python package to PyPI
+﻿name: Publish Python package to PyPI
 
 on:
   release:
@@ -225,7 +225,7 @@ jobs:
 
           project = "furox-scientific-toolkit-mcp"
           version = "${{ needs.build.outputs.version }}"
-          expected = sorted(path.name for path in Path("dist").iterdir() if path.is_file())
+          expected = sorted(path.name for path in Path("dist").iterdir() if path.is_file() and (path.name.endswith(".tar.gz") or path.name.endswith(".whl")))
           url = f"https://pypi.org/pypi/{project}/{version}/json"
 
           data = None
