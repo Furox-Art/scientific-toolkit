@@ -5,12 +5,24 @@ the generated report is read back from a real subprocess call: the installed
 distribution version comes from ``importlib.metadata`` and the capability result
 comes from an actual JSON-RPC ``tools/call`` handled by the gateway.
 
+Two semantics are deliberately kept apart in every record: ``listed`` means the
+distribution is registered in package metadata (a listing), while ``verified``
+means a real gateway call executed the CLI and observed its own exit code. A
+listing is never reported as a verification.
+
+No ``PYTHONPATH`` is exported globally. The bundled axiomize-quantum-skills-2.0
+distribution is installed into an isolated package directory, and that
+directory is passed to exactly one version-probe subprocess so it can never
+shadow the standalone ``axiomize`` distribution for anything else.
+
 Usage::
 
     python scripts/availability_report.py --output tests/e2e/results/availability.json
 
-The output file is committed as captured evidence. A missing upstream package is
-reported as a KNOWN GAP; it is never skipped silently and never fabricated.
+The output file is a generated artifact committed as captured evidence. It is
+never hand-edited: it is regenerated with the command above (also in CI). A
+missing upstream package is reported as a KNOWN GAP; it is never skipped
+silently and never fabricated.
 """
 from __future__ import annotations
 
@@ -192,7 +204,13 @@ def cli_version(executable: str | None, cli_key: str) -> dict:
 
 
 def _interpreter_for(executable: str | None) -> str | None:
-    """The interpreter a console script's shebang points at, if it exists."""
+    """The interpreter a console script's shebang points at, if it exists.
+
+    A wrapper script may launch through ``/usr/bin/env`` or point at an
+    interpreter that no longer exists. Those are launchers, not interpreters,
+    so the fallback is the interpreter running this report -- which is the same
+    interpreter the console script would use for shared dependencies.
+    """
     if executable is None:
         return None
     try:
@@ -203,26 +221,50 @@ def _interpreter_for(executable: str | None) -> str | None:
     if not first_line.startswith("#!"):
         return None
     interpreter = first_line[2:].strip().split()[0]
-    return interpreter if Path(interpreter).is_file() else None
+    if interpreter in ("/usr/bin/env", "env") or not Path(interpreter).is_file():
+        return sys.executable
+    return interpreter
 
 
-def _distribution_version_in(interpreter: str | None,
-                             distribution: str) -> str | None:
+def _isolated_package_root(executable: str | None) -> str | None:
+    """The isolated package directory an axiomize-reason console script runs from.
+
+    The bundled distribution is installed with ``--target .reason-pkg``. That
+    directory must stay off the global ``PYTHONPATH`` so it cannot shadow the
+    standalone ``axiomize`` distribution; only the single version probe for the
+    isolated distribution receives it, scoped to that one subprocess.
+    """
+    if executable is None:
+        return None
+    resolved = Path(executable).resolve()
+    candidates = [resolved.parent, *resolved.parents[1:3], REPO_ROOT / ".reason-pkg"]
+    for base in candidates:
+        if (base / "axiomize").is_dir():
+            return str(base)
+    return None
+
+
+def _distribution_version_in(interpreter: str | None, distribution: str,
+                             pythonpath: str | None = None) -> str | None:
     """A distribution version as resolved by a specific interpreter.
 
     ``axiomize-quantum-skills-2.0`` is installed into an isolated package
     directory so its bundled ``axiomize`` console script cannot clash with the
     standalone Axiomize CLI. Its version is therefore read back from the
-    interpreter that actually runs its console script, not from this process.
+    interpreter that actually runs its console script, not from this process,
+    with the isolated directory visible to that one probe subprocess only.
     """
     if interpreter is None:
         return None
+    env = {**os.environ}
+    if pythonpath:
+        env["PYTHONPATH"] = pythonpath
     try:
         completed = subprocess.run(
             [interpreter, "-c",
              "import importlib.metadata as m, sys;"
              "print(m.version(sys.argv[1]))", distribution],
-            capture_output=True, text=True, timeout=30, check=False)
+            capture_output=True, text=True, timeout=30, check=False, env=env)
     except (OSError, subprocess.SubprocessError):
         return None
     version = (completed.stdout or "").strip()
@@ -237,13 +279,15 @@ def probe_upstream(entry: dict) -> dict:
         "gateway_cli_key": entry["cli_key"],
         "proves": entry["proves"],
     }
-    # 1. Installed distribution version, read from real package metadata.
+    # 1. Distribution listing, read from real package metadata. A listing is
+    #    not a verification: it only says the distribution is registered.
     try:
         record["distribution_version"] = metadata.version(entry["distribution"])
-        record["installed"] = True
+        record["listed"] = True
     except metadata.PackageNotFoundError:
         record["distribution_version"] = None
-        record["installed"] = False
+        record["listed"] = False
+    record["installed"] = record["listed"]  # deprecated alias of "listed"
 
     # 2. Resolved executable path, from the same lookup the gateway uses.
     env_var, default_bin = BINS[entry["cli_key"]]
@@ -259,13 +303,17 @@ def probe_upstream(entry: dict) -> dict:
     record["executable_override_env"] = env_var
 
     # A distribution installed only in an isolated environment still counts as
-    # installed; its version is read back from the interpreter that runs it.
+    # listed; its version is read back from the interpreter that runs it, with
+    # the isolated directory scoped to that single probe subprocess.
     interpreter = _interpreter_for(executable)
-    if not record["installed"]:
-        isolated = _distribution_version_in(interpreter, entry["distribution"])
+    isolated_root = _isolated_package_root(executable)
+    if not record["listed"]:
+        isolated = _distribution_version_in(interpreter, entry["distribution"],
+                                            pythonpath=isolated_root)
         if isolated:
             record["distribution_version"] = isolated
-            record["installed"] = True
+            record["listed"] = True
+            record["installed"] = True  # deprecated alias of "listed"
             record["distribution_scope"] = (
                 f"installed in the isolated environment used by "
                 f"{env_var} ({interpreter}); the gateway runs that same "
@@ -281,8 +329,12 @@ def probe_upstream(entry: dict) -> dict:
         "status": payload.get("status"),
         "stdout_first_300_chars": str(payload.get("stdout", ""))[:300],
     }
+    # Verified means the CLI actually executed and reported its own exit code.
+    # A gateway refusal (including a documented configuration precondition) is
+    # a listing-level fact, not a verification, and is recorded as such.
+    record["verified"] = isinstance(record["gateway_call"]["exit_code"], int)
 
-    if not record["installed"] or executable is None:
+    if not record["listed"] or executable is None:
         record["verdict"] = "KNOWN_GAP"
         record["gap_detail"] = (
             "Upstream distribution or executable not present on this machine; "
@@ -352,6 +404,7 @@ def environment_summary() -> dict:
         "cwd": str(Path.cwd()),
         "executable": sys.executable,
         "captured_at_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "pinned_distribution_modules": pinned_distribution_check(),
         "scope_note": (
             "Availability only. A successful CLI exit code proves the program ran; "
             "it is not evidence of scientific correctness."
@@ -359,14 +412,52 @@ def environment_summary() -> dict:
     }
 
 
+def pinned_distribution_check() -> dict:
+    """Whether each pinned upstream module resolves to exactly one provider.
+
+    A same-named top-level module reachable through an earlier sys.path entry --
+    an isolated install directory exported through ``PYTHONPATH``, for example
+    -- silently makes every version in this report answer for a different
+    distribution than the one installed. The gateway refuses those calls loud;
+    the report records the same condition for the capture environment.
+    """
+    from scientific_toolkit_mcp.tools import PINNED_DISTRIBUTIONS, module_providers
+
+    return {
+        distribution: {"module": module,
+                       "sys_path_providers": module_providers(module)}
+        for distribution, module in sorted(PINNED_DISTRIBUTIONS.items())
+    }
+
+
 def build_report() -> dict:
     upstream = [probe_upstream(entry) for entry in UPSTREAM]
     available = [item for item in upstream if item["verdict"] == "AVAILABLE"]
     gaps = [item for item in upstream if item["verdict"] != "AVAILABLE"]
+    verified = [item for item in upstream if item["verified"]]
     doctor = payload_of(call_tool("toolkit_doctor", {}))
     return {
         "report": "scientific-toolkit MCP gateway availability",
         "generated_by": "scripts/availability_report.py",
+        "regenerate_command": (
+            "python scripts/availability_report.py "
+            "--output tests/e2e/results/availability.json"),
+        "generated_artifact_note": (
+            "Generated file: never hand-edit it. Regenerate it with "
+            "regenerate_command (CI regenerates a fresh copy on every run)."),
+        "schema": {
+            "version": 2,
+            "notes": [
+                "listed: the distribution is registered in package metadata "
+                "(a listing, not a verification).",
+                "verified: a real gateway call executed the CLI and observed "
+                "its own exit code.",
+                "installed: deprecated compatibility alias of listed.",
+                "verdict: AVAILABLE, KNOWN_GAP or CAPABILITY_FAILED; AVAILABLE "
+                "includes the documented reachability case where the gateway "
+                "refused the call before execution for a configuration reason.",
+            ],
+        },
         "environment": environment_summary(),
         "gateway": gateway_inventory(),
         "toolkit_doctor": doctor,
@@ -377,6 +468,8 @@ def build_report() -> dict:
             "known_gaps": len(gaps),
             "available_repositories": [item["repository"] for item in available],
             "gap_repositories": [item["repository"] for item in gaps],
+            "verified": len(verified),
+            "verified_repositories": [item["repository"] for item in verified],
         },
         "fail_closed_checks": probe_refusals(),
         "not_tested_here": [
@@ -409,10 +502,14 @@ def main() -> None:
     summary = report["summary"]
     print(f"Wrote {shown}")
     print(f"Available {summary['available']}/{summary['repositories_total']} upstream tools")
+    print(f"Verified by a real executed call: {summary['verified']}"
+          f"/{summary['repositories_total']} upstream tools")
     for item in report["upstream_tools"]:
         marker = "OK  " if item["verdict"] == "AVAILABLE" else "GAP "
         version = item["distribution_version"] or "not installed"
-        print(f"  {marker} {item['repository']:<32} {version}")
+        listed = "listed" if item["listed"] else "unlisted"
+        verified = "verified" if item["verified"] else "not verified"
+        print(f"  {marker} {item['repository']:<32} {version} [{listed}, {verified}]")
     failed = [c for c in report["fail_closed_checks"] if not c["marker_present"]]
     print(f"Fail-closed checks: {len(report['fail_closed_checks']) - len(failed)}"
           f"/{len(report['fail_closed_checks'])} refused as expected")
