@@ -139,6 +139,19 @@ paths only**, not commands with arguments:
 | `SCITOOL_REASON_BIN` | `axiomize-reason` |
 | `SCITOOL_EQ_BIN` | `eq-layer` |
 
+### Upstream distribution pins
+
+The bundled Axiomize variant installs its own top-level `axiomize` module, so
+an isolated install directory that reaches `sys.path` (for example through
+`PYTHONPATH`) can silently replace the standalone Axiomize distribution. The
+gateway therefore treats `axiomize` as a **pinned distribution**: when more than
+one `sys.path` entry provides the `axiomize` module, `axiomize` tool calls fail
+with a loud `BAD_CONFIGURATION` error instead of running whichever distribution
+happens to come first. `SCITOOL_PIN_AXIOMIZE` additionally pins the exact
+expected version (for example `SCITOOL_PIN_AXIOMIZE=1.12.5`), and a resolved
+version that differs fails the call. A missing executable still reports
+`NOT_INSTALLED`.
+
 ### Verification safety
 
 The Plan Auditor `audit` operation executes the plan's configured checks. It is
