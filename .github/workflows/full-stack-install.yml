@@ -6,10 +6,12 @@ on:
     paths:
       - scripts/render-build.sh
       - scripts/verify_production_probe.py
+      - scripts/availability_report.py
       - .github/workflows/full-stack-install.yml
       - scientific_toolkit_mcp/tools.py
       - scientific_toolkit_mcp/oauth.py
       - scientific_toolkit_mcp/production_probe.py
+      - tests/test_availability_report.py
       - pyproject.toml
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -29,6 +31,19 @@ jobs:
         with:
           python-version: '3.12'
       - run: bash scripts/render-build.sh
+      # The committed availability.json is a generated artifact; regenerate it
+      # here, where all seven CLIs are genuinely installed, and publish it as
+      # this run's evidence. It is never hand-edited.
+      - name: Regenerate the availability report with all seven CLIs
+        env:
+          SCITOOL_REASON_BIN: ${{ github.workspace }}/.reason-env/bin/axiomize-reason
+        run: python scripts/availability_report.py --output tests/e2e/results/availability.json
+      - name: Upload the freshly generated availability report
+        uses: actions/upload-artifact@v7
+        with:
+          name: availability-report
+          path: tests/e2e/results/availability.json
+          if-no-files-found: error
       - name: Test seven installed CLI adapters
         env:
           SCITOOL_REASON_BIN: ${{ github.workspace }}/.reason-env/bin/axiomize-reason

@@ -54,6 +54,46 @@ class OAuthTests(unittest.TestCase):
         self.assertFalse(oauth.authorized(self.token(scope='wrong:scope')))
     def test_expired(self):
         self.assertFalse(oauth.authorized(self.token(exp=int(time.time())-120)))
+    def test_non_ascii_header_is_rejected_without_raising(self):
+        # A hostile non-ASCII credential used to raise TypeError inside
+        # hmac.compare_digest and kill the request; it must be a clean refusal.
+        with patch.dict(os.environ,{'SCITOOL_MCP_BEARER_TOKEN':'test-only-secret'},clear=True):
+            self.assertFalse(oauth.authorized('Bearer tokén-ünicode-'))
+    def test_non_ascii_secret_is_compared_as_header_bytes(self):
+        with patch.dict(os.environ,{'SCITOOL_MCP_BEARER_TOKEN':'sécrèt-ünicode'},clear=True):
+            self.assertTrue(oauth.authorized('Bearer sécrèt-ünicode'))
+            self.assertFalse(oauth.authorized('Bearer secret-nicode'))
+    def test_unencodable_credential_never_fails_open(self):
+        # Latin-1 cannot represent this secret, so no conformant header can
+        # carry it: every presentation must be rejected, none may raise.
+        with patch.dict(os.environ,{'SCITOOL_MCP_BEARER_TOKEN':'秘密-トークン'},clear=True):
+            self.assertFalse(oauth.authorized('Bearer 秘密-トークン'))
+            self.assertFalse(oauth.authorized('Bearer test-only-secret'))
+            self.assertFalse(oauth.authorized('Bearer x'))
+    def test_non_string_header_is_rejected(self):
+        with patch.dict(os.environ,{'SCITOOL_MCP_BEARER_TOKEN':'test-only-secret'},clear=True):
+            self.assertFalse(oauth.authorized(None))
+    def test_non_ascii_bearer_over_http_is_a_clean_401(self):
+        with patch.dict(os.environ,{'SCITOOL_MCP_BEARER_TOKEN':'test-only-secret'},clear=True):
+            s=ThreadingHTTPServer(('127.0.0.1',0),Handler)
+            t=threading.Thread(target=s.serve_forever,daemon=True)
+            t.start()
+            try:
+                base=f'http://127.0.0.1:{s.server_port}'
+                req=Request(base+'/mcp',data=b'{"jsonrpc":"2.0","id":1,"method":"ping"}',
+                            method='POST',headers={'Content-Type':'application/json',
+                            'Accept':'application/json, text/event-stream',
+                            'Authorization':'Bearer tokén-ünicode-'})
+                with self.assertRaises(HTTPError) as err:
+                    urlopen(req,timeout=3)
+                self.assertEqual(err.exception.code,401)
+                # The connection must not be dropped: the gateway keeps serving.
+                with urlopen(base+'/health',timeout=3) as r:
+                    self.assertEqual(r.status,200)
+            finally:
+                s.shutdown()
+                s.server_close()
+                t.join(timeout=3)
     def test_no_subject(self):
         self.assertFalse(oauth.authorized(self.token(sub=None)))
     def test_forged_signature(self):

@@ -55,10 +55,22 @@ Two mechanisms keep the two environments apart:
    in its own `site-packages`, rather than a global `PYTHONPATH`.
 
 `scripts/refresh-availability.sh` follows both rules and deliberately does not
-export `PYTHONPATH`. The test
+export `PYTHONPATH`; `scripts/availability_report.py` passes the isolated
+package directory to the single version probe that needs it, scoped to that one
+subprocess. The test
 `test_axiomize_model_runs_in_the_gateway_environment` fails if the `axiomize`
 CLI on `PATH` ever reports a version that differs from the installed
 distribution, which catches this class of shadowing.
+
+The gateway also refuses to run the `axiomize` CLI when its pinned top-level
+module is shadowed: `axiomize` is a pinned distribution
+(`scientific_toolkit_mcp.tools.PINNED_DISTRIBUTIONS`), and if more than one
+`sys.path` entry provides the `axiomize` module the call fails with
+`BAD_CONFIGURATION` instead of silently executing whichever distribution comes
+first on `sys.path`. An operator can additionally pin an exact expected version
+with `SCITOOL_PIN_AXIOMIZE` (for example `SCITOOL_PIN_AXIOMIZE=1.12.5`); a
+resolved version that differs fails the call loud. When the executable is not
+resolved at all, the informative `NOT_INSTALLED` error is still returned.
 
 ## What each test group proves
 
@@ -189,9 +201,18 @@ python scripts/availability_report.py \
     --output tests/e2e/results/availability.json
 ```
 
+The committed `tests/e2e/results/availability.json` is a **generated artifact**.
+It is never hand-edited: it carries its own `generated_by`,
+`regenerate_command` and `generated_artifact_note` markers, and the
+`full-stack-install` workflow regenerates a fresh copy (with all seven CLIs
+installed) as a build artifact on every run. `tests/test_availability_report.py`
+regenerates the report into a temporary directory and asserts the schema, so the
+producer cannot drift from what the file promises.
+
 The report contains, all read back from real subprocess calls:
 
-- the environment (Python version, platform, gateway version, UTC timestamp);
+- the environment (Python version, platform, gateway version, UTC timestamp,
+  and the `sys.path` providers of each pinned distribution module);
 - the gateway inventory (protocol version, server name, eleven tool names);
 - the full `toolkit_doctor` output;
 - for each of the seven repositories: the installed distribution version, the
@@ -200,6 +221,21 @@ The report contains, all read back from real subprocess calls:
 - six fail-closed checks, each recording the actual refusal and whether the
   expected error marker was present;
 - an explicit `not_tested_here` list.
+
+Two semantics are deliberately recorded separately for every repository, and
+never conflated:
+
+- `listed`: the distribution is registered in package metadata. This is a
+  **listing**, not evidence that the tool works.
+- `verified`: a real gateway call executed the CLI and observed its own exit
+  code. Only this is verification.
+
+`installed` remains in every record as a deprecated compatibility alias of
+`listed`. `verdict` stays a reachability verdict: `AVAILABLE` includes the
+documented case where the gateway refused the call for a configuration reason
+before execution (for example `plan_auditor_inspect` without
+`SCITOOL_WORKSPACE_DIR`), which is why `verified` is the field to read when the
+question is "did the program actually run".
 
 A missing tool is recorded as `KNOWN_GAP`. Nothing is inferred: every field
 comes from an executed call.

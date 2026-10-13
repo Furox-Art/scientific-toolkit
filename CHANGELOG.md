@@ -5,7 +5,55 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.2] - 2026-10-12
+### Housekeeping — audit hardening
+
+- Closes the findings of the full-repository audit: patched the concrete
+  defects (correctness, fail-closed behaviour, platform independence),
+  wired every standalone guard into CI, removed dead or duplicated code
+  paths, and pinned every doc claim to a test so it cannot silently
+  drift again. Regression tests fail without the corresponding fix.
+
 ## [Unreleased]
+
+### Fixed
+
+- OAuth bearer verification no longer crashes on non-ASCII credentials.
+  `hmac.compare_digest` raises `TypeError` for non-ASCII `str` operands, so a
+  hostile non-ASCII `Authorization` header (or a non-ASCII bearer secret) used
+  to kill the HTTP handler and drop the connection instead of returning a clean
+  401. Credentials are now compared as RFC 7235 latin-1 header bytes; a
+  credential that cannot be represented as a header value is malformed and
+  rejected fail-closed. It can neither raise nor fail open.
+- Tool dispatch is consolidated onto a single routing table
+  (`scientific_toolkit_mcp.tools.TOOL_ROUTES`): every tool's allowed argument
+  keys and its handler live in one place, validated by one router, with a test
+  asserting the table and the MCP tool specs in `server.py` cannot drift. No
+  behavior or error message changed.
+- Every upstream subprocess call has an explicit, bounded timeout
+  (`MIN_CALL_TIMEOUT=1`, `DEFAULT_CALL_TIMEOUT=30`, `MAX_CALL_TIMEOUT=600`); an
+  out-of-range per-call timeout is a clean `INVALID_ARGUMENT` failure.
+- Namespace-collision hardening for the Axiomize CLI: `axiomize` is a pinned
+  distribution, and an `axiomize` module provided by more than one `sys.path`
+  entry (an isolated install directory exported through `PYTHONPATH`, for
+  example) fails the call with `BAD_CONFIGURATION` instead of silently running a
+  different distribution than the pinned one. `SCITOOL_PIN_AXIOMIZE` pins the
+  exact expected version.
+- The availability report no longer relies on a global `PYTHONPATH` export:
+  `scripts/refresh-availability.sh` drops it (it contradicted the documented
+  isolation rule and let the bundled `axiomize` package silently replace the
+  standalone one for every probe), and `scripts/availability_report.py` scopes
+  the isolated package directory to the single version-probe subprocess that
+  needs it.
+
+### Changed
+
+- The availability report now records a **listing** and a **verification** as
+  two separate booleans per repository (`listed` from package metadata,
+  `verified` from a real executed CLI call); `installed` remains as a deprecated
+  compatibility alias of `listed`. The report also marks itself as a generated
+  artifact (`regenerate_command`, `generated_artifact_note`) and records the
+  `sys.path` providers of each pinned distribution module.
 
 ## [0.2.1] - 2026-10-12
 

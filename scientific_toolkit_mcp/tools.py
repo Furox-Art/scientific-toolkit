@@ -7,12 +7,15 @@ reported as a successful scientific result.
 
 from __future__ import annotations
 
+from functools import partial
+import importlib.metadata as metadata
 import json
 import math
 import os
 from pathlib import Path
 import shutil
 import subprocess
+import sys
 import tempfile
 from typing import Any
 
@@ -20,6 +23,14 @@ from .catalog import catalog
 
 MAX_INPUT_BYTES = 65536
 MAX_OUTPUT = 32768
+
+# Every upstream subprocess runs with an explicit, bounded execution timeout.
+# The bound is absolute: a heavier upstream can never stall a request without a
+# limit, and no configuration can disable it. Individual tools declare their own
+# per-call timeout inside this range for the tools they invoke.
+MIN_CALL_TIMEOUT = 1
+DEFAULT_CALL_TIMEOUT = 30
+MAX_CALL_TIMEOUT = 600
 
 
 class ToolFailure(Exception):
@@ -34,6 +45,20 @@ BINS = {
     "quantum-reasoning": ("SCITOOL_QUANTUM_BIN", "quantum-reasoning"),
     "axiomize-reason": ("SCITOOL_REASON_BIN", "axiomize-reason"),
     "eq-layer": ("SCITOOL_EQ_BIN", "eq-layer"),
+}
+
+# BINS key -> upstream distribution whose top-level import module must not be
+# shadowed. The bundled axiomize-quantum-skills-2.0 distribution installs its
+# own top-level ``axiomize`` package, so when an isolated install directory
+# reaches sys.path (``PYTHONPATH=.reason-pkg``, an editable install, or a
+# vendored copy in the working directory), ``import axiomize`` and
+# ``importlib.metadata`` resolve that other distribution instead of the pinned
+# standalone one -- silently. Each pinned module must therefore have exactly one
+# provider on sys.path, and an operator can demand an exact version with
+# ``SCITOOL_PIN_AXIOMIZE``. A mismatch fails the call loud instead of letting a
+# different distribution than the pinned one run.
+PINNED_DISTRIBUTIONS = {
+    "axiomize": "axiomize",
 }
 
 
@@ -80,10 +105,69 @@ def _bin(key: str) -> str:
             found = str(isolated)
     if found is None:
         raise ToolFailure(f"NOT_INSTALLED: {name} is not available (override with {env})")
+    # Verify the pinned distribution before invoking it: once the executable
+    # resolves, the import path decides which distribution actually runs.
+    pinned = PINNED_DISTRIBUTIONS.get(key)
+    if pinned is not None:
+        _verify_pinned_distribution(pinned)
     return found
 
 
-def _call(key: str, argv: list[str], *, seconds: int = 30) -> dict:
+def module_providers(module: str) -> list[str]:
+    """Every sys.path entry that provides a top-level module, in import order.
+
+    This mirrors the interpreter's own resolution for ``import <module>``: the
+    first provider wins silently, so more than one provider means the import
+    path is shadowed and which distribution actually runs depends on sys.path
+    order instead of on what the operator installed and pinned.
+    """
+    providers: list[str] = []
+    for entry in sys.path:
+        if not entry:
+            continue
+        package = Path(entry) / module
+        single = Path(entry) / f"{module}.py"
+        if package.is_dir():
+            providers.append(str(package))
+        elif single.is_file():
+            providers.append(str(single))
+    return providers
+
+
+def _verify_pinned_distribution(distribution: str) -> None:
+    """Refuse to invoke an upstream CLI whose pinned module is shadowed.
+
+    Raises a loud configuration error instead of silently executing a
+    different distribution than the pinned one. An exact expected version can
+    be pinned with ``SCITOOL_PIN_<DISTRIBUTION>`` (for example
+    ``SCITOOL_PIN_AXIOMIZE=1.12.5``).
+    """
+    module = PINNED_DISTRIBUTIONS[distribution]
+    providers = module_providers(module)
+    if len(providers) > 1:
+        raise ToolFailure(
+            f"BAD_CONFIGURATION: pinned distribution {distribution!r} is shadowed: "
+            f"module {module!r} is provided by {len(providers)} sys.path entries "
+            f"({', '.join(providers)}) and the first one wins silently. Isolate the "
+            "colliding package so the pinned distribution is the only provider")
+    try:
+        resolved = metadata.version(distribution)
+    except metadata.PackageNotFoundError:
+        resolved = None
+    pin = os.environ.get(f"SCITOOL_PIN_{distribution.upper().replace('-', '_')}", "").strip()
+    if pin and resolved != pin:
+        raise ToolFailure(
+            f"BAD_CONFIGURATION: pinned {distribution} version mismatch: sys.path "
+            f"resolves {resolved!r} but SCITOOL_PIN_{distribution.upper().replace('-', '_')} "
+            f"pins {pin!r}")
+
+
+def _call(key: str, argv: list[str], *, seconds: int = DEFAULT_CALL_TIMEOUT) -> dict:
+    if (isinstance(seconds, bool) or not isinstance(seconds, int)
+            or not MIN_CALL_TIMEOUT <= seconds <= MAX_CALL_TIMEOUT):
+        raise ToolFailure(
+            "INVALID_ARGUMENT: timeout must be an integer between "
+            f"{MIN_CALL_TIMEOUT} and {MAX_CALL_TIMEOUT} seconds")
     program = _bin(key)
     try:
         completed = subprocess.run(
@@ -117,7 +201,6 @@ def _call(key: str, argv: list[str], *, seconds: int = 30) -> dict:
 
 
 def _stats(args: dict, key: str) -> dict:
-    _check_only(args, {"values"})
     values = args.get("values")
     if not isinstance(values, list) or not 2 <= len(values) <= 1000:
         raise ToolFailure("INVALID_ARGUMENT: values must be an array of 2..1000 numbers")
@@ -128,7 +211,6 @@ def _stats(args: dict, key: str) -> dict:
 
 
 def _model(args: dict) -> dict:
-    _check_only(args, {"action", "request"})
     action = args.get("action")
     # Intentionally exclude repair/heavy/export with surprising side effects.
     if action not in {"validate", "simulate", "validity", "uncertainty", "stability", "numerical-verify"}:
@@ -158,7 +240,6 @@ def _workspace() -> Path:
 
 
 def _eq_route(args: dict) -> dict:
-    _check_only(args, {"messages", "intent_mode"})
     messages = args.get("messages")
     mode = args.get("intent_mode", "heuristic")
     if mode not in {"auto", "heuristic", "learned"}:
@@ -181,7 +262,6 @@ def _eq_route(args: dict) -> dict:
 
 
 def _doctor(_args: dict) -> dict:
-    _check_only(_args, set())
     commands: dict[str, dict] = {}
     for key, (env, default) in BINS.items():
         exe = os.environ.get(env, default)
@@ -201,38 +281,59 @@ def _doctor(_args: dict) -> dict:
     }
 
 
+def _catalog(args: dict) -> dict:
+    return {"count": len(catalog()), "repositories": catalog(),
+            "integration_note": "Original repositories are unchanged; bundled Axiomize variant is not registered twice."}
+
+
+def _intake(args: dict) -> dict:
+    return _call("axiomize", ["intake", _str(args.get("idea"), "idea", 6000)])
+
+
+def _inspect(args: dict) -> dict:
+    return _call("plan-auditor", ["plan", "inspect", str(_workspace())])
+
+
+def _audit(args: dict) -> dict:
+    if os.environ.get("SCITOOL_ALLOW_AUDIT_EXECUTION") != "1":
+        raise ToolFailure("DISABLED: plan-auditor audit can execute project commands; set SCITOOL_ALLOW_AUDIT_EXECUTION=1 only for a trusted workspace")
+    return _call("plan-auditor", ["audit", str(_workspace())], seconds=120)
+
+
+def _quantum(args: dict) -> dict:
+    return _call("quantum-reasoning", ["--validate", "--json"])
+
+
+def _reason_score(args: dict) -> dict:
+    evidence = _unit(args.get("evidence"), "evidence")
+    verification = _unit(args.get("verification"), "verification")
+    return _call("axiomize-reason", ["score", "--evidence", str(evidence), "--verification", str(verification)])
+
+
+# One routing table for every tool: the exact argument keys the tool accepts and
+# the single handler that runs it. ``dispatch`` validates the keys against this
+# table and then calls the handler, so a tool can never accept an argument it
+# does not declare, and no second, divergent router can drift from this one.
+# ``tests/test_server.py`` asserts this table stays in sync with the MCP tool
+# specs in ``server.py`` (properties and additionalProperties).
+TOOL_ROUTES: dict[str, tuple[frozenset[str], Any]] = {
+    "toolkit_catalog": (frozenset(), _catalog),
+    "toolkit_doctor": (frozenset(), _doctor),
+    "axiomize_intake": (frozenset({"idea"}), _intake),
+    "axiomize_model": (frozenset({"action", "request"}), _model),
+    "cds_stats": (frozenset({"values"}), partial(_stats, key="cds")),
+    "cds2_stats": (frozenset({"values"}), partial(_stats, key="cds2")),
+    "plan_auditor_inspect": (frozenset(), _inspect),
+    "plan_auditor_audit": (frozenset(), _audit),
+    "quantum_skill_validate": (frozenset(), _quantum),
+    "axiomize_reason_score": (frozenset({"evidence", "verification"}), _reason_score),
+    "eq_layer_route": (frozenset({"messages", "intent_mode"}), _eq_route),
+}
+
+
 def dispatch(name: str, args: dict) -> dict:
-    if name == "toolkit_catalog":
-        _check_only(args, set())
-        return {"count": len(catalog()), "repositories": catalog(),
-                "integration_note": "Original repositories are unchanged; bundled Axiomize variant is not registered twice."}
-    if name == "toolkit_doctor":
-        return _doctor(args)
-    if name == "axiomize_intake":
-        _check_only(args, {"idea"})
-        return _call("axiomize", ["intake", _str(args.get("idea"), "idea", 6000)])
-    if name == "axiomize_model":
-        return _model(args)
-    if name == "cds_stats":
-        return _stats(args, "cds")
-    if name == "cds2_stats":
-        return _stats(args, "cds2")
-    if name == "plan_auditor_inspect":
-        _check_only(args, set())
-        return _call("plan-auditor", ["plan", "inspect", str(_workspace())])
-    if name == "plan_auditor_audit":
-        _check_only(args, set())
-        if os.environ.get("SCITOOL_ALLOW_AUDIT_EXECUTION") != "1":
-            raise ToolFailure("DISABLED: plan-auditor audit can execute project commands; set SCITOOL_ALLOW_AUDIT_EXECUTION=1 only for a trusted workspace")
-        return _call("plan-auditor", ["audit", str(_workspace())], seconds=120)
-    if name == "quantum_skill_validate":
-        _check_only(args, set())
-        return _call("quantum-reasoning", ["--validate", "--json"])
-    if name == "axiomize_reason_score":
-        _check_only(args, {"evidence", "verification"})
-        evidence = _unit(args.get("evidence"), "evidence")
-        verification = _unit(args.get("verification"), "verification")
-        return _call("axiomize-reason", ["score", "--evidence", str(evidence), "--verification", str(verification)])
-    if name == "eq_layer_route":
-        return _eq_route(args)
-    raise ToolFailure(f"UNKNOWN_TOOL: {name}")
+    allowed, handler = TOOL_ROUTES.get(name, (None, None))
+    if handler is None:
+        raise ToolFailure(f"UNKNOWN_TOOL: {name}")
+    _check_only(args, allowed)
+    return handler(args)

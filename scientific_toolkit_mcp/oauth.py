@@ -1,5 +1,13 @@
 """Optional OAuth resource-server verification for signed JWT access tokens.
 The real authorization server and end-user consent must be configured separately.
+
+Credentials are handled as RFC 7235 header bytes. ``hmac.compare_digest`` raises
+``TypeError`` for non-ASCII ``str`` operands, so a non-ASCII ``Authorization``
+header -- or a non-ASCII bearer secret -- must never reach it as ``str`` input:
+a hostile header could otherwise crash the request path instead of being
+refused. A credential that cannot be represented as latin-1 header bytes is
+malformed and is rejected (fail closed); the comparison can neither raise nor
+fail open.
 """
 from __future__ import annotations
 import hmac
@@ -41,9 +49,43 @@ def resource_metadata(config: OAuthConfig) -> dict:
     return {'resource':config.resource,'authorization_servers':[config.issuer],
             'bearer_methods_supported':['header'],'scopes_supported':[config.scope]}
 
+def _credential_bytes(value: object) -> bytes | None:
+    """RFC 7235 header bytes for a credential, or None when unrepresentable.
+
+    HTTP header values are latin-1 encoded on the wire. ``hmac.compare_digest``
+    accepts bytes of any content, but raises ``TypeError`` when either ``str``
+    operand contains a non-ASCII character, so both sides are encoded before
+    the comparison. Anything that is not a string, or that cannot be encoded as
+    a header value, is malformed: it can never appear on the wire and must never
+    match a secret.
+    """
+    if not isinstance(value, str):
+        return None
+    try:
+        return value.encode('latin-1')
+    except UnicodeEncodeError:
+        return None
+
+
+def _same_bearer(header: str, secret: str) -> bool:
+    """Constant-time Bearer equality that never raises on hostile input."""
+    actual = _credential_bytes(header)
+    expected = _credential_bytes('Bearer ' + secret)
+    return (actual is not None and expected is not None
+            and hmac.compare_digest(actual, expected))
+
+
 def authorized(header: str) -> bool:
+    """Whether an Authorization header value authenticates this resource.
+
+    A non-ASCII or otherwise unencodable credential is a malformed header value
+    per RFC 7235: it is rejected cleanly (fail closed, HTTP 401) instead of
+    raising inside the request path.
+    """
+    if not isinstance(header, str):
+        return False
     secret = os.environ.get('SCITOOL_MCP_BEARER_TOKEN', '')
-    if secret and hmac.compare_digest(header, 'Bearer ' + secret):
+    if secret and _same_bearer(header, secret):
         return True
     if not header.startswith('Bearer '):
         return False
