@@ -207,7 +207,14 @@ class Handler(BaseHTTPRequestHandler):
             self._reply(401, {'error': 'authentication required'}, headers={
                 'WWW-Authenticate': challenge})
             return
-        if self.headers.get('Content-Type', '').split(';', 1)[0].strip().lower() != 'application/json':
+        content_types = self.headers.get_all('Content-Type', [])
+        if len(content_types) > 1:
+            # Duplicate media types are interpreted inconsistently by proxies.
+            self.close_connection = True
+            self._reply(400, {'error': 'ambiguous content-type headers'},
+                        headers={'Connection': 'close'})
+            return
+        if not content_types or content_types[0].split(';', 1)[0].strip().lower() != 'application/json':
             self._reply(415, {'error': 'application/json required'})
             return
         if not _accepts_mcp(self.headers.get_all('Accept', [])):
@@ -272,7 +279,9 @@ class Handler(BaseHTTPRequestHandler):
                 return
             if isinstance(message, dict) and message.get('method') == 'tools/call':
                 params = message.get('params')
-                if isinstance(params, dict) and params.get('name') in LOCAL_ONLY_TOOLS:
+                if (isinstance(params, dict)
+                        and isinstance(params.get('name'), str)
+                        and params['name'] in LOCAL_ONLY_TOOLS):
                     self._reply(200, {'jsonrpc': '2.0', 'id': message.get('id'),
                         'result': {'content': [{'type': 'text',
                         'text': 'DISABLED: plan workspace actions are local-only'}],

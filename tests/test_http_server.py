@@ -273,6 +273,55 @@ class HttpTest(unittest.TestCase):
                 self.assertIn(b' 403 ', headers.split(b'\r\n', 1)[0])
                 self.assertNotIn(b'Access-Control-Allow-Origin:', headers)
 
+    def test_conflicting_content_type_headers_are_rejected(self):
+        body = b'{"jsonrpc":"2.0","id":1,"method":"ping"}'
+        base = (
+            b'POST /mcp HTTP/1.1\r\nHost: localhost\r\n'
+            + f'Authorization: Bearer {TOKEN}\r\n'.encode()
+            + b'Accept: application/json, text/event-stream\r\n'
+            + f'Content-Length: {len(body)}\r\n'.encode()
+        )
+        for media_types in (
+            b'Content-Type: application/json\r\nContent-Type: text/plain\r\n',
+            b'Content-Type: text/plain\r\nContent-Type: application/json\r\n',
+            b'Content-Type: application/json\r\nContent-Type: application/json\r\n',
+        ):
+            with self.subTest(media_types=media_types), patch.dict(
+                os.environ, {'SCITOOL_MCP_BEARER_TOKEN': TOKEN}
+            ):
+                with socket.create_connection(
+                    ('127.0.0.1', self.srv.server_port), timeout=3
+                ) as sock:
+                    sock.settimeout(3)
+                    sock.sendall(base + media_types + b'Connection: close\r\n\r\n' + body)
+                    response = sock.makefile('rb').read()
+                self.assertIn(b' 400 ', response.split(b'\r\n', 1)[0])
+                self.assertIn(b'Connection: close', response)
+                self.assertIn(b'ambiguous content-type headers', response)
+
+        with patch.dict(os.environ, {'SCITOOL_MCP_BEARER_TOKEN': TOKEN}):
+            code, data = self.send(
+                'POST', '/mcp', {'jsonrpc': '2.0', 'id': 1, 'method': 'ping'}
+            )
+        self.assertEqual(code, 200)
+        self.assertEqual(data['result'], {})
+
+    def test_malformed_tool_names_never_crash_http_worker(self):
+        with patch.dict(os.environ, {'SCITOOL_MCP_BEARER_TOKEN': TOKEN}):
+            for bad_name in ([], ['plan_auditor_audit'], {}, {'audit': True}, 123, None):
+                with self.subTest(bad_name=bad_name):
+                    request = {
+                        'jsonrpc': '2.0', 'id': 15, 'method': 'tools/call',
+                        'params': {'name': bad_name, 'arguments': {}},
+                    }
+                    code, response = self.send('POST', '/mcp', request)
+                    self.assertEqual(code, 200)
+                    self.assertEqual(response['error']['code'], -32602)
+            request = {'jsonrpc': '2.0', 'id': 16, 'method': 'ping'}
+            code, response = self.send('POST', '/mcp', request)
+            self.assertEqual(code, 200)
+            self.assertEqual(response['result'], {})
+
     def test_conflicting_http_request_lengths_are_rejected(self):
         body = b'{"jsonrpc":"2.0","id":2,"method":"ping"}'
         base = (
