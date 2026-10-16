@@ -9,6 +9,7 @@ from __future__ import annotations
 from collections import defaultdict, deque
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
+import math
 import os
 import threading
 import time
@@ -27,6 +28,19 @@ LOCAL_ONLY_TOOLS = frozenset({"plan_auditor_audit"})
 _lock = threading.Lock()
 _hits: dict[str, deque[float]] = defaultdict(deque)
 _semaphore = threading.BoundedSemaphore(MAX_CONCURRENT)
+
+
+def _finite_json_float(value: str) -> float:
+    """Refuse JSON numbers that overflow to non-finite Python floats."""
+    number = float(value)
+    if not math.isfinite(number):
+        raise ValueError("non-finite JSON number")
+    return number
+
+
+def _reject_json_constant(value: str) -> None:
+    """Python JSON accepts NaN/Infinity by default; JSON-RPC does not."""
+    raise ValueError(f"invalid JSON constant: {value}")
 
 
 def _authorized(request: BaseHTTPRequestHandler) -> bool:
@@ -155,8 +169,11 @@ class Handler(BaseHTTPRequestHandler):
         try:
             body = self.rfile.read(length)
             try:
-                message = json.loads(body)
-            except (UnicodeDecodeError, json.JSONDecodeError):
+                message = json.loads(
+                    body, parse_float=_finite_json_float,
+                    parse_constant=_reject_json_constant,
+                )
+            except (UnicodeDecodeError, json.JSONDecodeError, ValueError):
                 self._reply(400, {'jsonrpc': '2.0', 'id': None, 'error': {
                     'code': -32700, 'message': 'Parse error'}}, mcp=True)
                 return

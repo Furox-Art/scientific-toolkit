@@ -10,11 +10,17 @@ from unittest.mock import patch
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
-from scientific_toolkit_mcp.http_server import Handler
+from scientific_toolkit_mcp.http_server import Handler, _hits, _lock
 
 TOKEN = 'test-token-not-for-production'
 
 class HttpTest(unittest.TestCase):
+    def setUp(self):
+        # Rate limits are process-global. A previous integration suite must
+        # not consume the next independent test's per-client quota.
+        with _lock:
+            _hits.clear()
+
     @classmethod
     def setUpClass(cls):
         cls.srv = ThreadingHTTPServer(('127.0.0.1', 0), Handler)
@@ -145,6 +151,27 @@ class HttpTest(unittest.TestCase):
             code, _ = self.send('POST', '/mcp', {'jsonrpc': '2.0', 'id': 1,
                                                   'method': 'ping'}, accept=False)
         self.assertEqual(code, 406)
+
+    def test_nonfinite_json_numbers_are_rejected_as_parse_errors(self):
+        # The default Python JSON decoder silently accepts NaN and Infinity
+        # (including valid exponent syntax that overflows to infinity).
+        for invalid in (b'NaN', b'Infinity', b'-Infinity', b'1e9999'):
+            with self.subTest(invalid=invalid):
+                data = b'{"jsonrpc":"2.0","id":' + invalid + b',"method":"ping"}'
+                req = Request(
+                    self.base + '/mcp', data=data, method='POST',
+                    headers={
+                        'Authorization': f'Bearer {TOKEN}',
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json, text/event-stream',
+                    },
+                )
+                with patch.dict(os.environ, {'SCITOOL_MCP_BEARER_TOKEN': TOKEN}):
+                    with self.assertRaises(HTTPError) as raised:
+                        urlopen(req, timeout=3)
+                self.assertEqual(raised.exception.code, 400)
+                response = json.loads(raised.exception.read())
+                self.assertEqual(response['error']['code'], -32700)
 
     def test_notification_202(self):
         with patch.dict(os.environ, {'SCITOOL_MCP_BEARER_TOKEN': TOKEN}):
