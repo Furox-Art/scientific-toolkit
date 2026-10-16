@@ -21,6 +21,7 @@ from . import oauth
 MAX_REQUEST = 131072
 RATE_LIMIT = 20
 WINDOW_SECONDS = 60
+MAX_CLIENT_BUCKETS = 4096
 MAX_CONCURRENT = 4
 # Bounded reads prevent stalled clients from holding all worker slots forever.
 BODY_READ_TIMEOUT_SECONDS = 5.0
@@ -29,7 +30,39 @@ BODY_READ_TIMEOUT_SECONDS = 5.0
 LOCAL_ONLY_TOOLS = frozenset({"plan_auditor_audit"})
 _lock = threading.Lock()
 _hits: dict[str, deque[float]] = defaultdict(deque)
+_last_sweep = 0.0
 _semaphore = threading.BoundedSemaphore(MAX_CONCURRENT)
+
+
+def _record_rate_hit(client: str, now: float) -> bool:
+    """Caller holds _lock. Keep per-client buckets bounded and expire idle IPs.
+
+    Without eviction, each one-off source address remains in _hits forever;
+    a rotating set of addresses can grow the dictionary without limit.
+    Reject a new address when the table is full rather than evicting
+    active clients and resetting their rate-limit budget.
+    """
+    global _last_sweep
+    if now - _last_sweep >= WINDOW_SECONDS or (
+        client not in _hits and len(_hits) >= MAX_CLIENT_BUCKETS
+    ):
+        for address, times in list(_hits.items()):
+            while times and now - times[0] > WINDOW_SECONDS:
+                times.popleft()
+            if not times:
+                del _hits[address]
+        _last_sweep = now
+
+    if client not in _hits and len(_hits) >= MAX_CLIENT_BUCKETS:
+        return False
+
+    times = _hits[client]
+    while times and now - times[0] > WINDOW_SECONDS:
+        times.popleft()
+    if len(times) >= RATE_LIMIT:
+        return False
+    times.append(now)
+    return True
 
 
 def _authorized(request: BaseHTTPRequestHandler) -> bool:
@@ -145,13 +178,10 @@ class Handler(BaseHTTPRequestHandler):
         client = self.client_address[0]
         now = time.monotonic()
         with _lock:
-            times = _hits[client]
-            while times and now - times[0] > WINDOW_SECONDS:
-                times.popleft()
-            if len(times) >= RATE_LIMIT:
-                self._reply(429, {'error': 'rate limit exceeded'})
-                return
-            times.append(now)
+            admitted = _record_rate_hit(client, now)
+        if not admitted:
+            self._reply(429, {'error': 'rate limit exceeded'})
+            return
         if not _semaphore.acquire(blocking=False):
             self._reply(503, {'error': 'server busy'})
             return
