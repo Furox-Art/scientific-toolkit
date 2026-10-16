@@ -10,6 +10,7 @@ from collections import defaultdict, deque
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 import os
+import re
 import threading
 import time
 from urllib.parse import urlsplit
@@ -168,10 +169,28 @@ class Handler(BaseHTTPRequestHandler):
         if 'application/json' not in accept or 'text/event-stream' not in accept:
             self._reply(406, {'error': 'Accept must include application/json and text/event-stream'})
             return
-        try:
-            length = int(self.headers.get('Content-Length', '0'))
-        except ValueError:
-            length = 0
+        # Conflicting framing is unsafe across reverse proxies: the proxy
+        # and this handler may disagree which bytes belong to this request.
+        # No chunked request decoding is implemented here.
+        lengths = self.headers.get_all('Content-Length', [])
+        if (
+            self.headers.get_all('Transfer-Encoding', [])
+            or len(lengths) != 1
+            or re.fullmatch(r'[0-9]+', lengths[0].strip()) is None
+        ):
+            self.close_connection = True
+            self._reply(400, {'error': 'ambiguous or unsupported request framing'},
+                        headers={'Connection': 'close'})
+            return
+        raw_length = lengths[0].strip()
+        # Also cap decimal digits: Python refuses excessively long integer
+        # literals, so the header must not reach int() unchecked.
+        if len(raw_length) > len(str(MAX_REQUEST)):
+            self.close_connection = True
+            self._reply(413, {'error': 'request body too large'},
+                        headers={'Connection': 'close'})
+            return
+        length = int(raw_length)
         if not 0 < length <= MAX_REQUEST:
             self._reply(413, {'error': 'body must be between 1 and 131072 bytes'})
             return

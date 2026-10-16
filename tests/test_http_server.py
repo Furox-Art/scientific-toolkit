@@ -153,6 +153,51 @@ class HttpTest(unittest.TestCase):
                                                   'method': 'ping'}, accept=False)
         self.assertEqual(code, 406)
 
+    def test_conflicting_http_request_lengths_are_rejected(self):
+        body = b'{"jsonrpc":"2.0","id":2,"method":"ping"}'
+        base = (
+            b'POST /mcp HTTP/1.1\r\n'
+            b'Host: localhost\r\n'
+            b'Content-Type: application/json\r\n'
+            b'Accept: application/json, text/event-stream\r\n'
+            + f'Authorization: Bearer {TOKEN}\r\n'.encode()
+        )
+        for framing in (
+            b'Content-Length: 1\r\nContent-Length: 37\r\n',
+            b'Content-Length: 37\r\nTransfer-Encoding: chunked\r\n',
+            b'Transfer-Encoding: chunked\r\n',
+            b'Content-Length: +37\r\n',
+            b'Content-Length: 1,37\r\n',
+            b'Content-Length: -1\r\n',
+        ):
+            with self.subTest(framing=framing), patch.dict(
+                os.environ, {'SCITOOL_MCP_BEARER_TOKEN': TOKEN}
+            ):
+                with socket.create_connection(('127.0.0.1', self.srv.server_port), timeout=3) as sock:
+                    sock.settimeout(3)
+                    sock.sendall(base + framing + b'Connection: close\r\n\r\n' + body)
+                    response = sock.makefile('rb').read()
+                self.assertIn(b' 400 ', response.split(b'\r\n', 1)[0])
+                self.assertIn(b'Connection: close', response)
+                self.assertIn(b'ambiguous or unsupported request framing', response)
+
+        huge_length = b'9' * 5000
+        with patch.dict(os.environ, {'SCITOOL_MCP_BEARER_TOKEN': TOKEN}):
+            with socket.create_connection(('127.0.0.1', self.srv.server_port), timeout=3) as sock:
+                sock.settimeout(3)
+                sock.sendall(
+                    base + b'Content-Length: ' + huge_length
+                    + b'\r\nConnection: close\r\n\r\n'
+                )
+                response = sock.makefile('rb').read()
+            self.assertIn(b' 413 ', response.split(b'\r\n', 1)[0])
+
+        # Valid framing remains interoperable with ordinary MCP clients.
+        with patch.dict(os.environ, {'SCITOOL_MCP_BEARER_TOKEN': TOKEN}):
+            code, reply = self.send('POST', '/mcp', {'jsonrpc': '2.0', 'id': 1, 'method': 'ping'})
+        self.assertEqual(code, 200)
+        self.assertEqual(reply['result'], {})
+
     def test_duplicate_json_object_keys_are_rejected_at_every_depth(self):
         for raw in (
             b'{"jsonrpc":"2.0","id":1,"method":"ping","method":"tools/list"}',
