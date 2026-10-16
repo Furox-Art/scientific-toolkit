@@ -83,8 +83,11 @@ class Handler(BaseHTTPRequestHandler):
                 os.environ.get('SCITOOL_ALLOWED_ORIGINS', '').split(',') if origin.strip()}
 
     def _origin_allowed(self) -> bool:
-        origin = self.headers.get('Origin')
-        return not origin or origin in self._allowed_origins()
+        # More than one Origin has no unambiguous security interpretation.
+        origins = self.headers.get_all('Origin', [])
+        return len(origins) == 0 or (
+            len(origins) == 1 and origins[0] in self._allowed_origins()
+        )
 
     def _reply(self, code: int, payload=None, *, mcp=False, headers=None):
         raw = b'' if payload is None else json.dumps(payload, ensure_ascii=False,
@@ -93,7 +96,8 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header('Cache-Control', 'no-store')
         self.send_header('X-Content-Type-Options', 'nosniff')
         self.send_header('X-Frame-Options', 'DENY')
-        origin = self.headers.get('Origin')
+        origins = self.headers.get_all('Origin', [])
+        origin = origins[0] if len(origins) == 1 else None
         if origin and origin in self._allowed_origins():
             self.send_header('Access-Control-Allow-Origin', origin)
             self.send_header('Vary', 'Origin')
@@ -149,6 +153,13 @@ class Handler(BaseHTTPRequestHandler):
             return
         if not self._origin_allowed():
             self._reply(403, {'error': 'origin not allowed'})
+            return
+        # A reverse proxy may interpret duplicate Authorization fields
+        # differently. Never authenticate an ambiguous credential.
+        if len(self.headers.get_all('Authorization', [])) > 1:
+            self.close_connection = True
+            self._reply(400, {'error': 'ambiguous authorization headers'},
+                        headers={'Connection': 'close'})
             return
         if not _authorized(self):
             challenge = 'Bearer realm="scientific-toolkit"'

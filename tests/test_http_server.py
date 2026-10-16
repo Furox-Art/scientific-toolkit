@@ -153,6 +153,58 @@ class HttpTest(unittest.TestCase):
                                                   'method': 'ping'}, accept=False)
         self.assertEqual(code, 406)
 
+    def test_duplicate_authorization_headers_cannot_authorize_a_request(self):
+        body = b'{"jsonrpc":"2.0","id":1,"method":"ping"}'
+        prefix = (
+            b'POST /mcp HTTP/1.1\r\nHost: localhost\r\n'
+            b'Content-Type: application/json\r\n'
+            b'Accept: application/json, text/event-stream\r\n'
+            + f'Content-Length: {len(body)}\r\n'.encode()
+        )
+        credentials = (
+            b'Authorization: Bearer ' + TOKEN.encode() + b'\r\n'
+            b'Authorization: Bearer wrong\r\n',
+            b'Authorization: Bearer wrong\r\n'
+            + b'Authorization: Bearer ' + TOKEN.encode() + b'\r\n',
+            (b'Authorization: Bearer ' + TOKEN.encode() + b'\r\n') * 2,
+        )
+        for headers in credentials:
+            with self.subTest(headers=headers):
+                with patch.dict(os.environ, {'SCITOOL_MCP_BEARER_TOKEN': TOKEN}):
+                    with socket.create_connection(
+                        ('127.0.0.1', self.srv.server_port), timeout=3
+                    ) as sock:
+                        sock.settimeout(3)
+                        sock.sendall(prefix + headers + b'Connection: close\r\n\r\n' + body)
+                        response = sock.makefile('rb').read()
+                self.assertIn(b' 400 ', response.split(b'\r\n', 1)[0])
+                self.assertIn(b'ambiguous authorization headers', response)
+
+    def test_multiple_origins_never_receive_access_control_allow_origin(self):
+        raw_origins = (
+            b'Origin: https://client.example\r\nOrigin: https://evil.example\r\n',
+            b'Origin: https://evil.example\r\nOrigin: https://client.example\r\n',
+            b'Origin: https://client.example\r\nOrigin: https://client.example\r\n',
+        )
+        for origins in raw_origins:
+            with self.subTest(origins=origins):
+                raw = (
+                    b'OPTIONS /mcp HTTP/1.1\r\nHost: localhost\r\n'
+                    + origins + b'Connection: close\r\n\r\n'
+                )
+                with patch.dict(os.environ, {
+                    'SCITOOL_ALLOWED_ORIGINS': 'https://client.example',
+                }):
+                    with socket.create_connection(
+                        ('127.0.0.1', self.srv.server_port), timeout=3
+                    ) as sock:
+                        sock.settimeout(3)
+                        sock.sendall(raw)
+                        response = sock.makefile('rb').read()
+                headers = response.split(b'\r\n\r\n', 1)[0]
+                self.assertIn(b' 403 ', headers.split(b'\r\n', 1)[0])
+                self.assertNotIn(b'Access-Control-Allow-Origin:', headers)
+
     def test_conflicting_http_request_lengths_are_rejected(self):
         body = b'{"jsonrpc":"2.0","id":2,"method":"ping"}'
         base = (
