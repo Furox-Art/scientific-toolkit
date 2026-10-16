@@ -30,6 +30,25 @@ class StrictJSONTests(unittest.TestCase):
             with self.subTest(source=source), self.assertRaises(ValueError):
                 loads(source)
 
+    def test_unpaired_surrogates_and_non_utf8_wire_encodings_are_rejected(self):
+        for source in (
+            r'{"id":"\ud800","method":"ping"}',
+            r'{"nested":{"text":"\udfff"}}',
+            r'{"list":["\ud800"]}',
+            '{"id":1}'.encode('utf-16'),
+        ):
+            with self.subTest(source=source), self.assertRaises((ValueError, UnicodeError)):
+                loads(source)
+
+    def test_valid_multilingual_utf8_and_surrogate_pairs_are_preserved(self):
+        for source in (
+            '{"id":"Türkçe 日本語 😀"}',
+            r'{"id":"\ud83d\ude00"}',
+        ):
+            parsed = loads(source)
+            self.assertIn('id', parsed)
+            self.assertEqual(loads(json.dumps(parsed).encode('utf-8')), parsed)
+
     def test_malformed_json_raises_decoder_error(self):
         with self.assertRaises(json.JSONDecodeError):
             loads(b'{"a":}')

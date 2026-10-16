@@ -33,9 +33,20 @@ def _unique_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
 
 def loads(payload: str | bytes) -> Any:
     """Decode untrusted wire JSON without ambiguous object membership."""
-    return json.loads(
+    if isinstance(payload, bytes):
+        # MCP wire frames are UTF-8, not UTF-16/UTF-32 guessed by json.loads.
+        payload = payload.decode("utf-8")
+    value = json.loads(
         payload,
         parse_float=_finite_float,
         parse_constant=_reject_constant,
         object_pairs_hook=_unique_keys,
     )
+    # JSON accepts escaped unpaired UTF-16 surrogates, but our MCP
+    # response channel is UTF-8. Reject these before a reflected request ID
+    # can raise UnicodeEncodeError while serializing a response.
+    try:
+        json.dumps(value, ensure_ascii=False, allow_nan=False).encode("utf-8")
+    except UnicodeError as exc:
+        raise ValueError("JSON must contain valid UTF-8 Unicode scalars") from exc
+    return value

@@ -136,6 +136,20 @@ class ToolTests(unittest.TestCase):
         self.assertEqual(outputs[0]["error"]["code"], -32600)
         self.assertEqual(outputs[1]["result"], {})
 
+    def test_stdio_rejects_surrogate_id_and_recovers(self):
+        frames = (
+            b'{"jsonrpc":"2.0","id":"\\ud800","method":"ping"}\n'
+            b'{"jsonrpc":"2.0","id":2,"method":"ping"}\n'
+        )
+        completed = subprocess.run(
+            [sys.executable, "-m", "scientific_toolkit_mcp"],
+            input=frames, capture_output=True, timeout=10,
+        )
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        responses = [json.loads(line) for line in completed.stdout.splitlines()]
+        self.assertEqual(responses[0]['error']['code'], -32700)
+        self.assertEqual(responses[1]['result'], {})
+
     def test_stdio_rejects_ambiguous_json_and_remains_available(self):
         inputs = [
             '{"jsonrpc":"2.0","id":1,"method":"ping","method":"tools/list"}',

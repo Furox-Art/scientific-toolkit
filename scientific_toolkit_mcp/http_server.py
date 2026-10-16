@@ -66,6 +66,40 @@ def _record_rate_hit(client: str, now: float) -> bool:
     return True
 
 
+def _accepts_mcp(accept_headers: list[str]) -> bool:
+    """Require both real media types with positive HTTP quality weights.
+
+    String substring searches incorrectly accept fake MIME types and q=0
+    entries, causing unsupported clients to pass protocol negotiation.
+    """
+    available: set[str] = set()
+    for header in accept_headers:
+        for entry in header.split(","):
+            fields = [field.strip() for field in entry.split(";")]
+            media_type = fields[0].lower()
+            if not media_type:
+                continue
+            quality = 1.0
+            quality_seen = False
+            for parameter in fields[1:]:
+                name, separator, value = parameter.partition("=")
+                if not separator:
+                    return False
+                if name.strip().lower() == "q":
+                    if quality_seen:
+                        return False
+                    quality_seen = True
+                    try:
+                        quality = float(value.strip().strip('"'))
+                    except ValueError:
+                        return False
+                    if not 0.0 <= quality <= 1.0:
+                        return False
+            if quality > 0.0:
+                available.add(media_type)
+    return {"application/json", "text/event-stream"} <= available
+
+
 def _authorized(request: BaseHTTPRequestHandler) -> bool:
     return oauth.authorized(request.headers.get('Authorization', ''))
 
@@ -176,8 +210,7 @@ class Handler(BaseHTTPRequestHandler):
         if self.headers.get('Content-Type', '').split(';', 1)[0].strip().lower() != 'application/json':
             self._reply(415, {'error': 'application/json required'})
             return
-        accept = self.headers.get('Accept', '')
-        if 'application/json' not in accept or 'text/event-stream' not in accept:
+        if not _accepts_mcp(self.headers.get_all('Accept', [])):
             self._reply(406, {'error': 'Accept must include application/json and text/event-stream'})
             return
         # Conflicting framing is unsafe across reverse proxies: the proxy

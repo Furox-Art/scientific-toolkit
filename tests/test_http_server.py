@@ -147,6 +147,74 @@ class HttpTest(unittest.TestCase):
                                 origin='https://other.example')
         self.assertEqual(code, 403)
 
+    def test_accept_header_requires_real_positive_quality_media_types(self):
+        from scientific_toolkit_mcp.http_server import _accepts_mcp
+
+        invalid = (
+            ['application/json-fake, text/event-stream'],
+            ['application/json, text/event-stream-fake'],
+            ['application/json;q=0, text/event-stream'],
+            ['application/json, text/event-stream;q=0'],
+            ['application/json, text/event-stream;q=NaN'],
+            ['application/json, text/event-stream;q=1.1'],
+            ['application/json, text/event-stream;q=1;q=0'],
+            ['application/json, text/event-stream; q'],
+            [],
+        )
+        for headers in invalid:
+            with self.subTest(headers=headers):
+                self.assertFalse(_accepts_mcp(headers))
+        for headers in (
+            ['application/json, text/event-stream'],
+            ['application/json;q=0.8', 'text/event-stream;q=0.6'],
+            ['APPLICATION/JSON, TEXT/EVENT-STREAM'],
+        ):
+            with self.subTest(headers=headers):
+                self.assertTrue(_accepts_mcp(headers))
+
+    def test_invalid_accept_is_denied_before_mcp_dispatch(self):
+        payload = b'{"jsonrpc":"2.0","id":9,"method":"ping"}'
+        for accept, expected in (
+            ('application/json-fake, text/event-stream', b' 406 '),
+            ('application/json, text/event-stream;q=0', b' 406 '),
+            ('application/json;q=0.9, text/event-stream;q=0.8', b' 200 '),
+        ):
+            with self.subTest(accept=accept), patch.dict(os.environ, {
+                'SCITOOL_MCP_BEARER_TOKEN': TOKEN,
+            }):
+                req = Request(
+                    self.base + '/mcp', data=payload, method='POST',
+                    headers={
+                        'Authorization': f'Bearer {TOKEN}',
+                        'Content-Type': 'application/json',
+                        'Accept': accept,
+                    },
+                )
+                try:
+                    with urlopen(req, timeout=3) as reply:
+                        status = reply.status
+                except HTTPError as exc:
+                    status = exc.code
+                    exc.close()
+                self.assertEqual(status, int(expected.strip().split()[0]))
+
+    def test_unpaired_unicode_in_request_id_is_a_parse_error(self):
+        invalid = b'{"jsonrpc":"2.0","id":"\\ud800","method":"ping"}'
+        with patch.dict(os.environ, {'SCITOOL_MCP_BEARER_TOKEN': TOKEN}):
+            req = Request(
+                self.base + '/mcp', data=invalid, method='POST',
+                headers={
+                    'Authorization': f'Bearer {TOKEN}',
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json, text/event-stream',
+                },
+            )
+            with self.assertRaises(HTTPError) as exc:
+                urlopen(req, timeout=3)
+            self.assertEqual(exc.exception.code, 400)
+            reply = json.loads(exc.exception.read())
+        self.assertEqual(reply['error']['code'], -32700)
+
     def test_requires_mcp_accept(self):
         with patch.dict(os.environ, {'SCITOOL_MCP_BEARER_TOKEN': TOKEN}):
             code, _ = self.send('POST', '/mcp', {'jsonrpc': '2.0', 'id': 1,
