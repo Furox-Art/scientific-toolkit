@@ -12,6 +12,7 @@ from typing import Any
 
 from . import __version__
 from .tools import ToolFailure, dispatch
+from .strict_json import loads as strict_json_loads
 
 PROTO = "2025-06-18"
 
@@ -112,19 +113,31 @@ def handle(msg: Any) -> dict | None:
     return response(request_id, error={"code": -32601, "message": "Method not found"})
 
 
+MAX_STDIO_FRAME = 1024 * 1024
+
+
 def main() -> None:
-    # A minimal stdio endpoint: newline-delimited UTF-8 JSON. Never write to
-    # stdout except protocol frames. Clients launch it as a local subprocess.
-    for raw in sys.stdin.buffer:
+    # Read at most MAX_STDIO_FRAME + 1 bytes per call. A naive iteration
+    # over stdin buffers a full attacker-controlled line before checking size.
+    # Drain only the current oversized frame, then recover on the next line.
+    while True:
+        raw = sys.stdin.buffer.readline(MAX_STDIO_FRAME + 1)
+        if not raw:
+            return
         if not raw.strip():
             continue
-        if len(raw) > 1024 * 1024:
+        if len(raw) > MAX_STDIO_FRAME:
+            if not raw.endswith(b"\n"):
+                while True:
+                    remainder = sys.stdin.buffer.readline(MAX_STDIO_FRAME + 1)
+                    if not remainder or remainder.endswith(b"\n"):
+                        break
             outgoing = response(None, error={"code": -32600, "message": "Message too large"})
         else:
             try:
-                incoming = json.loads(raw)
+                incoming = strict_json_loads(raw)
                 outgoing = handle(incoming)
-            except (json.JSONDecodeError, UnicodeDecodeError):
+            except (json.JSONDecodeError, UnicodeDecodeError, ValueError):
                 outgoing = response(None, error={"code": -32700, "message": "Parse error"})
         if outgoing is not None:
             try:

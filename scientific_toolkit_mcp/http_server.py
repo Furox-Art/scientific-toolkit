@@ -9,38 +9,27 @@ from __future__ import annotations
 from collections import defaultdict, deque
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
-import math
 import os
 import threading
 import time
 from urllib.parse import urlsplit
 
 from .server import handle
+from .strict_json import loads as strict_json_loads
 from . import oauth
 
 MAX_REQUEST = 131072
 RATE_LIMIT = 20
 WINDOW_SECONDS = 60
 MAX_CONCURRENT = 4
+# Bounded reads prevent stalled clients from holding all worker slots forever.
+BODY_READ_TIMEOUT_SECONDS = 5.0
 # Read-only plan inspection is allowed for authenticated clients. Running an
 # audit executes commands from project plans; keep that action local-only.
 LOCAL_ONLY_TOOLS = frozenset({"plan_auditor_audit"})
 _lock = threading.Lock()
 _hits: dict[str, deque[float]] = defaultdict(deque)
 _semaphore = threading.BoundedSemaphore(MAX_CONCURRENT)
-
-
-def _finite_json_float(value: str) -> float:
-    """Refuse JSON numbers that overflow to non-finite Python floats."""
-    number = float(value)
-    if not math.isfinite(number):
-        raise ValueError("non-finite JSON number")
-    return number
-
-
-def _reject_json_constant(value: str) -> None:
-    """Python JSON accepts NaN/Infinity by default; JSON-RPC does not."""
-    raise ValueError(f"invalid JSON constant: {value}")
 
 
 def _authorized(request: BaseHTTPRequestHandler) -> bool:
@@ -167,12 +156,23 @@ class Handler(BaseHTTPRequestHandler):
             self._reply(503, {'error': 'server busy'})
             return
         try:
-            body = self.rfile.read(length)
+            self.connection.settimeout(BODY_READ_TIMEOUT_SECONDS)
             try:
-                message = json.loads(
-                    body, parse_float=_finite_json_float,
-                    parse_constant=_reject_json_constant,
-                )
+                body = self.rfile.read(length)
+            except TimeoutError:
+                self.close_connection = True
+                self._reply(408, {'error': 'request body timeout'}, headers={
+                    'Connection': 'close',
+                })
+                return
+            if len(body) != length:
+                self.close_connection = True
+                self._reply(400, {'error': 'incomplete request body'}, headers={
+                    'Connection': 'close',
+                })
+                return
+            try:
+                message = strict_json_loads(body)
             except (UnicodeDecodeError, json.JSONDecodeError, ValueError):
                 self._reply(400, {'jsonrpc': '2.0', 'id': None, 'error': {
                     'code': -32700, 'message': 'Parse error'}}, mcp=True)

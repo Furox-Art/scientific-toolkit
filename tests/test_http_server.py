@@ -1,6 +1,7 @@
 """Local end-to-end HTTP transport checks, including unauthorized traffic."""
 import json
 import os
+import socket
 import threading
 import tempfile
 import unittest
@@ -151,6 +152,74 @@ class HttpTest(unittest.TestCase):
             code, _ = self.send('POST', '/mcp', {'jsonrpc': '2.0', 'id': 1,
                                                   'method': 'ping'}, accept=False)
         self.assertEqual(code, 406)
+
+    def test_duplicate_json_object_keys_are_rejected_at_every_depth(self):
+        for raw in (
+            b'{"jsonrpc":"2.0","id":1,"method":"ping","method":"tools/list"}',
+            b'{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"toolkit_catalog","name":"plan_auditor_audit"}}',
+            b'{"jsonrpc":"2.0","id":1,"method":"ping","params":{"nested":{"a":1,"a":2}}}',
+            b'{"jsonrpc":"2.0","id":1,"method":"ping","method":"\\u0070ing"}',
+        ):
+            with self.subTest(raw=raw):
+                request = Request(
+                    self.base + '/mcp', data=raw, method='POST',
+                    headers={
+                        'Authorization': f'Bearer {TOKEN}',
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json, text/event-stream',
+                    },
+                )
+                with patch.dict(os.environ, {'SCITOOL_MCP_BEARER_TOKEN': TOKEN}):
+                    with self.assertRaises(HTTPError) as raised:
+                        urlopen(request, timeout=3)
+                self.assertEqual(raised.exception.code, 400)
+                response = json.loads(raised.exception.read())
+                self.assertEqual(response['error']['code'], -32700)
+
+    def test_truncated_body_is_rejected_even_if_prefix_is_valid_json(self):
+        with patch.dict(os.environ, {'SCITOOL_MCP_BEARER_TOKEN': TOKEN}):
+            with socket.create_connection(('127.0.0.1', self.srv.server_port), timeout=3) as sock:
+                sock.settimeout(3)
+                body = b'{"jsonrpc":"2.0","id":1,"method":"ping"}'
+                sock.sendall(
+                    b'POST /mcp HTTP/1.1\r\n'
+                    b'Host: localhost\r\n'
+                    + f'Content-Length: {len(body) + 8}\r\n'.encode()
+                    + b'Content-Type: application/json\r\n'
+                    + b'Accept: application/json, text/event-stream\r\n'
+                    + f'Authorization: Bearer {TOKEN}\r\n'.encode()
+                    + b'Connection: close\r\n\r\n'
+                    + body
+                )
+                sock.shutdown(socket.SHUT_WR)
+                response = sock.makefile('rb').read()
+        self.assertIn(b' 400 ', response.split(b'\r\n', 1)[0])
+        self.assertIn(b'incomplete request body', response)
+
+    def test_incomplete_body_times_out_instead_of_holding_a_worker_forever(self):
+        with patch('scientific_toolkit_mcp.http_server.BODY_READ_TIMEOUT_SECONDS', 0.4):
+            with patch.dict(os.environ, {'SCITOOL_MCP_BEARER_TOKEN': TOKEN}):
+                with socket.create_connection(('127.0.0.1', self.srv.server_port), timeout=3) as sock:
+                    sock.settimeout(3)
+                    sock.sendall(
+                        b'POST /mcp HTTP/1.1\r\n'
+                        b'Host: localhost\r\n'
+                        b'Content-Length: 100\r\n'
+                        b'Content-Type: application/json\r\n'
+                        b'Accept: application/json, text/event-stream\r\n'
+                        + f'Authorization: Bearer {TOKEN}\r\n'.encode()
+                        + b'Connection: close\r\n\r\n'
+                        + b'{"jsonrpc":"2.0","id":1'
+                    )
+                    response = sock.makefile('rb').read()
+        self.assertIn(b' 408 ', response.split(b'\r\n', 1)[0])
+        self.assertIn(b'request body timeout', response)
+        with patch.dict(os.environ, {'SCITOOL_MCP_BEARER_TOKEN': TOKEN}):
+            code, result = self.send('POST', '/mcp', {
+                'jsonrpc': '2.0', 'id': 2, 'method': 'ping',
+            })
+        self.assertEqual(code, 200)
+        self.assertEqual(result['result'], {})
 
     def test_nonfinite_json_numbers_are_rejected_as_parse_errors(self):
         # The default Python JSON decoder silently accepts NaN and Infinity

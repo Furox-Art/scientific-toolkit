@@ -116,6 +116,49 @@ class ToolTests(unittest.TestCase):
                 self.assertEqual(x["exit_code"], 3)
                 self.assertEqual(x["status"], "COMMAND_FAILED")
 
+    def test_stdio_oversized_frame_is_dropped_once_then_recovers(self):
+        from scientific_toolkit_mcp.server import MAX_STDIO_FRAME
+
+        oversized = (
+            b'{"jsonrpc":"2.0","id":1,"method":"ping","payload":"'
+            + b'x' * (MAX_STDIO_FRAME + 512)
+            + b'"}\n'
+        )
+        valid = b'{"jsonrpc":"2.0","id":2,"method":"ping"}\n'
+        completed = subprocess.run(
+            [sys.executable, "-m", "scientific_toolkit_mcp"],
+            input=oversized + valid,
+            capture_output=True, timeout=10,
+        )
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        outputs = [json.loads(line) for line in completed.stdout.splitlines()]
+        self.assertEqual(len(outputs), 2)
+        self.assertEqual(outputs[0]["error"]["code"], -32600)
+        self.assertEqual(outputs[1]["result"], {})
+
+    def test_stdio_rejects_ambiguous_json_and_remains_available(self):
+        inputs = [
+            '{"jsonrpc":"2.0","id":1,"method":"ping","method":"tools/list"}',
+            '{"jsonrpc":"2.0","id":2,"method":"ping","params":{"a":1,"a":2}}',
+            '{"jsonrpc":"2.0","id":3,"method":"ping","params":{"bad":NaN}}',
+            '{"jsonrpc":"2.0","id":4,"method":"ping","params":{"bad":1e9999}}',
+            '{"jsonrpc":"2.0","id":5,"method":"ping"}',
+        ]
+        completed = subprocess.run(
+            [sys.executable, "-m", "scientific_toolkit_mcp"],
+            input="\n".join(inputs) + "\n", text=True,
+            capture_output=True, timeout=10,
+        )
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        self.assertEqual(completed.stderr, "")
+        responses = [json.loads(line) for line in completed.stdout.splitlines()]
+        self.assertEqual(len(responses), 5)
+        self.assertEqual(
+            [reply["error"]["code"] for reply in responses[:-1]],
+            [-32700] * 4,
+        )
+        self.assertEqual(responses[-1]["result"], {})
+
     def test_full_stdio_roundtrip(self):
         reqs = [
             {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2025-06-18"}},
