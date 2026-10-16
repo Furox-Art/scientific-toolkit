@@ -54,6 +54,8 @@ class Handler(BaseHTTPRequestHandler):
                   allow_nan=False).encode('utf-8')
         self.send_response(code)
         self.send_header('Cache-Control', 'no-store')
+        self.send_header('X-Content-Type-Options', 'nosniff')
+        self.send_header('X-Frame-Options', 'DENY')
         origin = self.headers.get('Origin')
         if origin and origin in self._allowed_origins():
             self.send_header('Access-Control-Allow-Origin', origin)
