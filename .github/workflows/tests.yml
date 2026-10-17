@@ -1,9 +1,8 @@
 name: MCP test suite
 on:
   push:
-    # Keep test runs off the docs branch: the GitHub Pages deployment to gh-pages
-    # pushes every docs commit through the full suite for no benefit.
-    branches-ignore: [gh-pages]
+    # Branch changes are tested on pull_request; avoid duplicate push jobs.
+    branches: [main]
   pull_request:
   workflow_dispatch:
 concurrency:

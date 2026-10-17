@@ -1,7 +1,7 @@
 name: Real upstream MCP integration
 on:
   push:
-    branches-ignore: [gh-pages]
+    branches: [main]
     paths:
       - scripts/upstream_smoke.py
       - .github/workflows/real-upstream.yml

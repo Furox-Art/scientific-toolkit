@@ -1,7 +1,7 @@
 name: Official MCP SDK client interoperability
 on:
   push:
-    branches-ignore: [gh-pages]
+    branches: [main]
     paths:
       - scripts/sdk_client_smoke.py
       - .github/workflows/sdk-client.yml
