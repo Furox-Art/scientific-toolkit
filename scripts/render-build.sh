@@ -1,12 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
 # Render build: six stand-alone distributions plus an isolated bundled Axiomize.
-python -m pip install --no-cache-dir -e '.[oauth]'
-python -m pip install --no-cache-dir axiomize scientific-computing-system scientific-computing-system-2.0 plan-auditor quantum-reasoning-skill eq-layer PyYAML
+# Preserve no-cache builds on Render; let GitHub Actions restore and save pip
+# wheels to avoid re-downloading released upstream packages on every CI run.
+if [[ "${GITHUB_ACTIONS:-}" == "true" ]]; then
+  pip_cache_flag=()
+else
+  pip_cache_flag=(--no-cache-dir)
+fi
+python -m pip install "${pip_cache_flag[@]}" -e '.[oauth]'
+python -m pip install "${pip_cache_flag[@]}" axiomize scientific-computing-system scientific-computing-system-2.0 plan-auditor quantum-reasoning-skill eq-layer PyYAML
 # The Render runtime already uses a virtual environment. A nested venv cannot
 # inherit dependencies from that outer environment. Isolate the bundled module
 # tree with --target and use the existing Python interpreter for shared deps.
-python -m pip install --no-cache-dir --no-deps --target .reason-pkg axiomize-quantum-skills-2.0
+python -m pip install "${pip_cache_flag[@]}" --no-deps --target .reason-pkg axiomize-quantum-skills-2.0
 python - <<'PY'
 from pathlib import Path
 wrapper = Path('.reason-env/bin/axiomize-reason')
