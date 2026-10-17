@@ -100,6 +100,22 @@ def _accepts_mcp(accept_headers: list[str]) -> bool:
     return {"application/json", "text/event-stream"} <= available
 
 
+def _valid_json_content_type(value: str) -> bool:
+    """Only JSON encoded as UTF-8 is supported by the MCP wire reader."""
+    fields = [field.strip() for field in value.split(';')]
+    if fields[0].lower() != 'application/json':
+        return False
+    charset_seen = False
+    for field in fields[1:]:
+        name, sep, encoding = field.partition('=')
+        if not sep or name.strip().lower() != 'charset' or charset_seen:
+            return False
+        charset_seen = True
+        if encoding.strip().strip('"').lower() != 'utf-8':
+            return False
+    return True
+
+
 def _authorized(request: BaseHTTPRequestHandler) -> bool:
     return oauth.authorized(request.headers.get('Authorization', ''))
 
@@ -148,7 +164,18 @@ class Handler(BaseHTTPRequestHandler):
         if raw:
             self.wfile.write(raw)
 
+    def _reject_ambiguous_host(self) -> bool:
+        hosts = self.headers.get_all('Host', [])
+        if len(hosts) > 1 or (self.request_version == 'HTTP/1.1' and not hosts):
+            self.close_connection = True
+            self._reply(400, {'error': 'ambiguous or missing host header'},
+                        headers={'Connection': 'close'})
+            return True
+        return False
+
     def do_GET(self):
+        if self._reject_ambiguous_host():
+            return
         path = urlsplit(self.path).path
         if path in ('/.well-known/oauth-protected-resource',
                     '/.well-known/oauth-protected-resource/mcp'):
@@ -171,6 +198,8 @@ class Handler(BaseHTTPRequestHandler):
             self._reply(404, {'error': 'not found'})
 
     def do_OPTIONS(self):
+        if self._reject_ambiguous_host():
+            return
         if urlsplit(self.path).path != '/mcp':
             self._reply(404, {'error': 'not found'})
         elif not self._origin_allowed():
@@ -179,9 +208,13 @@ class Handler(BaseHTTPRequestHandler):
             self._reply(204)
 
     def do_DELETE(self):
+        if self._reject_ambiguous_host():
+            return
         self._reply(405, {'error': 'stateless endpoint; no MCP session to delete'})
 
     def do_POST(self):
+        if self._reject_ambiguous_host():
+            return
         if urlsplit(self.path).path != '/mcp':
             self._reply(404, {'error': 'not found'})
             return
@@ -214,8 +247,8 @@ class Handler(BaseHTTPRequestHandler):
             self._reply(400, {'error': 'ambiguous content-type headers'},
                         headers={'Connection': 'close'})
             return
-        if not content_types or content_types[0].split(';', 1)[0].strip().lower() != 'application/json':
-            self._reply(415, {'error': 'application/json required'})
+        if not content_types or not _valid_json_content_type(content_types[0]):
+            self._reply(415, {'error': 'application/json with UTF-8 encoding required'})
             return
         if not _accepts_mcp(self.headers.get_all('Accept', [])):
             self._reply(406, {'error': 'Accept must include application/json and text/event-stream'})

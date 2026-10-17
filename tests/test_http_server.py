@@ -273,6 +273,75 @@ class HttpTest(unittest.TestCase):
                 self.assertIn(b' 403 ', headers.split(b'\r\n', 1)[0])
                 self.assertNotIn(b'Access-Control-Allow-Origin:', headers)
 
+    def test_ambiguous_hosts_are_rejected_on_all_http_methods(self):
+        for method, path in (('GET', '/health'), ('OPTIONS', '/mcp'),
+                             ('DELETE', '/mcp'), ('POST', '/mcp')):
+            body = b'{"jsonrpc":"2.0","id":1,"method":"ping"}' if method == 'POST' else b''
+            extra = (
+                b'Content-Type: application/json\r\n'
+                b'Accept: application/json, text/event-stream\r\n'
+                + f'Authorization: Bearer {TOKEN}\r\n'.encode()
+                + f'Content-Length: {len(body)}\r\n'.encode()
+            )
+            for hosts in (
+                b'Host: localhost\r\nHost: attacker.example\r\n',
+                b'Host: attacker.example\r\nHost: localhost\r\n',
+                b'Host: localhost\r\nHost: localhost\r\n',
+                b'',
+            ):
+                with self.subTest(method=method, hosts=hosts), patch.dict(
+                    os.environ, {'SCITOOL_MCP_BEARER_TOKEN': TOKEN}
+                ):
+                    raw = (
+                        f'{method} {path} HTTP/1.1\r\n'.encode() + hosts + extra
+                        + b'Connection: close\r\n\r\n' + body
+                    )
+                    with socket.create_connection(
+                        ('127.0.0.1', self.srv.server_port), timeout=3
+                    ) as sock:
+                        sock.settimeout(3)
+                        sock.sendall(raw)
+                        response = sock.makefile('rb').read()
+                self.assertIn(b' 400 ', response.split(b'\r\n', 1)[0])
+                self.assertIn(b'Connection: close', response)
+
+    def test_invalid_json_charset_is_denied_before_mcp_dispatch(self):
+        body = b'{"jsonrpc":"2.0","id":1,"method":"ping"}'
+        prefix = (
+            b'POST /mcp HTTP/1.1\r\nHost: localhost\r\n'
+            + f'Authorization: Bearer {TOKEN}\r\n'.encode()
+            + b'Accept: application/json, text/event-stream\r\n'
+            + f'Content-Length: {len(body)}\r\n'.encode()
+        )
+        for header in (
+            b'Content-Type: application/json; charset=utf-16\r\n',
+            b'Content-Type: application/json; charset=latin-1\r\n',
+            b'Content-Type: application/json; charset=utf-8; charset=utf-16\r\n',
+            b'Content-Type: application/json; charset\r\n',
+            b'Content-Type: application/json; boundary=abc\r\n',
+        ):
+            with self.subTest(header=header), patch.dict(
+                os.environ, {'SCITOOL_MCP_BEARER_TOKEN': TOKEN}
+            ):
+                with socket.create_connection(
+                    ('127.0.0.1', self.srv.server_port), timeout=3
+                ) as sock:
+                    sock.settimeout(3)
+                    sock.sendall(prefix + header + b'Connection: close\r\n\r\n' + body)
+                    response = sock.makefile('rb').read()
+                self.assertIn(b' 415 ', response.split(b'\r\n', 1)[0])
+        from scientific_toolkit_mcp.http_server import _valid_json_content_type
+
+        self.assertTrue(_valid_json_content_type('application/json'))
+        self.assertTrue(_valid_json_content_type('APPLICATION/JSON; CHARSET="UTF-8"'))
+        self.assertFalse(_valid_json_content_type('application/json; charset= UTF-16'))
+        with patch.dict(os.environ, {'SCITOOL_MCP_BEARER_TOKEN': TOKEN}):
+            code, response = self.send(
+                'POST', '/mcp', {'jsonrpc': '2.0', 'id': 1, 'method': 'ping'}
+            )
+        self.assertEqual(code, 200)
+        self.assertEqual(response['result'], {})
+
     def test_conflicting_content_type_headers_are_rejected(self):
         body = b'{"jsonrpc":"2.0","id":1,"method":"ping"}'
         base = (
