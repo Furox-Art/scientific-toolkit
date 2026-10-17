@@ -29,10 +29,12 @@ jobs:
       # The e2e suite drives the seven real tool CLIs, so CI must install them
       # exactly like the Render build does (see scripts/render-build.sh).
       - run: bash scripts/render-build.sh
-      - name: Run tests
+      - name: Install complete test prerequisites
+        run: python -m pip install "pytest>=8" "pytest-cov>=5" "mcp>=1.15,<2"
+      - name: Run tests with 100% branch coverage and no skips
         env:
           SCITOOL_REASON_BIN: ${{ github.workspace }}/.reason-env/bin/axiomize-reason
-        run: python -m unittest discover -s tests -v
+        run: python -m pytest -q -rs tests/ --cov=scientific_toolkit_mcp --cov-branch --cov-report=term-missing --cov-fail-under=100
 
   package-artifacts:
     name: Build and smoke-test PyPI artifacts

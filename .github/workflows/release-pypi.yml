@@ -58,10 +58,12 @@ jobs:
       - name: Install build tooling
         run: python -m pip install --upgrade build twine
 
-      - name: Test MCP server
+      - name: Install complete test prerequisites
+        run: python -m pip install "pytest>=8" "pytest-cov>=5" "mcp>=1.15,<2"
+      - name: Verify MCP server and real adapters without skips
         env:
           SCITOOL_REASON_BIN: ${{ github.workspace }}/.reason-env/bin/axiomize-reason
-        run: python -m unittest discover -s tests -v
+        run: python -m pytest -q -rs tests/ --cov=scientific_toolkit_mcp --cov-branch --cov-report=term-missing --cov-fail-under=100
 
       - name: Build source and wheel distributions
         run: python -m build
