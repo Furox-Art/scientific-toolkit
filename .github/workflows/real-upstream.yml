@@ -1,7 +1,7 @@
 name: Real upstream MCP integration
 on:
   push:
-    branches-ignore: [gh-pages]
+    branches: [main]
     paths:
       - scripts/upstream_smoke.py
       - .github/workflows/real-upstream.yml
@@ -13,7 +13,7 @@ on:
       - scientific_toolkit_mcp/**
   workflow_dispatch:
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.head.repo.full_name || github.repository }}-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
 permissions:
   contents: read
@@ -40,6 +40,8 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
+          cache: 'pip'
+          cache-dependency-path: pyproject.toml
       - run: python -m pip install -e .
       - name: Install real published package
         run: python -m pip install "${{ matrix.profile }}"

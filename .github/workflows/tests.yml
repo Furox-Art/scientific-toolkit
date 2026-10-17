@@ -1,13 +1,12 @@
 name: MCP test suite
 on:
   push:
-    # Keep test runs off the docs branch: the GitHub Pages deployment to gh-pages
-    # pushes every docs commit through the full suite for no benefit.
-    branches-ignore: [gh-pages]
+    # Branch changes are tested on pull_request; avoid duplicate push jobs.
+    branches: [main]
   pull_request:
   workflow_dispatch:
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.head.repo.full_name || github.repository }}-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
 permissions:
   contents: read
@@ -26,6 +25,8 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+          cache-dependency-path: pyproject.toml
       # The e2e suite drives the seven real tool CLIs, so CI must install them
       # exactly like the Render build does (see scripts/render-build.sh).
       - run: bash scripts/render-build.sh
@@ -47,6 +48,8 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
+          cache: 'pip'
+          cache-dependency-path: pyproject.toml
       - name: Install packaging tools
         run: python -m pip install --upgrade build twine
       - name: Build source and wheel distributions
