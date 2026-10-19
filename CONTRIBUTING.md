@@ -42,15 +42,12 @@ directory. It is a Bash script, and the CI runner is Ubuntu.
 From the repository root:
 
 ```sh
-python -m unittest discover -s tests -v
-```
-
-This is the command documented in the README and the integration-test guide.
-CI runs the same suite with pytest and installs the upstream CLIs first:
-
-```sh
 python -m pytest -q -rs tests/
 ```
+
+CI runs this command after installing the upstream CLIs. `unittest discover`
+only collects `unittest.TestCase` classes, so it silently skips the
+pytest-style tests; do not use it as a substitute.
 
 `conftest.py` fails the pytest session if any test is skipped, so install the
 test prerequisites before using pytest. The end-to-end tests use real upstream

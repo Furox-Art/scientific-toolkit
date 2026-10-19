@@ -32,7 +32,6 @@ Closes #
 
 Paste the commands and real results. Do not claim a check you did not run.
 
-- [ ] `python -m unittest discover -s tests -v`
 - [ ] `python -m pytest -q -rs tests/` (CI uses pytest; a skipped test fails the session via `conftest.py`)
 - [ ] `python -m build` and `python -m twine check dist/*` (if packaging changed)
 - [ ] `python examples/analysis_pipeline.py` (if examples or adapter behavior changed)
