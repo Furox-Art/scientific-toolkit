@@ -275,7 +275,7 @@ be advertised as active without a real IdP and app-specific authentication test.
 ## Python package and PyPI publishing
 
 The gateway's Python distribution is named [`furox-scientific-toolkit-mcp`](https://pypi.org/project/furox-scientific-toolkit-mcp/)
-(version `0.2.0`), with import name `scientific_toolkit_mcp`. The package has
+(version `0.2.3`), with import name `scientific_toolkit_mcp`. The package has
 been published on PyPI and can be installed with:
 
 ```sh
