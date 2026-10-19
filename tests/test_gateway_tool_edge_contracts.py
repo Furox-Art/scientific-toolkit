@@ -144,7 +144,7 @@ def test_conservative_model_builds_structured_file_without_shell(
         assert name == "axiomize"
         assert args[:3] == ["model", "--action", "validate"]
         assert args[3] == "--input-json"
-        contents = json.loads(Path(args[4]).read_text())
+        contents = json.loads(Path(args[4]).read_text(encoding="utf-8"))
         observed.append((contents, seconds))
         return {"status": "COMMAND_SUCCEEDED"}
 

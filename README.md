@@ -184,7 +184,8 @@ It exposes read-only plan inspection only for a configured trusted workspace.
 ## Tests
 
 ```sh
-python -m unittest discover -s tests -v
+python -m pip install "pytest>=8" "mcp>=1.15,<2"
+python -m pytest -q -rs tests/
 ```
 
 CI exercises JSON-RPC initialization, list/call, seven-repository catalog,

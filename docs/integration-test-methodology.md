@@ -10,10 +10,10 @@ From the repository root:
 
 ```sh
 # The full suite: protocol unit tests plus the end-to-end integration tests
-python -m unittest discover -s tests -v
+python -m pytest -q -rs tests/
 
 # Only the end-to-end integration tests
-python -m unittest discover -s tests/e2e -v
+python -m pytest -q -rs tests/e2e
 ```
 
 Both commands need the gateway importable. Either install it
