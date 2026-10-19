@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/Furox-Art/scientific-toolkit/security/advisories/new
+    about: Private vulnerability reporting. Do not open a public issue for a suspected vulnerability.
+  - name: Code of Conduct report
+    url: https://github.com/Furox-Art/scientific-toolkit/blob/main/CODE_OF_CONDUCT.md
+    about: Contact the maintainer @Furox-Art to request a private enforcement channel. Do not post incident details publicly.
+  - name: Development and test setup
+    url: https://github.com/Furox-Art/scientific-toolkit/blob/main/CONTRIBUTING.md
+    about: Installation, test commands, CI prerequisites, and pull request expectations.
