@@ -1,0 +1,70 @@
+name: Feature request
+description: Propose a gateway tool, adapter, transport, packaging, or documentation change
+title: "[feature] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This repository is the MCP gateway, not the seven upstream packages.
+        Changes to upstream algorithms belong in the upstream repository.
+
+        Read [CONTRIBUTING.md](https://github.com/Furox-Art/scientific-toolkit/blob/main/CONTRIBUTING.md)
+        before proposing. The gateway is designed to fail closed: a missing or
+        failed upstream result must never become a success.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What cannot be done today
+      description: Describe the use case or limitation, not only the proposed implementation.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: The interface or behavior you want, including any new tool arguments, environment variables, or transport behavior.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - "MCP tool or upstream adapter"
+        - "HTTP transport, authentication, or CORS"
+        - "Local stdio transport"
+        - "Packaging, release, or installation"
+        - "Tests, CI, or documentation"
+        - "Other"
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: invariants
+    attributes:
+      label: Design constraints
+      description: Tick what the proposal preserves. If a constraint does not apply, explain why in the proposal above.
+      options:
+        - label: It does not turn a missing, failed, timed-out, or unknown upstream result into a success.
+        - label: It does not add arbitrary shell execution, user-selected filesystem paths, or an unbounded subprocess timeout.
+        - label: It keeps `plan_auditor_audit` unavailable to remote HTTP clients.
+        - label: It does not add a mandatory runtime dependency without explaining why it is needed.
+        - label: It documents any new environment variable or configuration in the README.
+
+  - type: textarea
+    id: contribution
+    attributes:
+      label: Willingness to implement
+      description: Optional. Say whether you can open a pull request and which tests you expect to add.
+    validations:
+      required: false
