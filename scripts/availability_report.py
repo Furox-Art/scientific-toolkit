@@ -263,7 +263,7 @@ def _distribution_version_in(interpreter: str | None, distribution: str,
         completed = subprocess.run(
             [interpreter, "-c",
              "import importlib.metadata as m, sys;"
-             "print(m.version(sys.argv[1]))", distribution],
+             + "print(m.version(sys.argv[1]))", distribution],
             capture_output=True, text=True, timeout=30, check=False, env=env)
     except (OSError, subprocess.SubprocessError):
         return None
@@ -449,13 +449,13 @@ def build_report() -> dict:
             "version": 2,
             "notes": [
                 "listed: the distribution is registered in package metadata "
-                "(a listing, not a verification).",
+                + "(a listing, not a verification).",
                 "verified: a real gateway call executed the CLI and observed "
-                "its own exit code.",
+                + "its own exit code.",
                 "installed: deprecated compatibility alias of listed.",
                 "verdict: AVAILABLE, KNOWN_GAP or CAPABILITY_FAILED; AVAILABLE "
-                "includes the documented reachability case where the gateway "
-                "refused the call before execution for a configuration reason.",
+                + "includes the documented reachability case where the gateway "
+                + "refused the call before execution for a configuration reason.",
             ],
         },
         "environment": environment_summary(),
@@ -474,9 +474,9 @@ def build_report() -> dict:
         "fail_closed_checks": probe_refusals(),
         "not_tested_here": [
             "Live remote deployment at scientific-toolkit.onrender.com (needs the "
-            "private bearer credential, which must never be committed).",
+            + "private bearer credential, which must never be committed).",
             "OAuth 2.1 sign-in with an external identity provider (no trusted "
-            "authorization server is configured).",
+            + "authorization server is configured).",
             "Scientific correctness of any upstream numerical result.",
         ],
     }

@@ -27,6 +27,7 @@ BUILD_SOURCES = ("pyproject.toml", "README.md", "LICENSE", "scientific_toolkit_m
 
 class PackagingTests(unittest.TestCase):
     def setUp(self):
+        build_meta = None
         try:
             from setuptools import build_meta
         except ImportError as exc:  # pragma: no cover - declared build backend

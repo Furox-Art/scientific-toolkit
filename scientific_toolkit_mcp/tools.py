@@ -196,6 +196,7 @@ def _call(key: str, argv: list[str], *, seconds: int = DEFAULT_CALL_TIMEOUT) -> 
         try:
             result["json"] = json.loads(stdout)
         except json.JSONDecodeError:
+            # Not JSON; keep the raw stdout without a parsed view.
             pass
     return result
 

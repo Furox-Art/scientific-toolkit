@@ -52,7 +52,7 @@ def _record_rate_hit(client: str, now: float) -> bool:
                 times.popleft()
             if not times:
                 del _hits[address]
-        _last_sweep = now
+        _last_sweep = now  # codeql[py/unused-global-variable] — read above; false positive
 
     if client not in _hits and len(_hits) >= MAX_CLIENT_BUCKETS:
         return False
@@ -149,7 +149,8 @@ class Handler(BaseHTTPRequestHandler):
         origins = self.headers.get_all('Origin', [])
         origin = origins[0] if len(origins) == 1 else None
         if origin and origin in self._allowed_origins():
-            self.send_header('Access-Control-Allow-Origin', origin)
+            self.send_header('Access-Control-Allow-Origin',
+                             origin.replace('\r', '').replace('\n', ''))
             self.send_header('Vary', 'Origin')
             self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
             self.send_header('Access-Control-Allow-Headers',
@@ -159,7 +160,10 @@ class Handler(BaseHTTPRequestHandler):
         if payload is not None:
             self.send_header('Content-Type', 'application/json' if mcp else 'application/json; charset=utf-8')
         for k, v in (headers or {}).items():
-            self.send_header(k, v)
+            self.send_header(
+                str(k).replace('\r', '').replace('\n', ''),
+                str(v).replace('\r', '').replace('\n', ''),
+            )
         self.end_headers()
         if raw:
             self.wfile.write(raw)
