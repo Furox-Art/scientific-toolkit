@@ -1,7 +1,7 @@
 # Contributing
 
 Thanks for helping improve `scientific-toolkit-mcp`. This repository is
-the MCP gateway that exposes seven independently released Furox-Art scientific
+the MCP gateway that exposes nine independently released Furox-Art scientific
 packages. The upstream packages keep their own source trees, versions, and
 licenses; changes to their algorithms or scientific behavior belong in those
 repositories.
@@ -13,27 +13,27 @@ request.
 
 ## Development setup
 
-The gateway requires Python 3.10 or newer. From a source checkout:
+The gateway requires Python 3.11 or newer. From a source checkout:
 
 ```sh
 git clone https://github.com/Furox-Art/scientific-toolkit.git
 cd scientific-toolkit
 python -m pip install -e '.[oauth]'
-python -m pip install "pytest>=8" "pytest-cov>=5" "mcp>=1.15,<2"
+python -m pip install "pytest>=8" "pytest-cov>=5" "mcp>=2,<3"
 ```
 
 `.[oauth]` installs the optional OAuth verification dependency used by the
 tests; the gateway's mandatory runtime dependencies remain empty. The three
 test packages are the prerequisites CI installs in `tests.yml`.
 
-To run the full end-to-end suite, the seven upstream CLIs must also be
-installed. On Linux or macOS, CI uses:
+To run the full end-to-end suite, the nine upstream tools (CLIs and MCP stdio
+servers) must also be installed. On Linux or macOS, CI uses:
 
 ```sh
 bash scripts/render-build.sh
 ```
 
-That script installs the gateway with the `oauth` extra, the six standalone
+That script installs the gateway with the `oauth` extra, the eight standalone
 upstream projects (from GitHub source in CI, from PyPI for Render builds), and
 the bundled Axiomize variant in an isolated directory. It is a Bash script, and the CI runner is Ubuntu.
 
@@ -51,7 +51,7 @@ pytest-style tests; do not use it as a substitute.
 
 `conftest.py` fails the pytest session if any test is skipped, so install the
 test prerequisites before using pytest. The end-to-end tests use real upstream
-executables. A missing executable is reported as `NOT_INSTALLED` and fails the
+executables and real MCP stdio servers. A missing executable is reported as `NOT_INSTALLED` and fails the
 test; it is not replaced by a fabricated result. The official MCP SDK
 interoperability test skips if the `mcp` package or its Streamable HTTP client
 is unavailable, and the pytest gate treats that skip as a failure.
@@ -90,7 +90,7 @@ separately with the CI change it needs.
 - Update `README.md` and the relevant file under `docs/` when behavior or
   configuration changes.
 - Add a user-visible entry under `Unreleased` in `CHANGELOG.md`.
-- Keep the code compatible with Python 3.10. CI tests 3.10, 3.12, and 3.13.
+- Keep the code compatible with Python 3.11. CI tests 3.11, 3.12, and 3.13.
 
 ## Packaging changes
 

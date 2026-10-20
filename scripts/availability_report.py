@@ -1,4 +1,4 @@
-"""Real availability probe for the seven upstream tools behind the MCP gateway.
+"""Real availability probe for the nine upstream tools behind the MCP gateway.
 
 This script performs no computation of its own about tool status. Every field in
 the generated report is read back from a real subprocess call: the installed
@@ -27,6 +27,7 @@ silently and never fabricated.
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import os
 import platform
@@ -41,7 +42,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
 from scientific_toolkit_mcp.server import handle  # noqa: E402
-from scientific_toolkit_mcp.tools import BINS  # noqa: E402
+from scientific_toolkit_mcp.tools import BINS, MODULE_SERVERS  # noqa: E402
 
 # Each upstream repository, its PyPI distribution, the gateway CLI key it uses,
 # and the exact capability call that proves that CLI actually executes.
@@ -105,6 +106,36 @@ UPSTREAM = (
         },
         "proves": "The eq-layer router runs and returns its own control decision.",
     },
+    {
+        "repository": "literature-evidence-mcp",
+        "distribution": "literature-evidence-mcp",
+        "cli_key": "literature-evidence",
+        "gateway_tool": "literature_evidence_verify_quote",
+        "arguments": {
+            "quote": "sample size affects uncertainty",
+            "source_text": "In this study, sample size affects uncertainty in the estimated mean.",
+            "source_id": "availability-probe",
+        },
+        "proves": (
+            "The literature-evidence MCP stdio server answers verify_claim; "
+            "text matching is not a scientific verdict."
+        ),
+    },
+    {
+        "repository": "nomosguard",
+        "distribution": "nomosguard",
+        "cli_key": "nomosguard",
+        "gateway_tool": "nomosguard_decide",
+        "arguments": {"claims": [{
+            "kind": "exposure",
+            "payload": {"service": "api"},
+            "evidence": "availability probe evidence",
+        }]},
+        "proves": (
+            "The NomosGuard MCP stdio module asserts a claim, derives paths, and "
+            "applies its fail-closed gate without calling a model."
+        ),
+    },
 )
 
 # Capability calls that are expected to be refused for configuration reasons.
@@ -146,6 +177,28 @@ EXPECTED_REFUSALS = (
         "expected_error": "INVALID_ARGUMENT",
         "reason": "A transcript without a user turn cannot be routed.",
     },
+    {
+        "gateway_tool": "literature_evidence_search",
+        "arguments": {"query": "quantum", "limit_per_source": 26},
+        "expected_error": "INVALID_ARGUMENT",
+        "reason": "Per-source result limits stay inside the declared 1..25 bound.",
+    },
+    {
+        "gateway_tool": "literature_evidence_verify_quote",
+        "arguments": {"quote": "q", "source_text": "s"},
+        "expected_error": "INVALID_ARGUMENT",
+        "reason": "Quote verification requires an explicit source identifier.",
+    },
+    {
+        "gateway_tool": "nomosguard_decide",
+        "arguments": {"claims": [{"kind": "k", "payload": {}, "evidence": "e"}],
+                      "fallback": "ALLOW"},
+        "expected_error": "INVALID_ARGUMENT",
+        "reason": (
+            "The MCP surface offers only fail-closed fallbacks; a per-call ALLOW "
+            "default is refused before any subprocess runs."
+        ),
+    },
 )
 
 
@@ -170,7 +223,7 @@ def payload_of(result: dict) -> dict:
 def cli_version(executable: str | None, cli_key: str) -> dict:
     """Ask the real CLI for its own version using a flag that CLI supports.
 
-    The seven upstream CLIs do not share a version convention: ``cds`` accepts
+    The upstream CLIs do not share a version convention: ``cds`` accepts
     ``--version``, ``cds2`` accepts only a ``version`` subcommand, and several
     have no version command at all. Every candidate below is a real executed
     subprocess call; nothing is inferred.
@@ -213,6 +266,12 @@ def _interpreter_for(executable: str | None) -> str | None:
     """
     if executable is None:
         return None
+    path = Path(executable)
+    if path.suffix.lower() == ".exe":
+        # A Windows venv console script launches the sibling python.exe.
+        sibling = path.parent / "python.exe"
+        if sibling.is_file():
+            return str(sibling)
     try:
         with open(executable, "rb") as handle:
             first_line = handle.readline().decode("utf-8", "replace").strip()
@@ -290,17 +349,33 @@ def probe_upstream(entry: dict) -> dict:
     record["installed"] = record["listed"]  # deprecated alias of "listed"
 
     # 2. Resolved executable path, from the same lookup the gateway uses.
-    env_var, default_bin = BINS[entry["cli_key"]]
-    program = os.environ.get(env_var, default_bin)
-    executable = shutil.which(program) if program.strip() else None
-    if executable is None and entry["cli_key"] == "axiomize-reason" and env_var not in os.environ:
-        for candidate in (Path.cwd() / ".reason-pkg" / "bin" / "axiomize-reason",
-                          Path.cwd() / ".reason-env" / "bin" / "axiomize-reason"):
-            if candidate.is_file():
-                executable = str(candidate)
-                break
+    module = None
+    module_importable = None
+    if entry["cli_key"] in BINS:
+        env_var, default_bin = BINS[entry["cli_key"]]
+        program = os.environ.get(env_var, default_bin)
+        executable = shutil.which(program) if program.strip() else None
+        if executable is None and entry["cli_key"] == "axiomize-reason" and env_var not in os.environ:
+            for candidate in (Path.cwd() / ".reason-pkg" / "bin" / "axiomize-reason",
+                              Path.cwd() / ".reason-env" / "bin" / "axiomize-reason"):
+                if candidate.is_file():
+                    executable = str(candidate)
+                    break
+    else:
+        # Module servers ship no console script: the gateway runs
+        # ``<python> -m <module>`` and additionally requires the module to be
+        # importable unless the operator names an explicit interpreter.
+        env_var, module, import_name = MODULE_SERVERS[entry["cli_key"]]
+        program = os.environ.get(env_var, sys.executable)
+        executable = shutil.which(program) if program.strip() else None
+        try:
+            module_importable = importlib.util.find_spec(import_name) is not None
+        except (ImportError, ValueError):
+            module_importable = False
     record["executable"] = executable
     record["executable_override_env"] = env_var
+    record["module"] = module
+    record["module_importable"] = module_importable
 
     # A distribution installed only in an isolated environment still counts as
     # listed; its version is read back from the interpreter that runs it, with
@@ -318,27 +393,36 @@ def probe_upstream(entry: dict) -> dict:
                 f"installed in the isolated environment used by "
                 f"{env_var} ({interpreter}); the gateway runs that same "
                 f"console script, so the tool is genuinely usable")
-    record["cli_self_reported_version"] = cli_version(executable, entry["cli_key"])
+    if module is None:
+        record["cli_self_reported_version"] = cli_version(executable, entry["cli_key"])
+    else:
+        record["cli_self_reported_version"] = {
+            "reported": False,
+            "reason": "module server; it exposes no CLI version command",
+        }
 
     # 3. Real gateway capability call through the MCP dispatcher.
     result = call_tool(entry["gateway_tool"], entry["arguments"])
     payload = payload_of(result)
+    output = payload.get("stdout") or payload.get("calls") or ""
     record["gateway_call"] = {
         "isError": bool(result.get("isError")),
         "exit_code": payload.get("exit_code"),
         "status": payload.get("status"),
-        "stdout_first_300_chars": str(payload.get("stdout", ""))[:300],
+        "stdout_first_300_chars": str(output)[:300],
     }
     # Verified means the CLI actually executed and reported its own exit code.
     # A gateway refusal (including a documented configuration precondition) is
     # a listing-level fact, not a verification, and is recorded as such.
     record["verified"] = isinstance(record["gateway_call"]["exit_code"], int)
 
-    if not record["listed"] or executable is None:
+    if (not record["listed"] or executable is None
+            or record["module_importable"] is False):
         record["verdict"] = "KNOWN_GAP"
         record["gap_detail"] = (
-            "Upstream distribution or executable not present on this machine; "
-            "the gateway returns NOT_INSTALLED instead of fabricating a result."
+            "Upstream distribution, executable, or importable module not present "
+            "on this machine; the gateway returns NOT_INSTALLED instead of "
+            "fabricating a result."
         )
     elif result.get("isError") and "NOT_CONFIGURED" in str(
             result["content"][0].get("text", "")):

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-# Render build: six stand-alone distributions plus an isolated bundled Axiomize.
+# Render build: eight stand-alone distributions plus an isolated bundled Axiomize.
 # Render installs the released distributions from PyPI. GitHub Actions must not:
 # every CI fetch of one of these projects counts toward its public download
 # statistics, so CI installs the sibling repositories from GitHub source
@@ -14,12 +14,14 @@ if [[ "${GITHUB_ACTIONS:-}" == "true" ]]; then
     "git+https://github.com/Furox-Art/plan-auditor.git@main"
     "git+https://github.com/Furox-Art/quantum-reasoning-skill.git@main"
     "git+https://github.com/Furox-Art/eq-layer.git@main"
+    "git+https://github.com/Furox-Art/literature-evidence-mcp.git@main"
+    "git+https://github.com/Furox-Art/nomosguard.git@main"
     "PyYAML"
   )
   reason_spec="git+https://github.com/Furox-Art/axiomize-quantum-skills-2.0.git@main"
 else
   pip_cache_flag=(--no-cache-dir)
-  upstream_specs=(axiomize scientific-computing-system scientific-computing-system-2.0 plan-auditor quantum-reasoning-skill eq-layer PyYAML)
+  upstream_specs=(axiomize scientific-computing-system scientific-computing-system-2.0 plan-auditor quantum-reasoning-skill eq-layer literature-evidence-mcp nomosguard PyYAML)
   reason_spec=axiomize-quantum-skills-2.0
 fi
 python -m pip install "${pip_cache_flag[@]}" -e '.[oauth]'
@@ -44,9 +46,12 @@ wrapper.chmod(0o755)
 PY
 python - <<'PY'
 from pathlib import Path
+import importlib.util
 import shutil
-for name in ('axiomize','cds','cds2','plan-auditor','quantum-reasoning','eq-layer'):
+for name in ('axiomize','cds','cds2','plan-auditor','quantum-reasoning','eq-layer',
+             'literature-evidence-mcp'):
     assert shutil.which(name), f'Missing CLI: {name}'
+assert importlib.util.find_spec('nomosguard.mcp_stdio'), 'Missing module: nomosguard.mcp_stdio'
 assert Path('.reason-env/bin/axiomize-reason').is_file()
-print('All seven CLI executables present, pending real CLI smoke tests')
+print('All nine upstream tools present, pending real adapter smoke tests')
 PY

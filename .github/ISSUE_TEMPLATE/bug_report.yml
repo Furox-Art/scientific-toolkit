@@ -6,7 +6,7 @@ body:
     attributes:
       value: |
         Use this form for defects in the MCP gateway, its transports, adapters,
-        packaging, or documentation. The seven upstream scientific packages are
+        packaging, or documentation. The nine upstream scientific packages are
         separate projects; report their own behavior in their repositories.
 
         If this is a security issue, do not file it publicly. Use the private
@@ -48,7 +48,7 @@ body:
     attributes:
       label: Gateway version and install source
       description: The version from `importlib.metadata.version("scientific-toolkit-mcp")`, and whether it came from PyPI or an editable checkout.
-      placeholder: "0.2.x from PyPI"
+      placeholder: "0.3.x from PyPI"
     validations:
       required: true
 

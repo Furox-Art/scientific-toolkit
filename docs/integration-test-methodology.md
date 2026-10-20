@@ -22,10 +22,11 @@ suite adds to `sys.path` itself.
 
 ### Environment the integration suite expects
 
-The integration suite exercises **real installed upstream CLIs**. No upstream
-executable is faked in `tests/e2e/`; every subprocess reaches an actual program.
+The integration suite exercises **real installed upstream tools**. No upstream
+executable or MCP server is faked in `tests/e2e/`; every subprocess reaches an
+actual program.
 
-| Tool | CLI executable | Override variable |
+| Tool | Interface | Override variable |
 | --- | --- | --- |
 | axiomize | `axiomize` | `SCITOOL_AXIOMIZE_BIN` |
 | scientific-computing-system | `cds` | `SCITOOL_CDS_BIN` |
@@ -34,6 +35,8 @@ executable is faked in `tests/e2e/`; every subprocess reaches an actual program.
 | quantum-reasoning-skill | `quantum-reasoning` | `SCITOOL_QUANTUM_BIN` |
 | axiomize-quantum-skills-2.0 | `axiomize-reason` | `SCITOOL_REASON_BIN` |
 | eq-layer | `eq-layer` | `SCITOOL_EQ_BIN` |
+| literature-evidence-mcp | `literature-evidence-mcp` | `SCITOOL_LIT_EVIDENCE_BIN` |
+| nomosguard | `python -m nomosguard.mcp_stdio` | `SCITOOL_NOMOSGUARD_BIN` |
 
 A missing tool is reported as a **KNOWN GAP** and the related assertions fail
 with an explicit message naming the gap. A missing tool is never silently
@@ -81,18 +84,24 @@ subprocess result: the program name, the real exit code, the
 `COMMAND_SUCCEEDED` status, and content that could only come from that upstream
 CLI. Nothing is mocked.
 
-- `test_doctor_reports_seven_commands`, `test_catalog_lists_seven_distinct_repositories`,
-  `test_gateway_exposes_eleven_local_tools` — the gateway advertises seven
-  repositories and eleven local tools.
-- `test_each_of_seven_repositories_has_installed_executable` — every upstream
-  executable resolves on `PATH` (or through its override).
-- `test_each_of_seven_repositories_has_installed_distribution` — every upstream
+- `test_doctor_reports_nine_commands`, `test_catalog_lists_nine_distinct_repositories`,
+  `test_gateway_exposes_fourteen_local_tools` — the gateway advertises nine
+  repositories and fourteen local tools.
+- `test_each_of_nine_repositories_has_installed_executable` — every upstream
+  executable or module server resolves through the same lookup the gateway uses.
+- `test_each_of_nine_repositories_has_installed_distribution` — every upstream
   distribution is importable by the interpreter that actually runs it. A
   distribution installed only in an isolated environment still counts.
 - `test_axiomize_intake_runs_real_cli`, `test_cds_stats_runs_real_cli`,
   `test_cds2_stats_runs_real_cli`, `test_quantum_skill_validate_runs_real_cli`,
   `test_axiomize_reason_score_runs_real_cli`, `test_eq_layer_route_runs_real_cli`
-  — six of the seven tools run their real CLI through the gateway.
+  — six tools run their real CLI through the gateway.
+- `test_literature_quote_verification_runs_real_mcp_server` — the
+  literature-evidence MCP stdio server answers `verify_claim`; the result is
+  textual matching with `scientific_claim_verified: false`.
+- `test_nomosguard_decision_runs_real_mcp_server` — the NomosGuard stdio module
+  asserts a claim, derives paths, and applies its fail-closed gate. An unknown
+  claim kind yields the documented `BLOCK` fallback.
 - `test_axiomize_model_runs_real_cli_on_structured_request` — a real Model IR
   request reaches the standalone Axiomize CLI and its own validation verdict is
   `PASS`. The request is wrapped in a `model_ir` key and declares
@@ -118,7 +127,7 @@ is computed by the suite.
 - `test_statistics_output_feeds_intent_router` — a sentence built from real
   `cds2` output is routed by `eq_layer_route`, and the router echoes the real
   computed numbers back.
-- `test_full_local_stdio_session_across_seven_tools` — a real stdio subprocess
+- `test_full_local_stdio_session_across_nine_tools` — a real stdio subprocess
   session: `initialize`, notification, `tools/list`, then four real tool calls,
   verifying the notification correctly receives no response.
 
@@ -138,7 +147,7 @@ crashes the gateway.
   checked **before** the opt-in flag, so a misconfigured deployment cannot run
   project commands.
 - A missing dependency reports `NOT_INSTALLED`, never a fabricated result. All
-  seven binaries are verified to report `NOT_INSTALLED` when absent.
+  all nine upstream adapters are verified to report `NOT_INSTALLED` when absent.
 - Invalid JSON-RPC frames never raise; the server returns an error instead.
 
 ### `RemoteHttpSecurityTests` — the remote transport is a separate boundary
@@ -147,7 +156,7 @@ Run against a real `ThreadingHTTPServer` instance.
 
 - `/health` is public; anonymous and wrong-token posts are `401` with a
   `WWW-Authenticate: Bearer` challenge.
-- The authenticated remote inventory exposes **10** tools and hides
+- The authenticated remote inventory exposes **13** tools and hides
   `plan_auditor_audit`; `plan_auditor_inspect` remains available.
 - `plan_auditor_audit` is denied remotely **even when** locally enabled — the
   HTTP safeguard is not overridden by `SCITOOL_ALLOW_AUDIT_EXECUTION=1`.
@@ -164,7 +173,7 @@ Run against a real `ThreadingHTTPServer` instance.
 ### `SdkClientInteropTests` — a real third-party MCP client
 
 A real official MCP Python SDK client connects to a real authenticated HTTP
-server, negotiates a session, enumerates the ten remote-safe tools, and calls
+server, negotiates a session, enumerates the thirteen remote-safe tools, and calls
 `toolkit_catalog` plus a real `cds_stats` CLI execution.
 
 The suite is written against the current SDK generation and stays compatible
@@ -187,7 +196,7 @@ installed.
   credential that must never be committed.
 - **OAuth 2.1 sign-in** with an external identity provider, since no trusted
   authorization server is configured.
-- That all seven dependencies fit a constrained host's memory limit.
+- That all nine dependencies fit a constrained host's memory limit.
 
 ## The availability report
 
@@ -204,7 +213,7 @@ python scripts/availability_report.py \
 The committed `tests/e2e/results/availability.json` is a **generated artifact**.
 It is never hand-edited: it carries its own `generated_by`,
 `regenerate_command` and `generated_artifact_note` markers, and the
-`full-stack-install` workflow regenerates a fresh copy (with all seven CLIs
+`full-stack-install` workflow regenerates a fresh copy (with all nine tools
 installed) as a build artifact on every run. `tests/test_availability_report.py`
 regenerates the report into a temporary directory and asserts the schema, so the
 producer cannot drift from what the file promises.
@@ -213,12 +222,13 @@ The report contains, all read back from real subprocess calls:
 
 - the environment (Python version, platform, gateway version, UTC timestamp,
   and the `sys.path` providers of each pinned distribution module);
-- the gateway inventory (protocol version, server name, eleven tool names);
+- the gateway inventory (protocol version, server name, fourteen tool names);
 - the full `toolkit_doctor` output;
-- for each of the seven repositories: the installed distribution version, the
+- for each of the nine repositories: the installed distribution version, the
   resolved executable path and its override variable, the CLI's own
-  self-reported version, and the result of a real gateway capability call;
-- six fail-closed checks, each recording the actual refusal and whether the
+  self-reported version (or, for a module server, why it has none), and the
+  result of a real gateway capability call;
+- nine fail-closed checks, each recording the actual refusal and whether the
   expected error marker was present;
 - an explicit `not_tested_here` list.
 

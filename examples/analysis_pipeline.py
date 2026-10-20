@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""End-to-end example: a measurement-uncertainty analysis across seven tools.
+"""End-to-end example: a measurement-uncertainty analysis across nine upstream tools.
 
 This is a real, runnable workflow. Every number and every decision in the
 output comes from an upstream tool executed through the MCP gateway. Nothing is
@@ -15,13 +15,15 @@ The pipeline
 5. ``quantum_skill_validate``-- confirm the reasoning protocol contract holds
 6. ``axiomize_reason_score`` -- score a candidate conclusion from the evidence above
 7. ``eq_layer_route``        -- decide how to report the result to the reader
-8. ``plan_auditor_inspect``  -- audit that this workflow's own claims are backed
+8. ``literature_evidence_verify_quote`` -- check textual support for the summary
+9. ``nomosguard_decide``     -- run the fail-closed policy gate over the claim
+10. ``plan_auditor_inspect`` -- audit that this workflow's own claims are backed
 
 Run it::
 
     python examples/analysis_pipeline.py
 
-Requirements: the seven upstream packages installed (see README). Missing tools
+Requirements: the nine upstream packages installed (see README). Missing tools
 are reported as KNOWN GAPS and the affected stages are skipped explicitly.
 """
 from __future__ import annotations
@@ -133,7 +135,7 @@ def parse_cds2_stats(stdout: str) -> dict:
 
 def stage_plan_auditor() -> bool:
     """Build a real sealed workspace, then inspect it through the gateway."""
-    banner("Stage 8 -- plan-auditor: independent inspection of this workflow")
+    banner("Stage 10 -- plan-auditor: independent inspection of this workflow")
     if not installed("plan-auditor"):
         show("plan_auditor_inspect", False,
              {"stdout": "NOT_INSTALLED: plan-auditor is not available"},
@@ -200,7 +202,7 @@ def stage_plan_auditor() -> bool:
 
 
 def main() -> int:
-    banner("Scientific Toolkit MCP gateway -- seven-tool example workflow")
+    banner("Scientific Toolkit MCP gateway -- nine-tool example workflow")
     print(f"Input data: {len(MEASUREMENTS)} replicate measurements of one length")
     print(f"Research idea: {RESEARCH_IDEA}")
 
@@ -333,10 +335,64 @@ def main() -> int:
     else:
         gaps.append("eq-layer")
 
+    banner("Stage 8 -- literature_evidence_verify_quote: textual support for the summary")
+    if cds_stats and cds2_stats:
+        ok, literature = call("literature_evidence_verify_quote", {
+            "quote": summary_line,
+            "source_text": summary_line,
+            "source_id": "analysis-pipeline-summary",
+        })
+        show("literature_evidence_verify_quote", ok, literature,
+             "Textual quote matching only. It does not verify the scientific claim.")
+        if ok:
+            try:
+                claim = literature["calls"][0]["json"]
+                results["literature_quote_verification"] = {
+                    "text_match": claim.get("text_match"),
+                    "status": claim.get("status"),
+                    "scientific_claim_verified": claim.get("scientific_claim_verified"),
+                }
+                print(f"       text_match={claim.get('text_match')}, "
+                      f"status={claim.get('status')}, "
+                      f"scientific_claim_verified={claim.get('scientific_claim_verified')}")
+            except (KeyError, IndexError, TypeError):
+                pass
+        else:
+            gaps.append("literature-evidence")
+    else:
+        print("       Skipping: statistics needed to build the quoted summary are unavailable.")
+        gaps.append("literature-evidence")
+
+    banner("Stage 9 -- nomosguard_decide: fail-closed policy gate")
+    claim = {
+        "kind": "measurement_result",
+        "payload": {"mean": cds2_stats.get("mean"), "n": cds2_stats.get("n")},
+        "evidence": summary_line,
+    }
+    ok, nomos = call("nomosguard_decide", {"claims": [claim]})
+    show("nomosguard_decide", ok, nomos,
+         "Deterministic policy gate over the declared claim. This is not a "
+         "scientific judgment or proof that the claim is false.")
+    if ok:
+        try:
+            decision = nomos["calls"][-1]["json"]
+            results["nomosguard_decision"] = {
+                "decision": decision.get("decision"),
+                "policy_rule": decision.get("policy_rule"),
+                "ledger_verified": decision.get("ledger_verified"),
+            }
+            print(f"       decision={decision.get('decision')}, "
+                  f"policy_rule={decision.get('policy_rule')}, "
+                  f"ledger_verified={decision.get('ledger_verified')}")
+        except (KeyError, IndexError, TypeError):
+            pass
+    else:
+        gaps.append("nomosguard")
+
     stage_plan_auditor()
 
     banner("Workflow summary")
-    print(f"Stages attempted: 8 (gateway metadata, six upstream tools, one audit)")
+    print("Stages attempted: 10 (gateway metadata, eight safe upstream tools, one audit)")
     print(f"Distinct KNOWN GAPS: {len(set(gaps))}")
     if gaps:
         for gap in sorted(set(gaps)):

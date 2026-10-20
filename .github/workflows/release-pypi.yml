@@ -51,7 +51,7 @@ jobs:
           PY
 
       - name: Install test and build dependencies
-        # The e2e suite drives the seven real tool CLIs, so the release build
+        # The e2e suite drives the nine real upstream tools, so the release build
         # installs them via scripts/render-build.sh (GitHub source in CI);
         # without them every cross-tool test fails with NOT_INSTALLED.
         run: bash scripts/render-build.sh
@@ -59,7 +59,7 @@ jobs:
         run: python -m pip install --upgrade build twine
 
       - name: Install complete test prerequisites
-        run: python -m pip install "pytest>=8" "pytest-cov>=5" "mcp>=1.15,<2"
+        run: python -m pip install "pytest>=8" "pytest-cov>=5" "mcp>=2,<3"
       - name: Verify MCP server and real adapters without skips
         env:
           SCITOOL_REASON_BIN: ${{ github.workspace }}/.reason-env/bin/axiomize-reason

@@ -1,22 +1,41 @@
 {
   "report": "scientific-toolkit MCP gateway availability",
   "generated_by": "scripts/availability_report.py",
+  "regenerate_command": "python scripts/availability_report.py --output tests/e2e/results/availability.json",
+  "generated_artifact_note": "Generated file: never hand-edit it. Regenerate it with regenerate_command (CI regenerates a fresh copy on every run).",
+  "schema": {
+    "version": 2,
+    "notes": [
+      "listed: the distribution is registered in package metadata (a listing, not a verification).",
+      "verified: a real gateway call executed the CLI and observed its own exit code.",
+      "installed: deprecated compatibility alias of listed.",
+      "verdict: AVAILABLE, KNOWN_GAP or CAPABILITY_FAILED; AVAILABLE includes the documented reachability case where the gateway refused the call before execution for a configuration reason."
+    ]
+  },
   "environment": {
-    "python_version": "3.12.3",
+    "python_version": "3.12.10",
     "python_implementation": "CPython",
-    "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
-    "machine": "x86_64",
-    "gateway_version": "0.2.0",
-    "cwd": "/home/urkan/github/scientific-toolkit",
-    "executable": "/home/urkan/github/scientific-toolkit/.venv/bin/python",
-    "captured_at_utc": "2026-10-08T21:52:18+00:00",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "machine": "AMD64",
+    "gateway_version": "0.4.0",
+    "cwd": "C:\\_work\\naming\\toolkit-repo",
+    "executable": "C:\\_work\\naming\\toolkit-verify-all\\Scripts\\python.exe",
+    "captured_at_utc": "2026-10-20T22:11:57+00:00",
+    "pinned_distribution_modules": {
+      "axiomize": {
+        "module": "axiomize",
+        "sys_path_providers": [
+          "C:\\_work\\naming\\toolkit-verify-all\\Lib\\site-packages\\axiomize"
+        ]
+      }
+    },
     "scope_note": "Availability only. A successful CLI exit code proves the program ran; it is not evidence of scientific correctness."
   },
   "gateway": {
     "protocol_version": "2025-06-18",
     "server_name": "furox-scientific-toolkit",
-    "server_version": "0.2.0",
-    "tool_count": 11,
+    "server_version": "0.4.0",
+    "tool_count": 14,
     "tool_names": [
       "toolkit_catalog",
       "toolkit_doctor",
@@ -28,47 +47,61 @@
       "plan_auditor_audit",
       "quantum_skill_validate",
       "axiomize_reason_score",
-      "eq_layer_route"
+      "eq_layer_route",
+      "literature_evidence_search",
+      "literature_evidence_verify_quote",
+      "nomosguard_decide"
     ]
   },
   "toolkit_doctor": {
     "status": "AVAILABLE_TOOLS_REQUIRE_INSTALLED_UPSTREAM_PACKAGES",
-    "repositories": 7,
+    "repositories": 9,
     "commands": {
       "axiomize": {
         "installed": true,
-        "executable": "/home/urkan/github/scientific-toolkit/.venv/bin/axiomize",
+        "executable": "C:/_work/naming/toolkit-verify-all/Scripts\\axiomize.exe",
         "override": "SCITOOL_AXIOMIZE_BIN"
       },
       "cds": {
         "installed": true,
-        "executable": "/home/urkan/github/scientific-toolkit/.venv/bin/cds",
+        "executable": "C:\\_work\\naming\\toolkit-verify-all\\Scripts\\cds.EXE",
         "override": "SCITOOL_CDS_BIN"
       },
       "cds2": {
         "installed": true,
-        "executable": "/home/urkan/github/scientific-toolkit/.venv/bin/cds2",
+        "executable": "C:\\_work\\naming\\toolkit-verify-all\\Scripts\\cds2.EXE",
         "override": "SCITOOL_CDS2_BIN"
       },
       "plan-auditor": {
         "installed": true,
-        "executable": "/home/urkan/github/scientific-toolkit/.venv/bin/plan-auditor",
+        "executable": "C:\\_work\\naming\\toolkit-verify-all\\Scripts\\plan-auditor.EXE",
         "override": "SCITOOL_AUDITOR_BIN"
       },
       "quantum-reasoning": {
         "installed": true,
-        "executable": "/home/urkan/github/scientific-toolkit/.venv/bin/quantum-reasoning",
+        "executable": "C:\\_work\\naming\\toolkit-verify-all\\Scripts\\quantum-reasoning.EXE",
         "override": "SCITOOL_QUANTUM_BIN"
       },
       "axiomize-reason": {
         "installed": true,
-        "executable": "/home/urkan/github/scientific-toolkit/.reason-pkg/bin/axiomize-reason",
+        "executable": "C:/_work/naming/toolkit-repo/.reason-env/Scripts\\axiomize-reason.exe",
         "override": "SCITOOL_REASON_BIN"
       },
       "eq-layer": {
         "installed": true,
-        "executable": "/home/urkan/github/scientific-toolkit/.venv/bin/eq-layer",
+        "executable": "C:\\_work\\naming\\toolkit-verify-all\\Scripts\\eq-layer.EXE",
         "override": "SCITOOL_EQ_BIN"
+      },
+      "literature-evidence": {
+        "installed": true,
+        "executable": "C:\\_work\\naming\\toolkit-verify-all\\Scripts\\literature-evidence-mcp.EXE",
+        "override": "SCITOOL_LIT_EVIDENCE_BIN"
+      },
+      "nomosguard": {
+        "installed": true,
+        "executable": "C:\\_work\\naming\\toolkit-verify-all\\Scripts\\python.exe",
+        "override": "SCITOOL_NOMOSGUARD_BIN",
+        "module": "nomosguard.mcp_stdio"
       }
     },
     "plan_auditor_audit_enabled": false,
@@ -82,17 +115,20 @@
       "gateway_tool": "axiomize_intake",
       "gateway_cli_key": "axiomize",
       "proves": "The Axiomize intake CLI runs and returns its own clarification questions.",
-      "distribution_version": "1.12.5",
+      "distribution_version": "1.14.1",
+      "listed": true,
       "installed": true,
-      "executable": "/home/urkan/github/scientific-toolkit/.venv/bin/axiomize",
+      "executable": "C:/_work/naming/toolkit-verify-all/Scripts\\axiomize.exe",
       "executable_override_env": "SCITOOL_AXIOMIZE_BIN",
+      "module": null,
+      "module_importable": null,
       "cli_self_reported_version": {
         "reported": true,
         "flags": [
           "capabilities"
         ],
         "exit_code": 0,
-        "output": "{\n  \"axiomize_version\": \"1.2.1\",\n  \"adaptive_intake\": {\n    \"available\": true,\n    \"levels\": [\n      \"weak\",\n      \"medium\",\n      \"strong\"\n    ],\n    \"question_modes\": [\n      \"one_by_one\",\n      \"all_at_once\",\n      \"adaptive\"\n    ]\n  },\n  \"consumption_guard\": {\n    \"available\": true,\n    \"guarded_actions\": [\n      \"spawn_subtask\",\n      \"repeat_alternative_method\",\n      \"extra_paid_model_call\""
+        "output": "{\n  \"axiomize_version\": \"1.14.1\",\n  \"adaptive_intake\": {\n    \"available\": true,\n    \"levels\": [\n      \"weak\",\n      \"medium\",\n      \"strong\"\n    ],\n    \"question_modes\": [\n      \"one_by_one\",\n      \"all_at_once\",\n      \"adaptive\"\n    ]\n  },\n  \"consumption_guard\": {\n    \"available\": true,\n    \"guarded_actions\": [\n      \"spawn_subtask\",\n      \"repeat_alternative_method\",\n      \"extra_paid_model_call"
       },
       "gateway_call": {
         "isError": false,
@@ -100,6 +136,7 @@
         "status": "COMMAND_SUCCEEDED",
         "stdout_first_300_chars": "{\n  \"status\": \"NEEDS_INPUT\",\n  \"idea\": \"How does sample size affect measurement uncertainty?\",\n  \"questions\": [\n    {\n      \"field\": \"system_boundary\",\n      \"question\": \"What exactly are we modeling, and what is outside the system?\"\n    }\n  ],\n  \"remaining_questions\": 5,\n  \"question_mode\": \"one_by_"
       },
+      "verified": true,
       "verdict": "AVAILABLE",
       "gap_detail": null
     },
@@ -109,17 +146,20 @@
       "gateway_tool": "cds_stats",
       "gateway_cli_key": "cds",
       "proves": "The pure-Python cds statistics CLI runs and returns its own statistics.",
-      "distribution_version": "2.2.3",
+      "distribution_version": "2.2.12",
+      "listed": true,
       "installed": true,
-      "executable": "/home/urkan/github/scientific-toolkit/.venv/bin/cds",
+      "executable": "C:\\_work\\naming\\toolkit-verify-all\\Scripts\\cds.EXE",
       "executable_override_env": "SCITOOL_CDS_BIN",
+      "module": null,
+      "module_importable": null,
       "cli_self_reported_version": {
         "reported": true,
         "flags": [
           "--version"
         ],
         "exit_code": 0,
-        "output": "System version 2.2.3"
+        "output": "System version 2.2.12"
       },
       "gateway_call": {
         "isError": false,
@@ -127,6 +167,7 @@
         "status": "COMMAND_SUCCEEDED",
         "stdout_first_300_chars": "Descriptive stats\n+----------+---------+\n| stat     | value   |\n+----------+---------+\n| n        | 5       |\n| mean     | 3       |\n| median   | 3       |\n| min      | 1       |\n| max      | 5       |\n| p25      | 2       |\n| p75      | 4       |\n| stdev    | 1.58114 |\n| variance | 2.5     |\n+-----"
       },
+      "verified": true,
       "verdict": "AVAILABLE",
       "gap_detail": null
     },
@@ -136,10 +177,13 @@
       "gateway_tool": "cds2_stats",
       "gateway_cli_key": "cds2",
       "proves": "The NumPy-backed cds2 statistics CLI runs and returns its own statistics.",
-      "distribution_version": "5.3.0",
+      "distribution_version": "5.4.4",
+      "listed": true,
       "installed": true,
-      "executable": "/home/urkan/github/scientific-toolkit/.venv/bin/cds2",
+      "executable": "C:\\_work\\naming\\toolkit-verify-all\\Scripts\\cds2.EXE",
       "executable_override_env": "SCITOOL_CDS2_BIN",
+      "module": null,
+      "module_importable": null,
       "cli_self_reported_version": {
         "reported": false,
         "note": "CLI exposes no version subcommand",
@@ -149,7 +193,7 @@
           ],
           "exit_code": 2,
           "stdout": "",
-          "stderr": "usage: cds2 [-h]\n            {info,stats,integrate,linsolve,plot,entropy,units,solve,guided-fit,guided-fit-rerun}\n            ...\ncds2: error: argument command: invalid choice: 'doctor' (choose from '"
+          "stderr": "usage: cds2 [-h]\n            {info,stats,integrate,linsolve,plot,entropy,units,solve,guided-fit,guided-fit-rerun}\n            ...\ncds2: error: argument command: invalid choice: 'doctor' (choose from i"
         }
       },
       "gateway_call": {
@@ -158,6 +202,7 @@
         "status": "COMMAND_SUCCEEDED",
         "stdout_first_300_chars": "n         5\nmean      3\nstd       1.58114\nmin       1\nq25       2\nmedian    3\nq75       4\nmax       5"
       },
+      "verified": true,
       "verdict": "AVAILABLE",
       "gap_detail": null
     },
@@ -167,17 +212,20 @@
       "gateway_tool": "plan_auditor_inspect",
       "gateway_cli_key": "plan-auditor",
       "proves": "The plan-auditor CLI runs; the gateway refuses without SCITOOL_WORKSPACE_DIR.",
-      "distribution_version": "2.4.3",
+      "distribution_version": "2.6.2",
+      "listed": true,
       "installed": true,
-      "executable": "/home/urkan/github/scientific-toolkit/.venv/bin/plan-auditor",
+      "executable": "C:\\_work\\naming\\toolkit-verify-all\\Scripts\\plan-auditor.EXE",
       "executable_override_env": "SCITOOL_AUDITOR_BIN",
+      "module": null,
+      "module_importable": null,
       "cli_self_reported_version": {
         "reported": true,
         "flags": [
           "doctor"
         ],
         "exit_code": 0,
-        "output": "{\n  \"workspace\": {\n    \"repository_root\": \"/home/urkan/github/scientific-toolkit\",\n    \"git\": {\n      \"branch\": \"main\",\n      \"is_repo\": true,\n      \"head_sha\": \"3201297c0cfbe7d88cf745e6ec62610d39286525\",\n      \"dirty_files\": [\n        \"EADME.md\",\n        \"pyproject.toml\",\n        \"scientific_toolkit_mcp/__init__.py\"\n      ],\n      \"untracked\": [\n        \"CHANGELOG.md\"\n      ]\n    },\n    \"exists_f"
+        "output": "{\n  \"workspace\": {\n    \"repository_root\": \"C:\\\\_work\\\\naming\\\\toolkit-repo\",\n    \"git\": {\n      \"branch\": \"main\",\n      \"is_repo\": true,\n      \"head_sha\": \"49312a10fa9245a7752db521990d649a1c0a9d98\",\n      \"dirty_files\": [\n        \".github/ISSUE_TEMPLATE/bug_report.yml\",\n        \".github/ISSUE_TEMPLATE/feature_request.yml\",\n        \".github/workflows/full-stack-install.yml\",\n        \".github/workfl"
       },
       "gateway_call": {
         "isError": true,
@@ -185,6 +233,7 @@
         "status": null,
         "stdout_first_300_chars": ""
       },
+      "verified": false,
       "verdict": "AVAILABLE",
       "gap_detail": "CLI installed and reachable. plan_auditor_inspect additionally requires SCITOOL_WORKSPACE_DIR, unset for this bare probe. See the cross-tool workflow for the configured-workspace run."
     },
@@ -194,10 +243,13 @@
       "gateway_tool": "quantum_skill_validate",
       "gateway_cli_key": "quantum-reasoning",
       "proves": "The quantum-reasoning inspector validates its packaged contract.",
-      "distribution_version": "1.1.1",
+      "distribution_version": "1.1.5",
+      "listed": true,
       "installed": true,
-      "executable": "/home/urkan/github/scientific-toolkit/.venv/bin/quantum-reasoning",
+      "executable": "C:\\_work\\naming\\toolkit-verify-all\\Scripts\\quantum-reasoning.EXE",
       "executable_override_env": "SCITOOL_QUANTUM_BIN",
+      "module": null,
+      "module_importable": null,
       "cli_self_reported_version": {
         "reported": false,
         "note": "CLI exposes no version subcommand",
@@ -216,6 +268,7 @@
         "status": "COMMAND_SUCCEEDED",
         "stdout_first_300_chars": "{\n  \"body_lines\": 142,\n  \"description\": \"Maintain multiple genuinely different candidate hypotheses or solution paths, test them against evidence and tools, suppress weak or contradictory paths, revive useful alternatives when new evidence appears, and collapse to the best-supported answer only at t"
       },
+      "verified": true,
       "verdict": "AVAILABLE",
       "gap_detail": null
     },
@@ -225,10 +278,14 @@
       "gateway_tool": "axiomize_reason_score",
       "gateway_cli_key": "axiomize-reason",
       "proves": "The bundled axiomize-reason branch scorer runs and returns its own verdict.",
-      "distribution_version": "1.2.1",
+      "distribution_version": "1.2.4",
+      "listed": true,
       "installed": true,
-      "executable": "/home/urkan/github/scientific-toolkit/.reason-pkg/bin/axiomize-reason",
+      "executable": "C:/_work/naming/toolkit-repo/.reason-env/Scripts\\axiomize-reason.exe",
       "executable_override_env": "SCITOOL_REASON_BIN",
+      "module": null,
+      "module_importable": null,
+      "distribution_scope": "installed in the isolated environment used by SCITOOL_REASON_BIN (C:\\_work\\naming\\toolkit-repo\\.reason-env\\Scripts\\python.exe); the gateway runs that same console script, so the tool is genuinely usable",
       "cli_self_reported_version": {
         "reported": false,
         "note": "CLI exposes no version subcommand",
@@ -238,7 +295,7 @@
           ],
           "exit_code": 2,
           "stdout": "",
-          "stderr": "usage: axiomize-reason [-h] {score,select,width} ...\naxiomize-reason: error: argument command: invalid choice: 'doctor' (choose from 'score', 'select', 'width')"
+          "stderr": "usage: axiomize-reason [-h] {score,select,width} ...\naxiomize-reason: error: argument command: invalid choice: 'doctor' (choose from score, select, width)"
         }
       },
       "gateway_call": {
@@ -247,6 +304,7 @@
         "status": "COMMAND_SUCCEEDED",
         "stdout_first_300_chars": "{\n  \"branch\": \"branch-1\",\n  \"can_collapse\": false,\n  \"reason\": \"leader score below collapse threshold\"\n}"
       },
+      "verified": true,
       "verdict": "AVAILABLE",
       "gap_detail": null
     },
@@ -256,17 +314,20 @@
       "gateway_tool": "eq_layer_route",
       "gateway_cli_key": "eq-layer",
       "proves": "The eq-layer router runs and returns its own control decision.",
-      "distribution_version": "0.1.0",
+      "distribution_version": "0.2.4",
+      "listed": true,
       "installed": true,
-      "executable": "/home/urkan/github/scientific-toolkit/.venv/bin/eq-layer",
+      "executable": "C:\\_work\\naming\\toolkit-verify-all\\Scripts\\eq-layer.EXE",
       "executable_override_env": "SCITOOL_EQ_BIN",
+      "module": null,
+      "module_importable": null,
       "cli_self_reported_version": {
         "reported": true,
         "flags": [
           "doctor"
         ],
         "exit_code": 0,
-        "output": "{\n  \"package\": \"eq-layer\",\n  \"version\": \"0.1.0\",\n  \"python\": \"3.12.3\",\n  \"ml_extra_available\": false\n}"
+        "output": "{\n  \"package\": \"eq-layer\",\n  \"version\": \"0.2.4\",\n  \"python\": \"3.12.10\",\n  \"ml_extra_available\": false,\n  \"ml_extra_hint\": \"Optional ML dependencies are unavailable. Install with: pip install \\\"eq-layer[ml]\\\"\"\n}"
       },
       "gateway_call": {
         "isError": false,
@@ -274,13 +335,76 @@
         "status": "COMMAND_SUCCEEDED",
         "stdout_first_300_chars": "{\"runtime_mode\": \"lightweight-local\", \"intent_backend\": \"heuristic\", \"policy\": {\"name\": \"direct_no_padding\", \"register\": \"direct\"}, \"affect\": {\"valence\": 0.15, \"arousal\": 0.35, \"escalation_delta\": 0.0, \"stance\": \"unknown\", \"subtext\": \"question\", \"turn_index\": 1, \"history\": [{\"valence\": 0.0, \"arousal"
       },
+      "verified": true,
+      "verdict": "AVAILABLE",
+      "gap_detail": null
+    },
+    {
+      "repository": "literature-evidence-mcp",
+      "distribution": "literature-evidence-mcp",
+      "gateway_tool": "literature_evidence_verify_quote",
+      "gateway_cli_key": "literature-evidence",
+      "proves": "The literature-evidence MCP stdio server answers verify_claim; text matching is not a scientific verdict.",
+      "distribution_version": "0.5.0",
+      "listed": true,
+      "installed": true,
+      "executable": "C:\\_work\\naming\\toolkit-verify-all\\Scripts\\literature-evidence-mcp.EXE",
+      "executable_override_env": "SCITOOL_LIT_EVIDENCE_BIN",
+      "module": null,
+      "module_importable": null,
+      "cli_self_reported_version": {
+        "reported": false,
+        "note": "CLI exposes no version subcommand",
+        "last_attempt": {
+          "flags": [
+            "doctor"
+          ],
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": ""
+        }
+      },
+      "gateway_call": {
+        "isError": false,
+        "exit_code": 0,
+        "status": "COMMAND_SUCCEEDED",
+        "stdout_first_300_chars": "[{'tool': 'verify_claim', 'status': 'COMMAND_SUCCEEDED', 'json': {'source_id': 'availability-probe', 'quote': 'sample size affects uncertainty', 'text_match': True, 'offset_start': 15, 'offset_end': 46, 'status': 'TEXTUAL_MATCH_ONLY', 'scientific_claim_verified': False, 'source_text_sha256': '78a055"
+      },
+      "verified": true,
+      "verdict": "AVAILABLE",
+      "gap_detail": null
+    },
+    {
+      "repository": "nomosguard",
+      "distribution": "nomosguard",
+      "gateway_tool": "nomosguard_decide",
+      "gateway_cli_key": "nomosguard",
+      "proves": "The NomosGuard MCP stdio module asserts a claim, derives paths, and applies its fail-closed gate without calling a model.",
+      "distribution_version": "0.7.9",
+      "listed": true,
+      "installed": true,
+      "executable": "C:\\_work\\naming\\toolkit-verify-all\\Scripts\\python.exe",
+      "executable_override_env": "SCITOOL_NOMOSGUARD_BIN",
+      "module": "nomosguard.mcp_stdio",
+      "module_importable": true,
+      "cli_self_reported_version": {
+        "reported": false,
+        "reason": "module server; it exposes no CLI version command"
+      },
+      "gateway_call": {
+        "isError": false,
+        "exit_code": 0,
+        "status": "COMMAND_SUCCEEDED",
+        "stdout_first_300_chars": "[{'tool': 'assert_claim', 'status': 'COMMAND_SUCCEEDED', 'json': {'accepted': True, 'seq': 1, 'entry_hash': 'e11d767077a7305979f933970416290e0c5b8fc68df73421c73b09c155ef8394', 'ledger_size': 1}, 'text': '{\\n  \"accepted\": true,\\n  \"seq\": 1,\\n  \"entry_hash\": \"e11d767077a7305979f933970416290e0c5b8fc68d"
+      },
+      "verified": true,
       "verdict": "AVAILABLE",
       "gap_detail": null
     }
   ],
   "summary": {
-    "repositories_total": 7,
-    "available": 7,
+    "repositories_total": 9,
+    "available": 9,
     "known_gaps": 0,
     "available_repositories": [
       "axiomize",
@@ -289,9 +413,22 @@
       "plan-auditor",
       "quantum-reasoning-skill",
       "axiomize-quantum-skills-2.0",
-      "eq-layer"
+      "eq-layer",
+      "literature-evidence-mcp",
+      "nomosguard"
     ],
-    "gap_repositories": []
+    "gap_repositories": [],
+    "verified": 8,
+    "verified_repositories": [
+      "axiomize",
+      "scientific-computing-system",
+      "scientific-computing-system-2.0",
+      "quantum-reasoning-skill",
+      "axiomize-quantum-skills-2.0",
+      "eq-layer",
+      "literature-evidence-mcp",
+      "nomosguard"
+    ]
   },
   "fail_closed_checks": [
     {
@@ -364,6 +501,48 @@
       "expected_error_marker": "INVALID_ARGUMENT",
       "marker_present": true,
       "response_first_200_chars": "INVALID_ARGUMENT: messages require a user turn"
+    },
+    {
+      "gateway_tool": "literature_evidence_search",
+      "arguments": {
+        "query": "quantum",
+        "limit_per_source": 26
+      },
+      "reason": "Per-source result limits stay inside the declared 1..25 bound.",
+      "isError": true,
+      "expected_error_marker": "INVALID_ARGUMENT",
+      "marker_present": true,
+      "response_first_200_chars": "INVALID_ARGUMENT: limit_per_source must be an integer between 1 and 25"
+    },
+    {
+      "gateway_tool": "literature_evidence_verify_quote",
+      "arguments": {
+        "quote": "q",
+        "source_text": "s"
+      },
+      "reason": "Quote verification requires an explicit source identifier.",
+      "isError": true,
+      "expected_error_marker": "INVALID_ARGUMENT",
+      "marker_present": true,
+      "response_first_200_chars": "INVALID_ARGUMENT: source_id must be a nonempty string <= 500 characters"
+    },
+    {
+      "gateway_tool": "nomosguard_decide",
+      "arguments": {
+        "claims": [
+          {
+            "kind": "k",
+            "payload": {},
+            "evidence": "e"
+          }
+        ],
+        "fallback": "ALLOW"
+      },
+      "reason": "The MCP surface offers only fail-closed fallbacks; a per-call ALLOW default is refused before any subprocess runs.",
+      "isError": true,
+      "expected_error_marker": "INVALID_ARGUMENT",
+      "marker_present": true,
+      "response_first_200_chars": "INVALID_ARGUMENT: fallback must be BLOCK or ALERT"
     }
   ],
   "not_tested_here": [

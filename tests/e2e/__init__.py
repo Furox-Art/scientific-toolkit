@@ -1,4 +1,4 @@
-"""End-to-end integration suite for the seven-tool MCP gateway.
+"""End-to-end integration suite for the nine-repository MCP gateway.
 
 Run from the repository root::
 

@@ -40,7 +40,7 @@ branches/tags if the repository's plan supports it.
    `scientific_toolkit_mcp/__init__.py`'s `__version__` together.
 2. Verify the full test suite and the distribution build in CI.
 3. On GitHub, create and **publish a release** with tag `v<version>` (for example,
-   `v0.2.0` for version `0.2.0`), targeting the reviewed commit on `main`.
+   `v0.4.0` for version `0.4.0`), targeting the reviewed commit on `main`.
 4. The release workflow checks that the tag, distribution name, and Python version
    match. It runs the tests, builds sdist and wheel, validates the archive metadata,
    and installs and imports the built wheel from outside the repository.
@@ -88,7 +88,7 @@ python -m pip install scientific-toolkit-mcp
 python -c "import importlib.metadata as m; import scientific_toolkit_mcp; print(m.version('scientific-toolkit-mcp'))"
 ```
 
-This installs the **gateway**, not all seven upstream scientific packages.
+This installs the **gateway**, not all nine upstream scientific packages.
 Install upstream packages separately and use `toolkit_doctor` to report what is
 actually available. The default transport is local stdio; use
 `python -m scientific_toolkit_mcp` only inside a configured MCP client.

@@ -1,4 +1,4 @@
-"""End-to-end integration tests for the seven-tool MCP gateway.
+"""End-to-end integration tests for the nine-tool MCP gateway.
 
 These tests exercise the gateway the way a real client does, over both
 transports, and they require the upstream packages to actually be installed.
@@ -7,7 +7,7 @@ here: every subprocess call below reaches a real installed program.
 
 What this suite proves
 ----------------------
-* Each of the seven upstream tools is genuinely installed and usable. A missing
+* Each of the nine upstream tools is genuinely installed and usable. A missing
   tool is reported as a KNOWN GAP; it is never skipped silently.
 * Real cross-tool data flow works: one tool's own output becomes the next
   tool's own input.
@@ -51,8 +51,8 @@ TOKEN = "e2e-local-test-token"
 
 MEASUREMENTS = [12.04, 11.97, 12.11, 12.02, 11.95, 12.08, 12.06, 11.99, 12.03, 12.10]
 
-# The seven upstream repositories mapped to the gateway CLI they depend on.
-SEVEN_TOOLS = {
+# The nine upstream repositories mapped to the gateway executable they depend on.
+UPSTREAM_TOOLS = {
     "axiomize": "axiomize",
     "scientific-computing-system": "cds",
     "scientific-computing-system-2.0": "cds2",
@@ -60,6 +60,8 @@ SEVEN_TOOLS = {
     "quantum-reasoning-skill": "quantum-reasoning",
     "axiomize-quantum-skills-2.0": "axiomize-reason",
     "eq-layer": "eq-layer",
+    "literature-evidence-mcp": "literature-evidence",
+    "nomosguard": "nomosguard",
 }
 
 
@@ -129,6 +131,13 @@ def _interpreter_for(executable: str | None) -> str | None:
     """
     if executable is None:
         return None
+    path = Path(executable)
+    if path.suffix.lower() == ".exe":
+        # A Windows venv console script is a launcher for the sibling
+        # python.exe, which is the interpreter that can see its distributions.
+        sibling = path.parent / "python.exe"
+        if sibling.is_file():
+            return str(sibling)
     try:
         with open(executable, "rb") as handle:
             first_line = handle.readline().decode("utf-8", "replace").strip()
@@ -205,13 +214,13 @@ def _clean_environment() -> dict:
 
 
 class UpstreamAvailabilityTests(unittest.TestCase):
-    """Prove each of the seven upstream tools is actually installed and usable."""
+    """Prove each of the nine upstream tools is actually installed and usable."""
 
-    def test_doctor_reports_seven_commands(self):
+    def test_doctor_reports_nine_commands(self):
         doctor = payload_of(call("toolkit_doctor"))
-        self.assertEqual(len(doctor.get("commands", {})), 7)
+        self.assertEqual(len(doctor.get("commands", {})), 9)
 
-    def test_each_of_seven_repositories_has_installed_executable(self):
+    def test_each_of_nine_repositories_has_installed_executable(self):
         doctor = payload_of(call("toolkit_doctor"))
         gaps = [key for key, info in doctor["commands"].items()
                 if not info.get("installed")]
@@ -221,7 +230,7 @@ class UpstreamAvailabilityTests(unittest.TestCase):
             f"Install them (see README) or record them as known gaps. "
             f"The gateway returns NOT_INSTALLED rather than fabricating output.")
 
-    def test_each_of_seven_repositories_has_installed_distribution(self):
+    def test_each_of_nine_repositories_has_installed_distribution(self):
         """Each upstream distribution must be importable through *some* real path.
 
         ``axiomize-quantum-skills-2.0`` bundles the Axiomize variant and is
@@ -234,7 +243,7 @@ class UpstreamAvailabilityTests(unittest.TestCase):
         import importlib.metadata as metadata
 
         missing = []
-        for repo in SEVEN_TOOLS:
+        for repo in UPSTREAM_TOOLS:
             if _distribution_installed(metadata, repo):
                 continue
             if repo == "axiomize-quantum-skills-2.0":
@@ -247,18 +256,18 @@ class UpstreamAvailabilityTests(unittest.TestCase):
             missing, [],
             f"KNOWN GAP: these upstream distributions are not installed: {missing}")
 
-    def test_catalog_lists_seven_distinct_repositories(self):
+    def test_catalog_lists_nine_distinct_repositories(self):
         catalog = payload_of(call("toolkit_catalog"))
-        self.assertEqual(catalog["count"], 7)
-        self.assertEqual(len({item["name"] for item in catalog["repositories"]}), 7)
+        self.assertEqual(catalog["count"], 9)
+        self.assertEqual(len({item["name"] for item in catalog["repositories"]}), 9)
         for item in catalog["repositories"]:
-            self.assertIn(item["name"], SEVEN_TOOLS,
+            self.assertIn(item["name"], UPSTREAM_TOOLS,
                           f"{item['name']} is not covered by the availability checks")
 
-    def test_gateway_exposes_eleven_local_tools(self):
+    def test_gateway_exposes_fourteen_local_tools(self):
         listing = handle({"jsonrpc": "2.0", "id": 1, "method": "tools/list",
                           "params": {}})
-        self.assertEqual(len(listing["result"]["tools"]), 11)
+        self.assertEqual(len(listing["result"]["tools"]), 14)
         self.assertEqual({t["name"] for t in TOOLS}, {t["name"] for t in
                                                       listing["result"]["tools"]})
 
@@ -314,6 +323,41 @@ class UpstreamAvailabilityTests(unittest.TestCase):
         self.assertEqual(payload["program"], "eq-layer")
         self.assertEqual(payload["exit_code"], 0)
         self.assertIn("factored_action", payload["stdout"])
+
+    def test_literature_quote_verification_runs_real_mcp_server(self):
+        result = call("literature_evidence_verify_quote", {
+            "quote": "sample size affects uncertainty",
+            "source_text": "In this study, sample size affects uncertainty in the estimated mean.",
+            "source_id": "e2e-doc-1",
+        })
+        payload = payload_of(result)
+        self.assertFalse(result["isError"], text_of(result))
+        self.assertEqual(payload["program"], "literature-evidence")
+        self.assertEqual(payload["exit_code"], 0)
+        self.assertEqual(payload["status"], "COMMAND_SUCCEEDED")
+        claim = payload["calls"][0]
+        self.assertEqual(claim["tool"], "verify_claim")
+        self.assertTrue(claim["json"]["text_match"])
+        self.assertEqual(claim["json"]["status"], "TEXTUAL_MATCH_ONLY")
+        self.assertFalse(claim["json"]["scientific_claim_verified"])
+
+    def test_nomosguard_decision_runs_real_mcp_server(self):
+        result = call("nomosguard_decide", {"claims": [{
+            "kind": "exposure",
+            "payload": {"service": "api"},
+            "evidence": "public ingress record",
+        }]})
+        payload = payload_of(result)
+        self.assertFalse(result["isError"], text_of(result))
+        self.assertEqual(payload["program"], "nomosguard")
+        self.assertEqual(payload["exit_code"], 0)
+        self.assertEqual([call_item["tool"] for call_item in payload["calls"]],
+                         ["assert_claim", "derive_paths", "decide"])
+        decision = payload["calls"][-1]["json"]
+        # An unknown claim kind derives no path, so the fail-closed default applies.
+        self.assertEqual(decision["decision"], "BLOCK")
+        self.assertEqual(decision["policy_rule"], "FALLBACK")
+        self.assertTrue(decision["ledger_verified"])
 
     def test_plan_auditor_inspect_runs_real_cli_with_configured_workspace(self):
         request_contract = {
@@ -507,7 +551,7 @@ class CrossToolWorkflowTests(unittest.TestCase):
         self.assertIn(decision["intent"]["kind"],
                       {"statement", "question", "request", "greeting", "feedback"})
 
-    def test_full_local_stdio_session_across_seven_tools(self):
+    def test_full_local_stdio_session_lists_nine_repositories(self):
         """A real stdio subprocess session: initialize, list, then call tools."""
         requests = [
             {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}},
@@ -532,9 +576,9 @@ class CrossToolWorkflowTests(unittest.TestCase):
         # Six responses: the notification correctly gets none.
         self.assertEqual(len(lines), 6)
         self.assertEqual(lines[0]["result"]["protocolVersion"], "2025-06-18")
-        self.assertEqual(len(lines[1]["result"]["tools"]), 11)
+        self.assertEqual(len(lines[1]["result"]["tools"]), 14)
         doctor = json.loads(lines[2]["result"]["content"][0]["text"])
-        self.assertEqual(doctor["repositories"], 7)
+        self.assertEqual(doctor["repositories"], 9)
         for response in lines[3:]:
             self.assertFalse(response["result"]["isError"], response)
 
@@ -661,8 +705,9 @@ class LocalStdioSecurityTests(unittest.TestCase):
         self.assertTrue(result["isError"])
         self.assertIn("NOT_INSTALLED", text_of(result))
 
-    def test_all_seven_bins_report_not_installed_when_absent(self):
+    def test_all_bins_report_not_installed_when_absent(self):
         overrides = {env: "/definitely/not/here" for env, _ in BINS.values()}
+        overrides["SCITOOL_NOMOSGUARD_BIN"] = "/definitely/not/here"
         with patch.dict(os.environ, overrides, clear=False):
             for name, arguments in (("axiomize_intake", {"idea": "test"}),
                                     ("cds_stats", {"values": [1, 2]}),
@@ -671,7 +716,11 @@ class LocalStdioSecurityTests(unittest.TestCase):
                                     ("axiomize_reason_score",
                                      {"evidence": 0.5, "verification": 0.5}),
                                     ("eq_layer_route",
-                                     {"messages": [{"role": "user", "content": "hi"}]})):
+                                     {"messages": [{"role": "user", "content": "hi"}]}),
+                                    ("literature_evidence_search", {"query": "test"}),
+                                    ("nomosguard_decide", {"claims": [{
+                                        "kind": "k", "payload": {},
+                                        "evidence": "e"}]})):
                 with self.subTest(tool=name):
                     result = call(name, arguments)
                     self.assertTrue(result["isError"])
@@ -778,7 +827,7 @@ class RemoteHttpSecurityTests(unittest.TestCase):
             code, body = self.post({"jsonrpc": "2.0", "id": 1, "method": "tools/list"})
         self.assertEqual(code, 200)
         names = {tool["name"] for tool in body["result"]["tools"]}
-        self.assertEqual(len(names), 10, "remote inventory must hide the audit tool")
+        self.assertEqual(len(names), 13, "remote inventory must hide the audit tool")
         self.assertIn("plan_auditor_inspect", names)
         self.assertNotIn("plan_auditor_audit", names)
 
@@ -800,7 +849,7 @@ class RemoteHttpSecurityTests(unittest.TestCase):
         self.assertEqual(code, 200)
         payload = json.loads(body["result"]["content"][0]["text"])
         self.assertFalse(body["result"]["isError"])
-        self.assertEqual(payload["count"], 7)
+        self.assertEqual(payload["count"], 9)
 
     def test_remote_cds_stats_executes_a_real_upstream_cli(self):
         with patch.dict(os.environ, {"SCITOOL_MCP_BEARER_TOKEN": TOKEN}):
@@ -814,14 +863,14 @@ class RemoteHttpSecurityTests(unittest.TestCase):
         self.assertEqual(payload["exit_code"], 0)
         self.assertIn("mean", payload["stdout"])
 
-    def test_remote_doctor_reports_seven_commands(self):
+    def test_remote_doctor_reports_nine_commands(self):
         with patch.dict(os.environ, {"SCITOOL_MCP_BEARER_TOKEN": TOKEN}):
             code, body = self.post({"jsonrpc": "2.0", "id": 1, "method": "tools/call",
                                     "params": {"name": "toolkit_doctor",
                                                "arguments": {}}})
         self.assertEqual(code, 200)
         payload = json.loads(body["result"]["content"][0]["text"])
-        self.assertEqual(len(payload["commands"]), 7)
+        self.assertEqual(len(payload["commands"]), 9)
 
     def test_remote_inspect_requires_a_configured_workspace(self):
         with patch.dict(os.environ, {"SCITOOL_MCP_BEARER_TOKEN": TOKEN}, clear=True):
@@ -1037,17 +1086,17 @@ class SdkClientInteropTests(unittest.TestCase):
                 return bool(getattr(result, attribute))
         return False
 
-    def test_official_sdk_client_enumerates_ten_remote_tools(self):
+    def test_official_sdk_client_enumerates_thirteen_remote_tools(self):
         listing, _, _ = self._session()
         names = {tool.name for tool in listing.tools}
-        self.assertEqual(len(names), 10)
+        self.assertEqual(len(names), 13)
         self.assertNotIn("plan_auditor_audit", names)
         self.assertIn("plan_auditor_inspect", names)
 
     def test_official_sdk_client_calls_catalog_and_a_real_cli(self):
         _, catalog, stats = self._session()
         catalog_text = catalog.content[0].text
-        self.assertEqual(json.loads(catalog_text)["count"], 7)
+        self.assertEqual(json.loads(catalog_text)["count"], 9)
         stats_text = stats.content[0].text
         self.assertFalse(self._tool_error(stats), stats_text)
         payload = json.loads(stats_text)

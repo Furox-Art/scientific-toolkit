@@ -43,6 +43,18 @@ REPOSITORIES = (
         "interface": "eq-layer CLI, local heuristic/learned routing",
         "tools": ["eq_layer_route"],
     },
+    {
+        "name": "literature-evidence-mcp",
+        "role": "Evidence-provenance-first scientific literature search, quote verification, and methodology screening",
+        "interface": "literature-evidence-mcp stdio MCP server; live search requires network access",
+        "tools": ["literature_evidence_search", "literature_evidence_verify_quote"],
+    },
+    {
+        "name": "nomosguard",
+        "role": "Deterministic security reasoning: hash-chained evidence ledger, rule engine, fail-closed policy gate",
+        "interface": "python -m nomosguard.mcp_stdio; deterministic, no model calls",
+        "tools": ["nomosguard_decide"],
+    },
 )
 
 

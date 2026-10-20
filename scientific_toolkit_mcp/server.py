@@ -34,8 +34,8 @@ NUMBERS = {"type": "array", "minItems": 2, "maxItems": 1000,
 UNIT = {"type": "number", "minimum": 0, "maximum": 1}
 
 TOOLS = [
-    spec("toolkit_catalog", "List the seven original, public Furox-Art repositories and their exact roles."),
-    spec("toolkit_doctor", "Check local upstream CLI availability; does not run scientific computations."),
+    spec("toolkit_catalog", "List the nine original, public Furox-Art repositories and their exact roles."),
+    spec("toolkit_doctor", "Check local upstream CLI and MCP server availability; does not run scientific computations."),
     spec("axiomize_intake", "Axiomize: clarify a scientific modeling idea using the upstream intake CLI.",
          {"idea": {"type": "string", "minLength": 1, "maxLength": 6000}}, ["idea"]),
     spec("axiomize_model", "Axiomize: invoke a conservative model operation. Input must use upstream Model IR / request schema; no shell commands.",
@@ -58,6 +58,24 @@ TOOLS = [
                        }, "required": ["role", "content"], "additionalProperties": False}},
           "intent_mode": {"type": "string", "enum": ["auto", "heuristic", "learned"], "default": "heuristic"}},
          ["messages"]),
+    spec("literature_evidence_search", "literature-evidence-mcp: search OpenAlex, Europe PMC, and Crossref concurrently. Results are provider metadata, never exhaustive or scientifically validated; live search requires network access.",
+         {"query": {"type": "string", "minLength": 1, "maxLength": 1000},
+          "limit_per_source": {"type": "integer", "minimum": 1, "maximum": 25, "default": 10}},
+         ["query"]),
+    spec("literature_evidence_verify_quote", "literature-evidence-mcp: check literal quote presence in caller-supplied source text. This is text matching, not a scientific verdict.",
+         {"quote": {"type": "string", "minLength": 1, "maxLength": 4000},
+          "source_text": {"type": "string", "minLength": 1, "maxLength": 50000},
+          "source_id": {"type": "string", "minLength": 1, "maxLength": 500}},
+         ["quote", "source_text", "source_id"]),
+    spec("nomosguard_decide", "NomosGuard: assert evidenced claims, derive paths, and run the deterministic fail-closed policy gate. No model is consulted at the decision boundary.",
+         {"claims": {"type": "array", "minItems": 1, "maxItems": 20,
+                     "items": {"type": "object", "properties": {
+                         "kind": {"type": "string", "minLength": 1, "maxLength": 200},
+                         "payload": {"type": "object"},
+                         "evidence": {"type": "string", "minLength": 1, "maxLength": 4000},
+                     }, "required": ["kind", "payload", "evidence"], "additionalProperties": False}},
+          "fallback": {"type": "string", "enum": ["BLOCK", "ALERT"], "default": "BLOCK"}},
+         ["claims"]),
 ]
 TOOL_NAMES = {tool["name"] for tool in TOOLS}
 
@@ -88,7 +106,7 @@ def handle(msg: Any) -> dict | None:
             "protocolVersion": PROTO,
             "capabilities": {"tools": {"listChanged": False}},
             "serverInfo": {"name": "furox-scientific-toolkit", "version": __version__},
-            "instructions": "Seven public repositories. Execute only installed local tools; tools report actual exit codes. Audit execution requires explicit opt-in.",
+            "instructions": "Nine public repositories. Execute only installed local tools; tools report actual exit codes. Audit execution requires explicit opt-in.",
         })
     if method == "ping":
         return response(request_id, result={})

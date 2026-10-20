@@ -16,13 +16,13 @@ from scientific_toolkit_mcp import production_probe
 
 def _success(name: str, arguments: dict) -> dict:
     if name == "toolkit_catalog":
-        return {"content": [{"text": json.dumps({"count": 7})}]}
+        return {"content": [{"text": json.dumps({"count": 9})}]}
     if name == "toolkit_doctor":
         return {
             "content": [
                 {
                     "text": json.dumps(
-                        {"commands": {str(i): {"installed": True} for i in range(7)}}
+                        {"commands": {str(i): {"installed": True} for i in range(9)}}
                     )
                 }
             ]
@@ -54,7 +54,7 @@ def _fake_post(url, method, params, token, timeout=110.0):
         return {
             "tools": [
                 {"name": "plan_auditor_inspect"},
-                *({"name": f"tool_{i}"} for i in range(9)),
+                *({"name": f"tool_{i}"} for i in range(12)),
             ]
         }
     assert method == "tools/call"
@@ -79,7 +79,7 @@ def test_successful_probe_checks_real_adapter_contract_offline(
     monkeypatch.setattr("scientific_toolkit_mcp.oauth.settings", lambda: None)
     assert production_probe.probe(8035)
     output = capsys.readouterr().out
-    assert "RESULT=PASS checks_passed=12 checks_failed=0" in output
+    assert "RESULT=PASS checks_passed=14 checks_failed=0" in output
     assert "oauth_state=PROVIDER_NOT_CONFIGURED" in output
     assert "probe-secret-not-to-print" not in output
 
@@ -90,18 +90,18 @@ def test_successful_probe_checks_real_adapter_contract_offline(
         ("initialize", {"serverInfo": {"name": "unknown"}}, "initialize=FAIL"),
         (
             "tools/list",
-            {"tools": [{"name": "plan_auditor_audit"}] * 10},
+            {"tools": [{"name": "plan_auditor_audit"}] * 13},
             "remote_tool_inventory=FAIL",
         ),
         (
             "toolkit_catalog",
-            {"content": [{"text": '{"count":8}'}]},
-            "seven_repository_catalog=FAIL",
+            {"content": [{"text": '{"count":10}'}]},
+            "nine_repository_catalog=FAIL",
         ),
         (
             "toolkit_doctor",
             {"content": [{"text": '{"commands":{}}'}]},
-            "seven_upstream_cli_paths=FAIL",
+            "nine_upstream_cli_paths=FAIL",
         ),
         ("plan_auditor_audit", {"isError": False}, "remote_audit_denied=FAIL"),
         (
@@ -340,10 +340,10 @@ def test_probe_reports_missing_upstream_command_in_doctor(
 
     def partial_doctor(url, method, params, token, timeout=110):
         if isinstance(params, dict) and params.get("name") == "toolkit_doctor":
-            data = {str(n): {"installed": n != 0} for n in range(7)}
+            data = {str(n): {"installed": n != 0} for n in range(9)}
             return {"content": [{"text": json.dumps({"commands": data})}]}
         return _fake_post(url, method, params, token, timeout)
 
     monkeypatch.setattr(production_probe, "_post", partial_doctor)
     assert not production_probe.probe(8035)
-    assert "seven_upstream_cli_paths=FAIL" in capsys.readouterr().out
+    assert "nine_upstream_cli_paths=FAIL" in capsys.readouterr().out
