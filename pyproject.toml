@@ -3,7 +3,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "furox-scientific-toolkit-mcp"
+name = "scientific-toolkit-mcp"
 version = "0.2.3"
 description = "Provider-neutral local and remote MCP hub for seven Furox-Art public research tools"
 keywords = ["model-context-protocol", "mcp", "scientific-computing", "ai-agents", "research-tools", "python"]

@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for helping improve `furox-scientific-toolkit-mcp`. This repository is
+Thanks for helping improve `scientific-toolkit-mcp`. This repository is
 the MCP gateway that exposes seven independently released Furox-Art scientific
 packages. The upstream packages keep their own source trees, versions, and
 licenses; changes to their algorithms or scientific behavior belong in those

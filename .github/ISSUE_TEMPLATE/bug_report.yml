@@ -47,7 +47,7 @@ body:
     id: version
     attributes:
       label: Gateway version and install source
-      description: The version from `importlib.metadata.version("furox-scientific-toolkit-mcp")`, and whether it came from PyPI or an editable checkout.
+      description: The version from `importlib.metadata.version("scientific-toolkit-mcp")`, and whether it came from PyPI or an editable checkout.
       placeholder: "0.2.x from PyPI"
     validations:
       required: true

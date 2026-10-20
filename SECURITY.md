@@ -1,6 +1,6 @@
 # Security Policy
 
-`furox-scientific-toolkit-mcp` is an MCP gateway. It exposes a local stdio
+`scientific-toolkit-mcp` is an MCP gateway. It exposes a local stdio
 transport and an authenticated HTTP transport, and it invokes separately
 installed upstream scientific CLIs. This policy covers the gateway code and
 packaging in this repository, not the seven upstream projects.

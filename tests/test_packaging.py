@@ -78,7 +78,7 @@ class PackagingTests(unittest.TestCase):
 
     def test_wheel_is_named_after_the_package_version(self):
         name, _ = self._build_wheel()
-        self.assertIn(f"furox_scientific_toolkit_mcp-{__version__}-", name)
+        self.assertIn(f"scientific_toolkit_mcp-{__version__}-", name)
         self.assertTrue(name.endswith(".whl"))
 
 
