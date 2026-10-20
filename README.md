@@ -201,9 +201,9 @@ Three CI suites provide progressively stronger, but limited, verification:
 1. [Protocol/unit tests](https://github.com/Furox-Art/scientific-toolkit/actions/workflows/tests.yml)
    check stdio and authenticated HTTP handling, argument validation, safe defaults,
    and fail-closed errors. Fake CLI tests are plumbing tests, not scientific evidence.
-2. [Published upstream package smoke checks](https://github.com/Furox-Art/scientific-toolkit/actions/workflows/real-upstream.yml)
-   install all seven distributions separately and invoke their real CLIs through
-   the gateway. The Plan Auditor profile checks the installed CLI and refusal
+2. [Upstream source smoke checks](https://github.com/Furox-Art/scientific-toolkit/actions/workflows/real-upstream.yml)
+   install all seven projects from GitHub source separately and invoke their real
+   CLIs through the gateway. The Plan Auditor profile checks the installed CLI and refusal
    to audit an unconfigured plan, *not* successful verification of research.
    This workflow also checks the live Render `/health` route and ensures that
    unauthenticated MCP tool calls receive HTTP 401.

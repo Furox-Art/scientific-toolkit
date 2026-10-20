@@ -1,4 +1,4 @@
-"""Real published upstream CLI smoke checks through MCP, one isolated CI job per package."""
+"""Real upstream CLI smoke checks through MCP, one isolated CI job per package."""
 import argparse
 import json
 import os
@@ -39,7 +39,7 @@ def main():
     binary, tool, args = CASES[profile]
     envvar, default = BINS[binary]
     executable = shutil.which(os.environ.get(envvar, default))
-    assert executable, f"{profile}: missing published CLI {default}"
+    assert executable, f"{profile}: missing CLI {default}"
     if profile == "plan-auditor":
         out = subprocess.run([executable, "--help"], text=True,
                              capture_output=True, check=True, timeout=30)

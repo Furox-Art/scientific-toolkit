@@ -27,8 +27,9 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
           cache-dependency-path: pyproject.toml
-      # The e2e suite drives the seven real tool CLIs, so CI must install them
-      # exactly like the Render build does (see scripts/render-build.sh).
+      # The e2e suite drives the seven real tool CLIs, so CI installs the
+      # sibling repositories from source (see scripts/render-build.sh; Render
+      # itself installs the released distributions from PyPI).
       - run: bash scripts/render-build.sh
       - name: Install complete test prerequisites
         run: python -m pip install "pytest>=8" "pytest-cov>=5" "mcp>=1.15,<2"

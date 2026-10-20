@@ -1,19 +1,33 @@
 #!/usr/bin/env bash
 set -euo pipefail
 # Render build: six stand-alone distributions plus an isolated bundled Axiomize.
-# Preserve no-cache builds on Render; let GitHub Actions restore and save pip
-# wheels to avoid re-downloading released upstream packages on every CI run.
+# Render installs the released distributions from PyPI. GitHub Actions must not:
+# every CI fetch of one of these projects counts toward its public download
+# statistics, so CI installs the sibling repositories from GitHub source
+# instead. The pip cache stays enabled on CI to avoid repeating source builds.
 if [[ "${GITHUB_ACTIONS:-}" == "true" ]]; then
   pip_cache_flag=()
+  upstream_specs=(
+    "git+https://github.com/Furox-Art/axiomize.git@main"
+    "git+https://github.com/Furox-Art/scientific-computing-system.git@main"
+    "git+https://github.com/Furox-Art/scientific-computing-system-2.0.git@main"
+    "git+https://github.com/Furox-Art/plan-auditor.git@main"
+    "git+https://github.com/Furox-Art/quantum-reasoning-skill.git@main"
+    "git+https://github.com/Furox-Art/eq-layer.git@main"
+    "PyYAML"
+  )
+  reason_spec="git+https://github.com/Furox-Art/axiomize-quantum-skills-2.0.git@main"
 else
   pip_cache_flag=(--no-cache-dir)
+  upstream_specs=(axiomize scientific-computing-system scientific-computing-system-2.0 plan-auditor quantum-reasoning-skill eq-layer PyYAML)
+  reason_spec=axiomize-quantum-skills-2.0
 fi
 python -m pip install "${pip_cache_flag[@]}" -e '.[oauth]'
-python -m pip install "${pip_cache_flag[@]}" axiomize scientific-computing-system scientific-computing-system-2.0 plan-auditor quantum-reasoning-skill eq-layer PyYAML
+python -m pip install "${pip_cache_flag[@]}" "${upstream_specs[@]}"
 # The Render runtime already uses a virtual environment. A nested venv cannot
 # inherit dependencies from that outer environment. Isolate the bundled module
 # tree with --target and use the existing Python interpreter for shared deps.
-python -m pip install "${pip_cache_flag[@]}" --no-deps --target .reason-pkg axiomize-quantum-skills-2.0
+python -m pip install "${pip_cache_flag[@]}" --no-deps --target .reason-pkg "${reason_spec}"
 python - <<'PY'
 from pathlib import Path
 wrapper = Path('.reason-env/bin/axiomize-reason')
