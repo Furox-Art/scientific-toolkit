@@ -12,6 +12,19 @@ A provider-neutral MCP gateway that exposes seven independent Furox-Art projects
 through one server. Upstream packages keep their own names, versions, and release
 histories; this repository is an integration hub, not a merged source tree.
 
+## Names
+
+| Surface | Name |
+| --- | --- |
+| Repository | `scientific-toolkit` |
+| PyPI project | `furox-scientific-toolkit-mcp` |
+| Import | `scientific_toolkit_mcp` |
+| CLI | `scientific-toolkit-mcp` |
+| Version | 0.2.3 |
+
+`pip install furox-scientific-toolkit-mcp` installs the `scientific-toolkit-mcp`
+command. No PyPI project is named `scientific-toolkit`.
+
 ## When to use this skill
 
 - You want one MCP client configuration for several scientific and verification
