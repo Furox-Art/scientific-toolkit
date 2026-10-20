@@ -328,6 +328,7 @@ def main() -> int:
                   f"mode={results['routing_decision']['response_mode']}, "
                   f"task_move={results['routing_decision']['task_move']}")
         except (KeyError, ValueError):
+            # The response omitted an optional shape; skip the enrichment.
             pass
     else:
         gaps.append("eq-layer")

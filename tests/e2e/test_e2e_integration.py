@@ -163,7 +163,7 @@ def _distribution_installed_in(interpreter: str, distribution: str) -> bool:
     completed = subprocess.run(
         [interpreter, "-c",
          "import importlib.metadata as m, sys;"
-         "sys.exit(0 if m.version(sys.argv[1]) else 1)", distribution],
+         + "sys.exit(0 if m.version(sys.argv[1]) else 1)", distribution],
         capture_output=True, text=True, timeout=30, env=env)
     return completed.returncode == 0
 
@@ -407,8 +407,8 @@ class UpstreamAvailabilityTests(unittest.TestCase):
         completed = subprocess.run(
             [sys.executable, "-c",
              "import importlib.metadata as m, sys;"
-             "print(m.version('axiomize'));"
-             "print(next(iter(m.distribution('axiomize')._path.parents)))"],
+             + "print(m.version('axiomize'));"
+             + "print(next(iter(m.distribution('axiomize')._path.parents)))"],
             capture_output=True, text=True, timeout=30,
             env=_clean_environment(), cwd=str(REPO_ROOT))
         self.assertEqual(completed.returncode, 0, completed.stderr)
