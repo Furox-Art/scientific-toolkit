@@ -52,7 +52,8 @@ def _record_rate_hit(client: str, now: float) -> bool:
                 times.popleft()
             if not times:
                 del _hits[address]
-        _last_sweep = now  # codeql[py/unused-global-variable] — read above; false positive
+        # codeql[py/unused-global-variable]
+        _last_sweep = now
 
     if client not in _hits and len(_hits) >= MAX_CLIENT_BUCKETS:
         return False
