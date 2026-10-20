@@ -1,6 +1,6 @@
 ---
 name: scientific-toolkit
-description: "Use when a task needs one MCP entry point to seven Furox scientific CLIs (axiomize, cds, cds2, plan-auditor, quantum-reasoning, axiomize-reason, eq-layer), locally over stdio or remotely over authenticated Streamable HTTP. It is an integration gateway, not a new scientific engine."
+description: "Use when a task needs one MCP entry point to seven Furox scientific CLIs (axiomize, cds, cds2, plan-auditor, quantum-reasoning, axiomize-reason, eq-layer), locally over stdio or remotely over authenticated Streamable HTTP. It is an integration gateway, not a new scientific engine. Installed from PyPI as `furox-scientific-toolkit-mcp`."
 argument-hint: "<scientific workflow, repository, or upstream tool to invoke>"
 metadata:
   version: "0.2.3"
