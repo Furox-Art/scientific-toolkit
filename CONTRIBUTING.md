@@ -34,8 +34,8 @@ bash scripts/render-build.sh
 ```
 
 That script installs the gateway with the `oauth` extra, the six standalone
-upstream distributions, and the bundled Axiomize variant in an isolated
-directory. It is a Bash script, and the CI runner is Ubuntu.
+upstream projects (from GitHub source in CI, from PyPI for Render builds), and
+the bundled Axiomize variant in an isolated directory. It is a Bash script, and the CI runner is Ubuntu.
 
 ## Tests
 

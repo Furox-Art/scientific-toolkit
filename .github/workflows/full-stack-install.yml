@@ -1,4 +1,4 @@
-name: Full Render build and seven real package checks
+name: Full stack build and seven real package checks
 on:
   workflow_dispatch:
   push:

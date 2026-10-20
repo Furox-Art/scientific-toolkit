@@ -51,8 +51,8 @@ jobs:
           PY
 
       - name: Install test and build dependencies
-        # The e2e suite drives the seven real tool CLIs, so the release build must
-        # install them exactly like the Render build does (scripts/render-build.sh);
+        # The e2e suite drives the seven real tool CLIs, so the release build
+        # installs them via scripts/render-build.sh (GitHub source in CI);
         # without them every cross-tool test fails with NOT_INSTALLED.
         run: bash scripts/render-build.sh
       - name: Install build tooling
