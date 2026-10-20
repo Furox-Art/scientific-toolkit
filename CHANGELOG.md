@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The PyPI distribution is now `scientific-toolkit-mcp`; the previous
+  `furox-scientific-toolkit-mcp` project was removed from PyPI. The import
+  module and the `scientific-toolkit-mcp` console script are unchanged.
+
 ## [0.2.3] - 2026-10-13
 
 ### Fixed

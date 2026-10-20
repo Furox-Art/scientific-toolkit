@@ -1,6 +1,6 @@
 ---
 name: scientific-toolkit
-description: "Use when a task needs one MCP entry point to seven Furox scientific CLIs (axiomize, cds, cds2, plan-auditor, quantum-reasoning, axiomize-reason, eq-layer), locally over stdio or remotely over authenticated Streamable HTTP. It is an integration gateway, not a new scientific engine. Installed from PyPI as `furox-scientific-toolkit-mcp`."
+description: "Use when a task needs one MCP entry point to seven Furox scientific CLIs (axiomize, cds, cds2, plan-auditor, quantum-reasoning, axiomize-reason, eq-layer), locally over stdio or remotely over authenticated Streamable HTTP. It is an integration gateway, not a new scientific engine. Installed from PyPI as `scientific-toolkit-mcp`."
 argument-hint: "<scientific workflow, repository, or upstream tool to invoke>"
 metadata:
   version: "0.2.3"
@@ -17,13 +17,14 @@ histories; this repository is an integration hub, not a merged source tree.
 | Surface | Name |
 | --- | --- |
 | Repository | `scientific-toolkit` |
-| PyPI project | `furox-scientific-toolkit-mcp` |
+| PyPI project | `scientific-toolkit-mcp` |
 | Import | `scientific_toolkit_mcp` |
 | CLI | `scientific-toolkit-mcp` |
 | Version | 0.2.3 |
 
-`pip install furox-scientific-toolkit-mcp` installs the `scientific-toolkit-mcp`
-command. No PyPI project is named `scientific-toolkit`.
+`pip install scientific-toolkit-mcp` installs the `scientific-toolkit-mcp`
+command. No PyPI project is named `scientific-toolkit`. The former
+`furox-scientific-toolkit-mcp` project was removed and is no longer installable.
 
 ## When to use this skill
 
@@ -38,7 +39,7 @@ command. No PyPI project is named `scientific-toolkit`.
 Requires Python 3.10+.
 
 ```bash
-pip install furox-scientific-toolkit-mcp
+pip install scientific-toolkit-mcp
 # or from a source checkout: pip install -e .
 
 # Install only the upstream packages you need:
@@ -119,5 +120,5 @@ Ten of the eleven tools are available remotely.
 ## References
 
 - Repository: https://github.com/Furox-Art/scientific-toolkit
-- PyPI: https://pypi.org/project/furox-scientific-toolkit-mcp/
+- PyPI: https://pypi.org/project/scientific-toolkit-mcp/
 - Website: https://www.furoxscientifictoolkit.lovie.me/

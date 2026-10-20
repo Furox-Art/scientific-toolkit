@@ -1,6 +1,6 @@
 # PyPI publishing: Furox Scientific Toolkit
 
-This repository builds the Python distribution **`furox-scientific-toolkit-mcp`**. The
+This repository builds the Python distribution **`scientific-toolkit-mcp`**. The
 importable module is `scientific_toolkit_mcp`, and the installed executable is
 `scientific-toolkit-mcp`.
 
@@ -15,7 +15,7 @@ maintainer and visit https://pypi.org/manage/account/publishing/ to add a
 
 | PyPI field | Value |
 | --- | --- |
-| PyPI project name | `furox-scientific-toolkit-mcp` |
+| PyPI project name | `scientific-toolkit-mcp` |
 | GitHub owner | `Furox-Art` |
 | Repository | `scientific-toolkit` |
 | Workflow filename | `release-pypi.yml` |
@@ -24,6 +24,11 @@ maintainer and visit https://pypi.org/manage/account/publishing/ to add a
 If the project already exists under the maintainer's account, register the same
 GitHub Trusted Publisher under **that project's** Publishing settings instead.
 A pending publisher does not reserve a name.
+
+The previous project `furox-scientific-toolkit-mcp` was removed from PyPI on
+2026-10-20 and has no files. The distribution is published under the new name
+`scientific-toolkit-mcp`, so the pending publisher above must be registered for
+that name before the first release.
 
 The workflow is `.github/workflows/release-pypi.yml`. It uses GitHub's OIDC identity
 and `pypa/gh-action-pypi-publish`; **do not create a long-lived PyPI API token**.
@@ -44,7 +49,7 @@ branches/tags if the repository's plan supports it.
    distributions, re-checks them with `twine check`, and requests a short-lived PyPI
    publishing token through OIDC.
 6. Check the workflow's final status and the actual public release on
-   https://pypi.org/project/furox-scientific-toolkit-mcp/.
+   https://pypi.org/project/scientific-toolkit-mcp/.
 
 ### Idempotent publishing and automatic verification
 
@@ -80,8 +85,8 @@ previously published version's distributions. Do not recycle version numbers.
 After the public PyPI page lists the new version, verify on a fresh environment:
 
 ```bash
-python -m pip install furox-scientific-toolkit-mcp
-python -c "import importlib.metadata as m; import scientific_toolkit_mcp; print(m.version('furox-scientific-toolkit-mcp'))"
+python -m pip install scientific-toolkit-mcp
+python -c "import importlib.metadata as m; import scientific_toolkit_mcp; print(m.version('scientific-toolkit-mcp'))"
 ```
 
 This installs the **gateway**, not all seven upstream scientific packages.

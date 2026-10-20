@@ -5,7 +5,7 @@ The upstream packages stay independent, with their original names and version hi
 This repository is an integration hub, not a merge of source trees.
 
 Project website: [Furox Scientific Toolkit](https://www.furoxscientifictoolkit.lovie.me/).
-Published Python package: [furox-scientific-toolkit-mcp on PyPI](https://pypi.org/project/furox-scientific-toolkit-mcp/).
+Published Python package: [scientific-toolkit-mcp on PyPI](https://pypi.org/project/scientific-toolkit-mcp/).
 
 ## Names
 
@@ -15,7 +15,7 @@ spellings. They all refer to this one gateway.
 | Surface | Name |
 | --- | --- |
 | GitHub repository | `scientific-toolkit` |
-| PyPI project | `furox-scientific-toolkit-mcp` |
+| PyPI project | `scientific-toolkit-mcp` |
 | Python import | `scientific_toolkit_mcp` |
 | Console script | `scientific-toolkit-mcp` |
 | Current version | 0.2.3 |
@@ -23,6 +23,10 @@ spellings. They all refer to this one gateway.
 PyPI project names cannot be renamed after publication, so this table, the
 `[project]` block in `pyproject.toml` and `SKILL.md` are the authoritative
 mapping. There is no PyPI project named `scientific-toolkit`.
+
+The earlier `furox-scientific-toolkit-mcp` project was removed from PyPI and is
+no longer installable; `scientific-toolkit-mcp` replaces it with the same import
+name and console script.
 
 **Status:** local stdio and authenticated stateless Streamable HTTP transports
 are implemented. The public Render deployment at
@@ -56,7 +60,7 @@ Requires **Python 3.10+**. Install the published MCP gateway from PyPI,
 or install it in editable mode from a source checkout for development:
 
 ```sh
-python -m pip install furox-scientific-toolkit-mcp
+python -m pip install scientific-toolkit-mcp
 # For a source checkout instead: python -m pip install -e .
 # Select upstream packages you actually need:
 python -m pip install axiomize scientific-computing-system
@@ -292,12 +296,12 @@ be advertised as active without a real IdP and app-specific authentication test.
 
 ## Python package and PyPI publishing
 
-The gateway's Python distribution is named [`furox-scientific-toolkit-mcp`](https://pypi.org/project/furox-scientific-toolkit-mcp/)
+The gateway's Python distribution is named [`scientific-toolkit-mcp`](https://pypi.org/project/scientific-toolkit-mcp/)
 (version `0.2.3`), with import name `scientific_toolkit_mcp`. The package has
 been published on PyPI and can be installed with:
 
 ```sh
-python -m pip install furox-scientific-toolkit-mcp
+python -m pip install scientific-toolkit-mcp
 ```
 
 Publishing the MCP gateway does not by itself verify integration with Claude

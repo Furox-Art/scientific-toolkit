@@ -40,7 +40,7 @@ jobs:
           from pathlib import Path
 
           metadata = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))["project"]
-          package_name = "furox-scientific-toolkit-mcp"
+          package_name = "scientific-toolkit-mcp"
           version = metadata["version"]
           tag = os.environ["GITHUB_REF_NAME"]
           assert metadata["name"] == package_name, f"Unexpected distribution name: {metadata['name']}"
@@ -102,7 +102,7 @@ jobs:
       - name: Smoke-test installed wheel away from checkout
         run: |
           python -m pip install --force-reinstall dist/*.whl
-          (cd /tmp && python -c 'import importlib.metadata as meta; import scientific_toolkit_mcp; assert meta.version("furox-scientific-toolkit-mcp") == scientific_toolkit_mcp.__version__; import scientific_toolkit_mcp.server; print("Installed wheel import PASS")')
+          (cd /tmp && python -c 'import importlib.metadata as meta; import scientific_toolkit_mcp; assert meta.version("scientific-toolkit-mcp") == scientific_toolkit_mcp.__version__; import scientific_toolkit_mcp.server; print("Installed wheel import PASS")')
 
       - name: Save verified distributions
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
@@ -118,7 +118,7 @@ jobs:
     timeout-minutes: 20
     environment:
       name: pypi
-      url: https://pypi.org/p/furox-scientific-toolkit-mcp
+      url: https://pypi.org/p/scientific-toolkit-mcp
     permissions:
       id-token: write
     steps:
@@ -225,7 +225,7 @@ jobs:
           import urllib.request
           from pathlib import Path
 
-          project = "furox-scientific-toolkit-mcp"
+          project = "scientific-toolkit-mcp"
           version = "${{ needs.build.outputs.version }}"
           expected = sorted(path.name for path in Path("dist").iterdir() if path.is_file() and (path.name.endswith(".tar.gz") or path.name.endswith(".whl")))
           url = f"https://pypi.org/pypi/{project}/{version}/json"
