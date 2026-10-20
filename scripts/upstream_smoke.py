@@ -75,8 +75,12 @@ def main():
         print("No sealed scientific plan or completion verdict was tested.")
     else:
         output = request(tool, args)
-        print(f"PASS: {profile}, {tool}, real process exit {output['exit_code']}, "
-              f"output chars {len(output['stdout'])}")
+        if "stdout" in output:
+            print(f"PASS: {profile}, {tool}, real process exit {output['exit_code']}, "
+                  f"output chars {len(output['stdout'])}")
+        else:
+            print(f"PASS: {profile}, {tool}, real MCP stdio session exit "
+                  f"{output['exit_code']}, {len(output['calls'])} tool replies")
     print("Smoke pass is not proof of scientific validity or full client compatibility.")
 
 if __name__ == "__main__":
