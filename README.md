@@ -7,6 +7,23 @@ This repository is an integration hub, not a merge of source trees.
 Project website: [Furox Scientific Toolkit](https://www.furoxscientifictoolkit.lovie.me/).
 Published Python package: [furox-scientific-toolkit-mcp on PyPI](https://pypi.org/project/furox-scientific-toolkit-mcp/).
 
+## Names
+
+The repository, PyPI project, import module and console script use different
+spellings. They all refer to this one gateway.
+
+| Surface | Name |
+| --- | --- |
+| GitHub repository | `scientific-toolkit` |
+| PyPI project | `furox-scientific-toolkit-mcp` |
+| Python import | `scientific_toolkit_mcp` |
+| Console script | `scientific-toolkit-mcp` |
+| Current version | 0.2.3 |
+
+PyPI project names cannot be renamed after publication, so this table, the
+`[project]` block in `pyproject.toml` and `SKILL.md` are the authoritative
+mapping. There is no PyPI project named `scientific-toolkit`.
+
 **Status:** local stdio and authenticated stateless Streamable HTTP transports
 are implemented. The public Render deployment at
 [`https://scientific-toolkit.onrender.com/health`](https://scientific-toolkit.onrender.com/health)
