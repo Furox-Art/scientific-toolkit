@@ -48,9 +48,9 @@ def main():
                     outcome = line
         assert outcome, "no finished production diagnostic was reported"
         assert "RESULT=PASS" in outcome, outcome
-        assert "checks_passed=12" in outcome, outcome
+        assert "checks_passed=14" in outcome, outcome
         assert "checks_failed=0" in outcome, outcome
-        print("PASS: real HTTP authentication and six real CLIs in a single instance")
+        print("PASS: real HTTP authentication and eight real upstream adapters in one instance")
     finally:
         process.terminate()
         try:
