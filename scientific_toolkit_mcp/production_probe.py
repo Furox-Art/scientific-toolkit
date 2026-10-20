@@ -21,6 +21,16 @@ CALLS = [
     ("eq_layer_route", {"messages": [
         {"role": "user", "content": "Explain the result clearly."}
     ], "intent_mode": "heuristic"}),
+    ("literature_evidence_verify_quote", {
+        "quote": "sample size affects uncertainty",
+        "source_text": "In this study, sample size affects uncertainty.",
+        "source_id": "probe-doc",
+    }),
+    ("nomosguard_decide", {"claims": [{
+        "kind": "exposure",
+        "payload": {"service": "api"},
+        "evidence": "probe evidence",
+    }]}),
 ]
 
 
@@ -44,7 +54,7 @@ def _post(url: str, method: str, params: dict | None, token: str | None,
 
 
 def probe(port: int) -> bool:
-    """Return true only after the real HTTP adapter, six safe CLI calls and guards pass."""
+    """Return true only after the real HTTP adapter, eight safe upstream calls and guards pass."""
     token = os.environ.get("SCITOOL_MCP_BEARER_TOKEN", "")
     if not token:
         print("PRODUCTION_MCP_PROBE RESULT=BLOCKED reason=no_static_secret", flush=True)
@@ -112,22 +122,22 @@ def probe(port: int) -> bool:
     def list_remote() -> None:
         result = _post(endpoint, "tools/list", None, token)
         names = {item["name"] for item in result["tools"]}
-        if len(names) != 10 or "plan_auditor_audit" in names or "plan_auditor_inspect" not in names:
+        if len(names) != 13 or "plan_auditor_audit" in names or "plan_auditor_inspect" not in names:
             raise AssertionError("wrong remote tool inventory")
 
     def catalog() -> None:
         output = _post(endpoint, "tools/call",
                        {"name": "toolkit_catalog", "arguments": {}}, token)
         data = json.loads(output["content"][0]["text"])
-        if output.get("isError") or data.get("count") != 7:
+        if output.get("isError") or data.get("count") != 9:
             raise AssertionError("catalog mismatch")
 
     def doctor() -> None:
         output = _post(endpoint, "tools/call",
                        {"name": "toolkit_doctor", "arguments": {}}, token)
         data = json.loads(output["content"][0]["text"])
-        if output.get("isError") or len(data.get("commands", {})) != 7:
-            raise AssertionError("doctor did not list seven CLIs")
+        if output.get("isError") or len(data.get("commands", {})) != 9:
+            raise AssertionError("doctor did not list nine upstream tools")
         if not all(v.get("installed") is True for v in data["commands"].values()):
             raise AssertionError("one or more upstream commands are not installed")
 
@@ -140,8 +150,8 @@ def probe(port: int) -> bool:
     check("unauthenticated_denied", unauthorized)
     check("initialize", initialization)
     check("remote_tool_inventory", list_remote)
-    check("seven_repository_catalog", catalog)
-    check("seven_upstream_cli_paths", doctor)
+    check("nine_repository_catalog", catalog)
+    check("nine_upstream_cli_paths", doctor)
     check("remote_audit_denied", denied_audit)
 
     for name, arguments in CALLS:

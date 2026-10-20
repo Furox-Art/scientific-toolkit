@@ -4,11 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "scientific-toolkit-mcp"
-version = "0.3.0"
-description = "Provider-neutral local and remote MCP hub for seven Furox-Art public research tools"
+version = "0.4.0"
+description = "Provider-neutral local and remote MCP hub for nine Furox-Art public research tools"
 keywords = ["model-context-protocol", "mcp", "scientific-computing", "ai-agents", "research-tools", "python"]
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 authors = [{name = "Furox-Art"}]
 license = "Apache-2.0"
 dependencies = []
@@ -17,7 +17,6 @@ classifiers = [
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",

@@ -40,6 +40,10 @@ jobs:
             repository: Furox-Art/axiomize-quantum-skills-2.0
           - profile: eq-layer
             repository: Furox-Art/eq-layer
+          - profile: literature-evidence-mcp
+            repository: Furox-Art/literature-evidence-mcp
+          - profile: nomosguard
+            repository: Furox-Art/nomosguard
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:

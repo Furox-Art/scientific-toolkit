@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `literature-evidence-mcp` and `nomosguard` join the gateway catalog, taking
+  the inventory to nine upstream repositories and fourteen tools.
+- `literature_evidence_search` and `literature_evidence_verify_quote` drive the
+  literature-evidence MCP stdio server; `nomosguard_decide` asserts evidenced
+  claims, derives paths, and runs the deterministic fail-closed policy gate.
+- A bounded stdlib MCP stdio client that keeps stdin open until every expected
+  response arrives, so a server that stops reading at EOF cannot drop replies.
+- `toolkit_doctor` reports module-based servers and their import names.
+
+### Changed
+
+- The gateway now requires Python 3.11 or newer; `literature-evidence-mcp`
+  declares the same floor.
+
 ## [0.3.0] - 2026-10-20
 
 ### Changed

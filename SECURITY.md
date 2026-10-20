@@ -3,17 +3,17 @@
 `scientific-toolkit-mcp` is an MCP gateway. It exposes a local stdio
 transport and an authenticated HTTP transport, and it invokes separately
 installed upstream scientific CLIs. This policy covers the gateway code and
-packaging in this repository, not the seven upstream projects.
+packaging in this repository, not the nine upstream projects.
 
 ## Supported versions
 
 | Version | Supported |
 | --- | --- |
-| `0.2.x` | Yes |
-| `< 0.2` | No |
+| `0.3.x` | Yes |
+| `< 0.3` | No |
 
-Security fixes target the `0.2.x` release line. Reproduce a report against the
-latest `0.2.x` release before submitting it. The upstream packages have their
+Security fixes target the `0.3.x` release line. Reproduce a report against the
+latest `0.3.x` release before submitting it. The upstream packages have their
 own release and security policies.
 
 ## Reporting a vulnerability
@@ -87,7 +87,7 @@ coordinate disclosure and credit with the reporter.
 
 - Scientific correctness, statistical validity, or model quality of upstream
   results. Report defects in an upstream package to that package's repository.
-- Vulnerabilities in the seven upstream distributions themselves, unless the
+- Vulnerabilities in the nine upstream distributions themselves, unless the
   gateway makes the impact worse.
 - The documented execution model of `plan_auditor_audit` when it is explicitly
   enabled for a trusted workspace. It runs project-authored checks and is not a

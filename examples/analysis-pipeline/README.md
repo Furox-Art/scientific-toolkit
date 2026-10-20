@@ -4,7 +4,7 @@ Generated on this machine by running:
 
     python examples/analysis_pipeline.py
 
-Environment: Python 3.12.3 (Linux x86_64).
+Environment: Python 3.12.10 (Windows win32 x86_64).
 The bundled `axiomize-reason` ran from the isolated package directory
 selected by `SCITOOL_REASON_BIN`.
 
@@ -14,7 +14,7 @@ capture process: each number is what an upstream CLI actually printed.
 ```text
 
 ==============================================================================
-Scientific Toolkit MCP gateway -- seven-tool example workflow
+Scientific Toolkit MCP gateway -- nine-tool example workflow
 ==============================================================================
 Input data: 10 replicate measurements of one length
 Research idea: How does the number of replicate measurements affect the reported uncertainty of a single length measurement?
@@ -98,7 +98,7 @@ Stage 5 -- quantum_skill_validate: is the reasoning protocol contract valid?
        |   "description": "Maintain multiple genuinely different candidate hypotheses or solution paths, test them against evidence and tools, suppress weak or contradictory paths, revive useful alternatives when new evidence appears, and collapse to the best-supported answer only at the end.",
        |   "description_length": 266,
        |   "name": "quantum-reasoning",
-       |   "package_version": "1.1.1",
+       |   "package_version": "1.1.5",
        |   "problems": [],
        |   "valid": true
        | }
@@ -126,7 +126,23 @@ Stage 7 -- eq_layer_route: how should this result be reported?
        intent=statement, mode=contextual, task_move=respond_contextually
 
 ==============================================================================
-Stage 8 -- plan-auditor: independent inspection of this workflow
+Stage 8 -- literature_evidence_verify_quote: textual support for the summary
+==============================================================================
+[OK  ] literature_evidence_verify_quote
+       Textual quote matching only. It does not verify the scientific claim.
+       upstream program: literature-evidence, real exit code 0
+       text_match=True, status=TEXTUAL_MATCH_ONLY, scientific_claim_verified=False
+
+==============================================================================
+Stage 9 -- nomosguard_decide: fail-closed policy gate
+==============================================================================
+[OK  ] nomosguard_decide
+       Deterministic policy gate over the declared claim. This is not a scientific judgment or proof that the claim is false.
+       upstream program: nomosguard, real exit code 0
+       decision=BLOCK, policy_rule=FALLBACK, ledger_verified=True
+
+==============================================================================
+Stage 10 -- plan-auditor: independent inspection of this workflow
 ==============================================================================
 [OK  ] plan_auditor_inspect
        Read-only inspection of a real sealed workspace. This does not certify any scientific conclusion.
@@ -149,7 +165,7 @@ Stage 8 -- plan-auditor: independent inspection of this workflow
 ==============================================================================
 Workflow summary
 ==============================================================================
-Stages attempted: 8 (gateway metadata, six upstream tools, one audit)
+Stages attempted: 10 (gateway metadata, eight safe upstream tools, one audit)
 Distinct KNOWN GAPS: 0
   - none: every upstream tool executed and returned its own output
 
@@ -179,7 +195,9 @@ Machine-readable result for this run:
     "plan-auditor",
     "quantum-reasoning",
     "axiomize-reason",
-    "eq-layer"
+    "eq-layer",
+    "literature-evidence",
+    "nomosguard"
   ],
   "intake_questions": [
     {
@@ -218,6 +236,16 @@ Machine-readable result for this run:
     "intent_kind": "statement",
     "response_mode": "contextual",
     "task_move": "respond_contextually"
+  },
+  "literature_quote_verification": {
+    "text_match": true,
+    "status": "TEXTUAL_MATCH_ONLY",
+    "scientific_claim_verified": false
+  },
+  "nomosguard_decision": {
+    "decision": "BLOCK",
+    "policy_rule": "FALLBACK",
+    "ledger_verified": true
   }
 }
 ```

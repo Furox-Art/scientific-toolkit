@@ -1,6 +1,7 @@
 #!/bin/bash
 # Regenerate the committed availability report with the fully installed
-# local environment (six upstream CLIs in .venv, axiomize-reason isolated).
+# local environment (seven upstream CLIs in .venv, the nomosguard module, and
+# axiomize-reason isolated).
 cd /home/urkan/github/scientific-toolkit
 export PATH="/home/urkan/github/scientific-toolkit/.venv/bin:$PATH"
 # SCITOOL_REASON_BIN points at the isolated console script only. No global

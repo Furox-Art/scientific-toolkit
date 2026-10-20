@@ -5,7 +5,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        This repository is the MCP gateway, not the seven upstream packages.
+        This repository is the MCP gateway, not the nine upstream packages.
         Changes to upstream algorithms belong in the upstream repository.
 
         Read [CONTRIBUTING.md](https://github.com/Furox-Art/scientific-toolkit/blob/main/CONTRIBUTING.md)

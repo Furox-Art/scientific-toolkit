@@ -23,11 +23,27 @@ def call(name, args=None):
     return r["result"]
 
 
+def fake_cli(directory, name, source):
+    """Create a runnable fake executable, including on Windows without shebangs."""
+    script = Path(directory) / f"{name}.py"
+    if os.name == "nt":
+        script.write_text(source, encoding="utf-8")
+        launcher = Path(directory) / f"{name}.cmd"
+        launcher.write_text(
+            f'@echo off\r\n"{sys.executable}" "{script}" %*\r\n',
+            encoding="utf-8",
+        )
+        return launcher
+    script.write_text(f"#!{sys.executable}\n{source}", encoding="utf-8")
+    script.chmod(0o755)
+    return script
+
+
 class ToolTests(unittest.TestCase):
-    def test_catalog_has_seven_distinct_original_repos(self):
+    def test_catalog_has_nine_distinct_original_repos(self):
         items = catalog()
-        self.assertEqual(len(items), 7)
-        self.assertEqual(len({i["name"] for i in items}), 7)
+        self.assertEqual(len(items), 9)
+        self.assertEqual(len({i["name"] for i in items}), 9)
         self.assertTrue(all(i["url"].startswith("https://github.com/Furox-Art/") for i in items))
         self.assertEqual(set().union(*(set(i["tools"]) for i in items)) | {"toolkit_catalog", "toolkit_doctor"},
                          {t["name"] for t in TOOLS})
@@ -43,7 +59,7 @@ class ToolTests(unittest.TestCase):
     def test_catalog_tool(self):
         r = call("toolkit_catalog")
         self.assertFalse(r["isError"])
-        self.assertEqual(json.loads(r["content"][0]["text"])["count"], 7)
+        self.assertEqual(json.loads(r["content"][0]["text"])["count"], 9)
 
     def test_unknown_tool_is_protocol_error(self):
         r = handle({"jsonrpc": "2.0", "id": 7, "method": "tools/call", "params": {"name": "nope"}})
@@ -90,9 +106,8 @@ class ToolTests(unittest.TestCase):
 
     def test_fake_cli_is_invoked_without_shell(self):
         with tempfile.TemporaryDirectory() as td:
-            fake = Path(td) / "fakecli"
-            fake.write_text(f"#!{sys.executable}\nimport sys, json\nprint(json.dumps({{'argv': sys.argv[1:]}}))\n", encoding="utf-8")
-            fake.chmod(0o755)
+            fake = fake_cli(td, "fakecli",
+                            "import sys, json\nprint(json.dumps({'argv': sys.argv[1:]}))\n")
             with patch.dict(os.environ, {"SCITOOL_EQ_BIN": str(fake), "SCITOOL_CDS2_BIN": str(fake)}):
                 eq = call("eq_layer_route", {"messages": [{"role": "user", "content": "Test me"}]})
                 self.assertFalse(eq["isError"])
@@ -106,9 +121,7 @@ class ToolTests(unittest.TestCase):
 
     def test_fake_cli_nonzero_is_mcp_error(self):
         with tempfile.TemporaryDirectory() as td:
-            fake = Path(td) / "failcli"
-            fake.write_text(f"#!{sys.executable}\nimport sys\nprint('UNKNOWN')\nsys.exit(3)\n", encoding="utf-8")
-            fake.chmod(0o755)
+            fake = fake_cli(td, "failcli", "import sys\nprint('UNKNOWN')\nsys.exit(3)\n")
             with patch.dict(os.environ, {"SCITOOL_REASON_BIN": str(fake)}):
                 r = call("axiomize_reason_score", {"evidence": .5, "verification": .7})
                 self.assertTrue(r["isError"])
@@ -187,8 +200,8 @@ class ToolTests(unittest.TestCase):
         self.assertEqual(p.stderr, "")
         lines = [json.loads(line) for line in p.stdout.splitlines()]
         self.assertEqual(len(lines), 3)
-        self.assertEqual(len(lines[1]["result"]["tools"]), 11)
-        self.assertEqual(json.loads(lines[2]["result"]["content"][0]["text"])["count"], 7)
+        self.assertEqual(len(lines[1]["result"]["tools"]), 14)
+        self.assertEqual(json.loads(lines[2]["result"]["content"][0]["text"])["count"], 9)
 
 
 class ToolRoutingTests(unittest.TestCase):
@@ -241,6 +254,10 @@ class ToolRoutingTests(unittest.TestCase):
             "quantum_skill_validate": {},
             "axiomize_reason_score": {"evidence": 0.5, "verification": 0.5},
             "eq_layer_route": {"messages": [{"role": "user", "content": "x"}]},
+            "literature_evidence_search": {"query": "x"},
+            "literature_evidence_verify_quote": {
+                "quote": "q", "source_text": "s", "source_id": "id"},
+            "nomosguard_decide": {"claims": []},
         }
         for name, args in sample.items():
             with self.subTest(tool=name):
@@ -412,9 +429,9 @@ class DocumentedInventoryTests(unittest.TestCase):
     def test_documented_tool_counts_match_the_code(self):
         local = len(TOOLS)
         remote = local - 1  # plan_auditor_audit is local-only by design
-        self.assertEqual(local, 11)
-        self.assertEqual(remote, 10)
-        self.assertEqual(len(catalog()), 7)
+        self.assertEqual(local, 14)
+        self.assertEqual(remote, 13)
+        self.assertEqual(len(catalog()), 9)
         readme = (Path(__file__).resolve().parents[1] / "README.md").read_text(
             encoding="utf-8")
         self.assertIn(f"{remote} remote tools out of {local} local tools", readme)
@@ -422,8 +439,8 @@ class DocumentedInventoryTests(unittest.TestCase):
     def test_methodology_documents_the_same_inventory(self):
         docs = (Path(__file__).resolve().parents[1] / "docs"
                 / "integration-test-methodology.md").read_text(encoding="utf-8")
-        self.assertIn("eleven tool names", docs)
-        self.assertIn("ten remote-safe tools", docs)
+        self.assertIn("fourteen tool names", docs)
+        self.assertIn("thirteen remote-safe tools", docs)
 
 
 if __name__ == "__main__":

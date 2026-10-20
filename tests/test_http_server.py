@@ -67,7 +67,7 @@ class HttpTest(unittest.TestCase):
         with patch.dict(os.environ, {'SCITOOL_MCP_BEARER_TOKEN': TOKEN}):
             code, result = self.send('POST', '/mcp', req)
         self.assertEqual(code, 200)
-        self.assertEqual(len(result['result']['tools']), 10)
+        self.assertEqual(len(result['result']['tools']), 13)
         names = {tool['name'] for tool in result['result']['tools']}
         self.assertIn('plan_auditor_inspect', names)
         self.assertNotIn('plan_auditor_audit', names)
@@ -78,7 +78,7 @@ class HttpTest(unittest.TestCase):
         with patch.dict(os.environ, {'SCITOOL_MCP_BEARER_TOKEN': TOKEN}):
             code, result = self.send('POST', '/mcp', req)
         self.assertEqual(code, 200)
-        self.assertEqual(json.loads(result['result']['content'][0]['text'])['count'], 7)
+        self.assertEqual(json.loads(result['result']['content'][0]['text'])['count'], 9)
 
     def test_remote_inspect_requires_configured_workspace(self):
         req = {'jsonrpc': '2.0', 'id': 5, 'method': 'tools/call',

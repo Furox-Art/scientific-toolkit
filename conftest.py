@@ -1,4 +1,4 @@
-"""Fail-closed integrity gate for full toolkit and seven adapter test suites."""
+"""Fail-closed integrity gate for the full toolkit and upstream adapter suites."""
 
 from __future__ import annotations
 

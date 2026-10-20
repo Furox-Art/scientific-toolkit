@@ -42,7 +42,7 @@ class AvailabilityReportTests(unittest.TestCase):
 
     def test_every_upstream_record_splits_listed_from_verified(self):
         records = self.report["upstream_tools"]
-        self.assertEqual(len(records), 7)
+        self.assertEqual(len(records), 9)
         for record in records:
             with self.subTest(repository=record["repository"]):
                 self.assertIsInstance(record["listed"], bool)
@@ -75,9 +75,18 @@ class AvailabilityReportTests(unittest.TestCase):
         self.assertIsInstance(providers, list)
         self.assertTrue(all(isinstance(p, str) for p in providers))
 
+    def test_module_server_is_probed_without_claiming_a_cli_version(self):
+        records = {record["repository"]: record for record in self.report["upstream_tools"]}
+        nomosguard = records["nomosguard"]
+        self.assertEqual(nomosguard["module"], "nomosguard.mcp_stdio")
+        self.assertIsInstance(nomosguard["module_importable"], bool)
+        self.assertFalse(nomosguard["cli_self_reported_version"]["reported"])
+        self.assertIn("module server", nomosguard["cli_self_reported_version"]["reason"])
+        self.assertIsNone(records["eq-layer"]["module"])
+
     def test_fail_closed_checks_all_refuse_as_expected(self):
         checks = self.report["fail_closed_checks"]
-        self.assertEqual(len(checks), 6)
+        self.assertEqual(len(checks), 9)
         for check in checks:
             with self.subTest(tool=check["gateway_tool"]):
                 self.assertTrue(check["isError"], check)
