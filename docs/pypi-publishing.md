@@ -7,11 +7,11 @@ importable module is `scientific_toolkit_mcp`, and the installed executable is
 > A GitHub workflow existing is **not** evidence of a published PyPI package.
 > Verify the public PyPI project after a successful release before advertising installation.
 
-## First release: establish a pending Trusted Publisher
+## Trusted Publisher
 
-If the distribution has not yet been created on PyPI, sign in as its intended
-maintainer and visit https://pypi.org/manage/account/publishing/ to add a
-**GitHub Actions pending publisher** with these exact values:
+The `scientific-toolkit-mcp` project was created on PyPI on 2026-10-20, and
+release `0.3.0` is published. Its GitHub Actions Trusted Publisher is
+registered with these exact values:
 
 | PyPI field | Value |
 | --- | --- |
@@ -21,14 +21,13 @@ maintainer and visit https://pypi.org/manage/account/publishing/ to add a
 | Workflow filename | `release-pypi.yml` |
 | GitHub environment | `pypi` |
 
-If the project already exists under the maintainer's account, register the same
-GitHub Trusted Publisher under **that project's** Publishing settings instead.
-A pending publisher does not reserve a name.
+Manage the publisher at
+https://pypi.org/manage/project/scientific-toolkit-mcp/settings/publishing/.
+Any mismatch between these values and the workflow's OIDC claims makes PyPI
+reject the exchange with `invalid-publisher`.
 
 The previous project `furox-scientific-toolkit-mcp` was removed from PyPI on
-2026-10-20 and has no files. The distribution is published under the new name
-`scientific-toolkit-mcp`, so the pending publisher above must be registered for
-that name before the first release.
+2026-10-20 and has no files; the distribution now lives under the new name.
 
 The workflow is `.github/workflows/release-pypi.yml`. It uses GitHub's OIDC identity
 and `pypa/gh-action-pypi-publish`; **do not create a long-lived PyPI API token**.
