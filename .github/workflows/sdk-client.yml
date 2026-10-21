@@ -31,8 +31,11 @@ jobs:
           cache: 'pip'
           cache-dependency-path: pyproject.toml
       - name: Install toolkit and official MCP Python SDK
+        # Same major as the package test extra (pyproject.toml). The SDK smoke
+        # uses mcp>=2's streamable_http_client/httpx2 API; installing the older
+        # 1.x SDK here tested a client the project itself no longer supports.
         run: |
           python -m pip install -e .
-          python -m pip install "mcp>=1.15,<2"
+          python -m pip install "mcp>=2,<3"
       - name: Real client/server MCP session over authenticated loopback HTTP
         run: python scripts/sdk_client_smoke.py

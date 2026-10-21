@@ -41,9 +41,12 @@ branches/tags if the repository's plan supports it.
 2. Verify the full test suite and the distribution build in CI.
 3. On GitHub, create and **publish a release** with tag `v<version>` (for example,
    `v0.4.0` for version `0.4.0`), targeting the reviewed commit on `main`.
-4. The release workflow checks that the tag, distribution name, and Python version
-   match. It runs the tests, builds sdist and wheel, validates the archive metadata,
-   and installs and imports the built wheel from outside the repository.
+4. The release workflow checks that the tag, distribution name, and package version
+   match (the tag `v<version>` against `project.version` and
+   `__version__`). It also refuses commits that are not on `main` and skips
+   prerelease GitHub releases entirely. It runs the tests, builds sdist and wheel,
+   validates the archive metadata, and installs and imports the built wheel from
+   outside the repository.
 5. Only after the build job succeeds, the publishing job downloads those exact
    distributions, re-checks them with `twine check`, and requests a short-lived PyPI
    publishing token through OIDC.

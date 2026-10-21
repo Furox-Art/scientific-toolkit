@@ -729,16 +729,21 @@ class LocalStdioSecurityTests(unittest.TestCase):
                     self.assertTrue(result["isError"])
                     self.assertIn("NOT_INSTALLED", text_of(result))
 
-    def test_gateway_survives_invalid_json_rpc_frames(self):
-        for message in ("not json", "[]", '{"jsonrpc":"1.0","id":1,"method":"ping"}',
-                        '{"id":1,"method":42}', '{"jsonrpc":"2.0","id":1,"method":"ping",'
-                                                 '"params":"not-an-object"}'):
+    def test_invalid_json_rpc_frames_are_rejected_with_protocol_errors(self):
+        cases = [
+            ([], None, -32600),
+            ({"jsonrpc": "1.0", "id": 1, "method": "ping"}, 1, -32600),
+            ({"id": 1, "method": 42}, 1, -32600),
+            ({"jsonrpc": "2.0", "id": 1, "method": "ping",
+              "params": "not-an-object"}, 1, -32602),
+        ]
+        for message, request_id, code in cases:
             with self.subTest(message=message):
-                response = handle(json.loads(message)) if message.startswith("{") \
-                    else None
-                # Malformed frames must never raise; the server returns an error.
-                self.assertTrue(response is None or "error" in response
-                                or "result" in response)
+                reply = handle(message)
+                self.assertEqual(reply["jsonrpc"], "2.0")
+                self.assertEqual(reply["id"], request_id)
+                self.assertEqual(reply["error"]["code"], code)
+                self.assertNotIn("result", reply)
 
     def test_params_must_be_an_object(self):
         response = handle({"jsonrpc": "2.0", "id": 1, "method": "ping",

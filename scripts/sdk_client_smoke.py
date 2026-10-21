@@ -13,8 +13,9 @@ import sys
 import time
 from urllib.request import urlopen
 
+import httpx2
 from mcp import ClientSession
-from mcp.client.streamable_http import streamablehttp_client
+from mcp.client.streamable_http import streamable_http_client
 
 
 def free_port():
@@ -24,27 +25,33 @@ def free_port():
 
 
 async def exercise(url, token):
-    async with streamablehttp_client(
-        url,
-        headers={"Authorization": f"Bearer {token}"},
-        timeout=30,
-        sse_read_timeout=30,
-    ) as (reader, writer, _):
-        async with ClientSession(reader, writer) as session:
-            initialized = await session.initialize()
-            assert initialized.serverInfo.name == "furox-scientific-toolkit", initialized
-            tools = await session.list_tools()
-            names = {tool.name for tool in tools.tools}
-            assert len(names) == 13, names
-            assert "toolkit_catalog" in names
-            assert "plan_auditor_inspect" in names
-            assert "plan_auditor_audit" not in names
-            response = await session.call_tool("toolkit_catalog", {})
-            assert not response.isError, response
-            catalog = json.loads(response.content[0].text)
-            assert catalog["count"] == 9, catalog
-            print("PASS official MCP SDK initialize, list_tools (13), call_tool "
-                  "(9 project catalog), remote plan inspection only; audit blocked")
+    # mcp>=2 moved the Authorization header onto a caller-supplied
+    # httpx2.AsyncClient and yields a (read, write) pair instead of the
+    # legacy (read, write, get_session_id) triple. The project pins mcp>=2
+    # in its test extra, so this workflow exercises the same major version.
+    async with (
+        httpx2.AsyncClient(
+            headers={"Authorization": f"Bearer {token}"}, timeout=30
+        ) as http_client,
+        streamable_http_client(url, http_client=http_client) as (reader, writer),
+        ClientSession(reader, writer) as session,
+    ):
+        initialized = await session.initialize()
+        assert initialized.server_info.name == "furox-scientific-toolkit", (
+            initialized
+        )
+        tools = await session.list_tools()
+        names = {tool.name for tool in tools.tools}
+        assert len(names) == 13, names
+        assert "toolkit_catalog" in names
+        assert "plan_auditor_inspect" in names
+        assert "plan_auditor_audit" not in names
+        response = await session.call_tool("toolkit_catalog", {})
+        assert not response.is_error, response
+        catalog = json.loads(response.content[0].text)
+        assert catalog["count"] == 9, catalog
+        print("PASS official MCP SDK initialize, list_tools (13), call_tool "
+              "(9 project catalog), remote plan inspection only; audit blocked")
 
 
 def main():
