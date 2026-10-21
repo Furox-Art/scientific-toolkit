@@ -15,23 +15,23 @@ if [[ "${GITHUB_ACTIONS:-}" == "true" ]]; then
     "git+https://github.com/Furox-Art/axiomize.git@803eb44b1e7500bfd10760f8813f9dd4e3afe6d0"
     # scientific-computing-system (SCS) v2.2.12 (dfeda42ebadd1cbef4424ab27564384506618edd)
     "git+https://github.com/Furox-Art/scientific-computing-system.git@dfeda42ebadd1cbef4424ab27564384506618edd"
-    # scientific-computing-system-2.0 (SCS2) v5.4.4 (50a0f65dac34303493921c672bff71405681557b)
-    "git+https://github.com/Furox-Art/scientific-computing-system-2.0.git@50a0f65dac34303493921c672bff71405681557b"
-    # plan-auditor v2.6.2 (d9992e424d3b89c03b2595a4ea200566f9902dda)
-    "git+https://github.com/Furox-Art/plan-auditor.git@d9992e424d3b89c03b2595a4ea200566f9902dda"
-    # quantum-reasoning-skill (QRS) v1.1.5 (68efc4d0d2c6ba58211ef81193c09ebe7cf7c756)
-    "git+https://github.com/Furox-Art/quantum-reasoning-skill.git@68efc4d0d2c6ba58211ef81193c09ebe7cf7c756"
-    # eq-layer v0.2.4 (0221f5d806def389a781b3c3b9e3989a77ecd735)
-    "git+https://github.com/Furox-Art/eq-layer.git@0221f5d806def389a781b3c3b9e3989a77ecd735"
-    # literature-evidence-mcp v0.5.0 (0e60299a4970fe135b486025d89f159238737bf2)
-    "git+https://github.com/Furox-Art/literature-evidence-mcp.git@0e60299a4970fe135b486025d89f159238737bf2"
-    # nomosguard v0.7.9 (7556a11fbfcfdf54a5e005a953ea02ce471f98d7)
-    "git+https://github.com/Furox-Art/nomosguard.git@7556a11fbfcfdf54a5e005a953ea02ce471f98d7"
+    # scientific-computing-system-2.0 (SCS2) v5.4.5 (012979f95ff0599af527503c02b4e5434e8af5d1)
+    "git+https://github.com/Furox-Art/scientific-computing-system-2.0.git@012979f95ff0599af527503c02b4e5434e8af5d1"
+    # plan-auditor v2.6.3 (09e27c9ee7de6a7ec15651e605a7f5b5ea5ab96c)
+    "git+https://github.com/Furox-Art/plan-auditor.git@09e27c9ee7de6a7ec15651e605a7f5b5ea5ab96c"
+    # quantum-reasoning-skill (QRS) v1.2.0 (a6ee692ca6722aeda55c9912924ae0fb9acc40db)
+    "git+https://github.com/Furox-Art/quantum-reasoning-skill.git@a6ee692ca6722aeda55c9912924ae0fb9acc40db"
+    # eq-layer v0.2.5 (e31e1882c2fc1ae861683b56ef46aaf31a9ccd6b)
+    "git+https://github.com/Furox-Art/eq-layer.git@e31e1882c2fc1ae861683b56ef46aaf31a9ccd6b"
+    # literature-evidence-mcp v0.5.1 (b9c90f5e11bf18bba87bb5abfc8e240923424640)
+    "git+https://github.com/Furox-Art/literature-evidence-mcp.git@b9c90f5e11bf18bba87bb5abfc8e240923424640"
+    # nomosguard v0.7.10 (d0d9de518bd7a7d6155a8eb83054f30eaff3c965)
+    "git+https://github.com/Furox-Art/nomosguard.git@d0d9de518bd7a7d6155a8eb83054f30eaff3c965"
     # PyYAML 6.0.3 (the version the full-stack CI run resolves today)
     "PyYAML==6.0.3"
   )
-  # axiomize-quantum-skills-2.0 (AQSK2) v1.2.4 (92f2f6426b09837952107f434e88010440e89cf1)
-  reason_spec="git+https://github.com/Furox-Art/axiomize-quantum-skills-2.0.git@92f2f6426b09837952107f434e88010440e89cf1"
+  # axiomize-quantum-skills-2.0 (AQSK2) v1.2.5 (74df0190a77c2b65540aace89b1f9d2c505ec894)
+  reason_spec="git+https://github.com/Furox-Art/axiomize-quantum-skills-2.0.git@74df0190a77c2b65540aace89b1f9d2c505ec894"
 else
   pip_cache_flag=(--no-cache-dir)
   upstream_specs=(axiomize scientific-computing-system scientific-computing-system-2.0 plan-auditor quantum-reasoning-skill eq-layer literature-evidence-mcp nomosguard "PyYAML==6.0.3")
