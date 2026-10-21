@@ -272,6 +272,9 @@ def _interpreter_for(executable: str | None) -> str | None:
         sibling = path.parent / "python.exe"
         if sibling.is_file():
             return str(sibling)
+        # A ``pip --target`` install has no sibling interpreter; the running
+        # interpreter is the one the launcher was generated for.
+        return sys.executable
     try:
         with open(executable, "rb") as handle:
             first_line = handle.readline().decode("utf-8", "replace").strip()

@@ -7,6 +7,7 @@ reported as a successful scientific result.
 
 from __future__ import annotations
 
+import contextlib
 from functools import partial
 import importlib.metadata as metadata
 import importlib.util
@@ -320,10 +321,8 @@ def _mcp(key: str, argv: list[str], calls: list[tuple[str, dict]],
                 if isinstance(message, dict) and "id" in message:
                     replies[message["id"]] = message
         finally:
-            try:
+            with contextlib.suppress(OSError):
                 process.stdin.close()
-            except OSError:
-                pass
             try:
                 process.wait(timeout=max(1.0, deadline - time.monotonic()))
             except subprocess.TimeoutExpired:

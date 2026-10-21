@@ -58,8 +58,11 @@ jobs:
       - name: Install build tooling
         run: python -m pip install --upgrade build twine
 
-      - name: Install complete test prerequisites
-        run: python -m pip install "pytest>=8" "pytest-cov>=5" "mcp>=2,<3"
+      - name: Install test prerequisites from the package test extra
+        # Same extra the local and pull-request test paths use; the ad-hoc
+        # pytest/pytest-cov/mcp install is gone so the release cannot resolve a
+        # different MCP SDK than CI.
+        run: python -m pip install -e ".[test]"
       - name: Verify MCP server and real adapters without skips
         env:
           SCITOOL_REASON_BIN: ${{ github.workspace }}/.reason-env/bin/axiomize-reason
