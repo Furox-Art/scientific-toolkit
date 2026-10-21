@@ -31,11 +31,11 @@ name and console script.
 **Status:** local stdio and authenticated stateless Streamable HTTP transports
 are implemented. The public Render deployment
 [`https://scientific-toolkit.onrender.com/health`](https://scientific-toolkit.onrender.com/health)
-running 0.3.0 was verified on 2026-10-08: 7 installed CLI executables and
-**12/12 authenticated loopback MCP HTTP startup checks passed**, including six
-safe scientific CLI adapter calls. This proves deployment plumbing, **not**
-scientific correctness or external Claude/ChatGPT client login. The 0.4.0
-nine-repository source has not been deployed to that service yet. OAuth
+publishes only `status` and `transport`, not a version or tool inventory, so it
+cannot attest which release is deployed. CI checks that endpoint and the
+anonymous-401 refusal of MCP calls on every run; those checks prove deployment
+plumbing, **not** scientific correctness or external Claude/ChatGPT client login.
+The 0.4.0 nine-repository source has not been confirmed on that service. OAuth
 issuer/JWKS remains **not configured**.
 
 ## Nine upstream repositories
@@ -245,10 +245,11 @@ Three CI suites provide progressively stronger, but limited, verification:
    and calls `toolkit_catalog`. A generated CI-only token is used.
 
 **Deployment scope:** CI tests both isolated packages and all nine tools installed
-in one environment. The 0.3.0 live Render service also passed 12/12
-authenticated HTTP tests using its own private bearer credential over loopback;
-this includes six tool-execution paths and a seven-CLI availability check. The
-0.4.0 probe contract now expects nine upstream tools and thirteen remote tools.
+in one environment. The live Render `/health` route proves only that the service
+answers with `status: ok` and `transport: streamable-http`, and that an anonymous
+MCP call receives HTTP 401; neither check reveals the deployed version or the
+installed tool set. The 0.4.0 probe contract expects nine upstream tools and
+thirteen remote tools.
 No external ChatGPT/Claude OAuth sign-in was tested. The optional OAuth
 resource verifier is implemented, but a trusted authorization server
 must still be connected before OAuth-based clients can log in. Never

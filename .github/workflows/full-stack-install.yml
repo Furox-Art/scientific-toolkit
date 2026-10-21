@@ -46,7 +46,10 @@ jobs:
           name: availability-report
           path: tests/e2e/results/availability.json
           if-no-files-found: error
-      - name: Test nine installed upstream adapters
+      - name: Smoke-test nine installed upstream tools
+        # Eight profiles execute a real adapter call. plan-auditor is limited to
+        # CLI help plus a fail-closed disabled audit: executing a sealed plan
+        # requires a trusted workspace and is deliberately not done here.
         env:
           SCITOOL_REASON_BIN: ${{ github.workspace }}/.reason-env/bin/axiomize-reason
         run: |

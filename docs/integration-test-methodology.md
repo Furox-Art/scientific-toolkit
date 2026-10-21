@@ -127,7 +127,7 @@ is computed by the suite.
 - `test_statistics_output_feeds_intent_router` — a sentence built from real
   `cds2` output is routed by `eq_layer_route`, and the router echoes the real
   computed numbers back.
-- `test_full_local_stdio_session_across_nine_tools` — a real stdio subprocess
+- `test_full_local_stdio_session_lists_nine_repositories` — a real stdio subprocess
   session: `initialize`, notification, `tools/list`, then four real tool calls,
   verifying the notification correctly receives no response.
 
@@ -218,6 +218,11 @@ installed) as a build artifact on every run. `tests/test_availability_report.py`
 regenerates the report into a temporary directory and asserts the schema, so the
 producer cannot drift from what the file promises.
 
+The committed copy is the last maintainer-run snapshot; its `captured_at_utc`
+field records when it was taken, and the versions it lists can lag the current
+pins. Treat the CI-generated artifact, not the committed file, as the record of
+the present dependency state.
+
 The report contains, all read back from real subprocess calls:
 
 - the environment (Python version, platform, gateway version, UTC timestamp,
@@ -259,12 +264,12 @@ unrelated user can execute end to end:
 python examples/analysis_pipeline.py
 ```
 
-It runs eight stages through the gateway — availability check, research-idea
-intake, two independent statistics engines, their cross-check, protocol
-validation, evidence-based reasoning scoring, response routing, and independent
-plan inspection — feeding each tool's real output into the next tool's real
-input. Missing tools are reported as KNOWN GAPS and the affected stages are
-skipped explicitly.
+It runs ten stages through the gateway — installed-tool inventory, research-idea
+intake, two independent statistics engines plus their cross-check, protocol
+validation, evidence-based reasoning scoring, response routing, textual quote
+verification, a fail-closed policy gate, and independent plan inspection — feeding
+each tool's real output into the next tool's real input. Missing tools are reported
+as KNOWN GAPS and the affected stages are skipped explicitly.
 
 Its real captured output is committed at
 [`examples/analysis-pipeline/README.md`](../examples/analysis-pipeline/README.md).

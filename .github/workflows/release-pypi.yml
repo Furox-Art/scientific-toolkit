@@ -15,6 +15,11 @@ concurrency:
 jobs:
   build:
     name: Build and verify distributions
+    # GitHub fires `release: published` for prereleases too. Publishing a
+    # prerelease tag to PyPI would put `v0.4.0rc1` on the production index as
+    # `0.4.0rc1`, where pip resolves it for users who opt into prereleases and
+    # it cannot be deleted or reused. Prereleases stay GitHub-only.
+    if: github.event.release.prerelease == false
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
@@ -26,6 +31,21 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
+          # Full history so the ancestry check below can see origin/main.
+          fetch-depth: 0
+
+      - name: Require the release commit to be on main
+        # A tag can be created on any commit, including one that no longer
+        # represents the project's shipped line. Asserting ancestry (not
+        # equality with HEAD) allows a release commit that main has since
+        # moved past while rejecting a tag cut from an unmerged branch.
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin main
+          git merge-base --is-ancestor HEAD origin/main || {
+            echo "::error::release commit $(git rev-parse HEAD) is not an ancestor of origin/main"
+            exit 1
+          }
 
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
