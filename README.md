@@ -213,9 +213,12 @@ It exposes read-only plan inspection only for a configured trusted workspace.
 ## Tests
 
 ```sh
-python -m pip install "pytest>=8" "mcp>=2,<3"
+python -m pip install -e ".[test]"
 python -m pytest -q -rs tests/
 ```
+
+The `test` extra is declared in `pyproject.toml` and matches the CI install
+(pytest, pytest-cov, `mcp>=2,<3` and setuptools).
 
 CI exercises JSON-RPC initialization, list/call, nine-repository catalog,
 input validation, fail-closed audit defaults, upstream failures, and fake-CLI
@@ -271,6 +274,13 @@ python -m scientific_toolkit_mcp.http_server
 
 Do **not** replace or reveal the existing `SCITOOL_MCP_BEARER_TOKEN`.
 Rebuild/redeploy the existing free service after changing the build command.
+**Reproducibility.** `scripts/render-build.sh` is not pinned the same way in both
+branches. Under GitHub Actions (`GITHUB_ACTIONS=true`) it installs the eight sibling
+projects from immutable full commit SHAs, each annotated with the release tag it
+resolves to; on Render it installs the released PyPI distributions without commit
+pins. A Render rebuild therefore reflects registry state at build time, while the CI
+full-stack workflow is reproducible against the recorded commits.
+
 The [full-stack installation workflow](https://github.com/Furox-Art/scientific-toolkit/actions/workflows/full-stack-install.yml)
 checks nine real adapter invocations in one CI environment. That does not prove all
 dependencies fit the Render Free 512 MB runtime limit or that production has

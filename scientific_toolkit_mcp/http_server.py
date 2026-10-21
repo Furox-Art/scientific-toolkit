@@ -7,6 +7,7 @@ Browser Origins require explicit configuration; no vendor is privileged.
 from __future__ import annotations
 
 from collections import defaultdict, deque
+import contextlib
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 import os
@@ -140,6 +141,16 @@ class Handler(BaseHTTPRequestHandler):
             len(origins) == 1 and origins[0] in self._allowed_origins()
         )
 
+    def _drain_request_body(self) -> None:
+        """Consume a bounded declared body before an early reply."""
+        lengths = self.headers.get_all('Content-Length', [])
+        if len(lengths) != 1 or re.fullmatch(r'[0-9]+', lengths[0].strip()) is None:
+            return
+        length = int(lengths[0])
+        if 0 < length <= MAX_REQUEST:
+            with contextlib.suppress(OSError):
+                self.rfile.read(length)
+
     def _reply(self, code: int, payload=None, *, mcp=False, headers=None):
         raw = b'' if payload is None else json.dumps(payload, ensure_ascii=False,
                   allow_nan=False).encode('utf-8')
@@ -219,16 +230,20 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         if self._reject_ambiguous_host():
+            self._drain_request_body()
             return
         if urlsplit(self.path).path != '/mcp':
+            self._drain_request_body()
             self._reply(404, {'error': 'not found'})
             return
         if not self._origin_allowed():
+            self._drain_request_body()
             self._reply(403, {'error': 'origin not allowed'})
             return
         # A reverse proxy may interpret duplicate Authorization fields
         # differently. Never authenticate an ambiguous credential.
         if len(self.headers.get_all('Authorization', [])) > 1:
+            self._drain_request_body()
             self.close_connection = True
             self._reply(400, {'error': 'ambiguous authorization headers'},
                         headers={'Connection': 'close'})
@@ -240,8 +255,10 @@ class Handler(BaseHTTPRequestHandler):
                 if config is not None:
                     challenge += f', resource_metadata="{oauth.metadata_url(config)}"'
             except ValueError:
+                self._drain_request_body()
                 self._reply(503, {'error': 'invalid OAuth configuration'})
                 return
+            self._drain_request_body()
             self._reply(401, {'error': 'authentication required'}, headers={
                 'WWW-Authenticate': challenge})
             return
@@ -253,9 +270,11 @@ class Handler(BaseHTTPRequestHandler):
                         headers={'Connection': 'close'})
             return
         if not content_types or not _valid_json_content_type(content_types[0]):
+            self._drain_request_body()
             self._reply(415, {'error': 'application/json with UTF-8 encoding required'})
             return
         if not _accepts_mcp(self.headers.get_all('Accept', [])):
+            self._drain_request_body()
             self._reply(406, {'error': 'Accept must include application/json and text/event-stream'})
             return
         # Conflicting framing is unsafe across reverse proxies: the proxy
@@ -288,9 +307,11 @@ class Handler(BaseHTTPRequestHandler):
         with _lock:
             admitted = _record_rate_hit(client, now)
         if not admitted:
+            self._drain_request_body()
             self._reply(429, {'error': 'rate limit exceeded'})
             return
         if not _semaphore.acquire(blocking=False):
+            self._drain_request_body()
             self._reply(503, {'error': 'server busy'})
             return
         try:

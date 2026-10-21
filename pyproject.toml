@@ -25,6 +25,15 @@ classifiers = [
 
 [project.optional-dependencies]
 oauth = ["PyJWT[crypto]>=2.9,<3"]
+# Mirrors the test install in .github/workflows/tests.yml; setuptools is needed
+# because the package is built with setuptools and the extras are resolved
+# against the same floor as [build-system].
+test = [
+    "pytest>=8",
+    "pytest-cov>=5",
+    "mcp>=2,<3",
+    "setuptools>=68",
+]
 
 [project.scripts]
 scientific-toolkit-mcp = "scientific_toolkit_mcp.server:main"

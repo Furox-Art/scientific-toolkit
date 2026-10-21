@@ -28,6 +28,7 @@ are reported as KNOWN GAPS and the affected stages are skipped explicitly.
 """
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 import shutil
@@ -345,7 +346,7 @@ def main() -> int:
         show("literature_evidence_verify_quote", ok, literature,
              "Textual quote matching only. It does not verify the scientific claim.")
         if ok:
-            try:
+            with contextlib.suppress(KeyError, IndexError, TypeError):
                 claim = literature["calls"][0]["json"]
                 results["literature_quote_verification"] = {
                     "text_match": claim.get("text_match"),
@@ -355,8 +356,6 @@ def main() -> int:
                 print(f"       text_match={claim.get('text_match')}, "
                       f"status={claim.get('status')}, "
                       f"scientific_claim_verified={claim.get('scientific_claim_verified')}")
-            except (KeyError, IndexError, TypeError):
-                pass
         else:
             gaps.append("literature-evidence")
     else:
@@ -374,7 +373,7 @@ def main() -> int:
          "Deterministic policy gate over the declared claim. This is not a "
          "scientific judgment or proof that the claim is false.")
     if ok:
-        try:
+        with contextlib.suppress(KeyError, IndexError, TypeError):
             decision = nomos["calls"][-1]["json"]
             results["nomosguard_decision"] = {
                 "decision": decision.get("decision"),
@@ -384,8 +383,6 @@ def main() -> int:
             print(f"       decision={decision.get('decision')}, "
                   f"policy_rule={decision.get('policy_rule')}, "
                   f"ledger_verified={decision.get('ledger_verified')}")
-        except (KeyError, IndexError, TypeError):
-            pass
     else:
         gaps.append("nomosguard")
 

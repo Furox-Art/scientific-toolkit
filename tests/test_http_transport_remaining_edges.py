@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import io
+from types import SimpleNamespace
+
 import pytest
 
 from scientific_toolkit_mcp import http_server
@@ -41,6 +44,27 @@ def test_accept_negotiation_refuses_incompatible_and_ambiguous_media(
 )
 def test_json_wire_contract_restricts_content_type(media: str, allowed: bool) -> None:
     assert http_server._valid_json_content_type(media) == allowed
+
+
+def test_drain_request_body_ignores_unsized_or_oversized_declarations() -> None:
+    class StubHandler:
+        def __init__(self, *lengths: str) -> None:
+            self.headers = SimpleNamespace(
+                get_all=lambda name, default: list(lengths)
+            )
+            self.rfile = io.BytesIO(b"payload")
+
+    http_server.Handler._drain_request_body(StubHandler())
+    http_server.Handler._drain_request_body(StubHandler("4", "4"))
+    http_server.Handler._drain_request_body(StubHandler("+4"))
+    http_server.Handler._drain_request_body(StubHandler("0"))
+    http_server.Handler._drain_request_body(
+        StubHandler(str(http_server.MAX_REQUEST + 1))
+    )
+
+    sized = StubHandler("4")
+    http_server.Handler._drain_request_body(sized)
+    assert sized.rfile.read() == b"oad"
 
 
 def test_same_ip_rate_bucket_expires_without_full_global_sweep(
