@@ -8,7 +8,7 @@ from scientific_toolkit_mcp.strict_json import loads
 
 
 def TestOneInput(data: bytes) -> None:
-    fdp = atheris.FuzzDataProvider(data)
+    fdp = atheris.FuzzedDataProvider(data)
     if fdp.ConsumeBool():
         payload = fdp.ConsumeBytes(4096)
     else:
