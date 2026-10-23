@@ -1,4 +1,4 @@
-﻿name: Publish Python package to PyPI
+name: Publish Python package to PyPI
 
 on:
   release:
@@ -221,7 +221,7 @@ jobs:
         # job when the files are genuinely absent. Every other input stays at its
         # default, as before.
         continue-on-error: true
-        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # release/v1
+        uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # release/v1
         with:
           skip-existing: true
 
@@ -232,7 +232,7 @@ jobs:
         id: publish-retry
         if: steps.publish.outcome == 'failure'
         continue-on-error: true
-        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # release/v1
+        uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # release/v1
         with:
           skip-existing: true
 
