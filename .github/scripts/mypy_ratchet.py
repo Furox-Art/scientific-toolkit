@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Strict mypy ratchet for scientific-toolkit.
 
 Runs ``mypy --strict`` over ``scientific_toolkit_mcp`` and compares each file's
