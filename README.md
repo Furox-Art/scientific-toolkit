@@ -123,6 +123,10 @@ Optional variables: `PORT` (default `8000`) and `SCITOOL_ALLOWED_ORIGINS`
 Non-browser clients normally omit `Origin`; browser-origin requests require a
 configured allowlist entry and receive restricted CORS headers. Do not put
 bearer secrets in browser JavaScript or check them into a Git repository.
+Set `SCITOOL_TRUST_PROXY=1` only when a reverse proxy appends the peer address
+to a single `X-Forwarded-For` header; rate limiting then keys on its rightmost
+valid address instead of the proxy's socket address. Leave it unset when
+clients can reach the server directly.
 Use TLS/HTTPS at the hosting reverse proxy and restrict access to trusted users.
 
 Remote clients must support **MCP Streamable HTTP and an explicit bearer-token
