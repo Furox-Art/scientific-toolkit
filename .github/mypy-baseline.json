@@ -1,0 +1,8 @@
+{
+  "scientific_toolkit_mcp/catalog.py": 1,
+  "scientific_toolkit_mcp/http_server.py": 10,
+  "scientific_toolkit_mcp/oauth.py": 3,
+  "scientific_toolkit_mcp/production_probe.py": 7,
+  "scientific_toolkit_mcp/server.py": 5,
+  "scientific_toolkit_mcp/tools.py": 30
+}

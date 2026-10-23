@@ -1,0 +1,28 @@
+# Non-modifying hooks only. No formatter or fixer runs here, so a pre-commit
+# run can never rewrite the tree; every hook either passes or reports a
+# violation for a human to fix.
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c  # v6.0.0
+    hooks:
+      - id: check-added-large-files
+      - id: check-merge-conflict
+      - id: check-yaml
+      - id: check-toml
+      - id: check-ast
+      - id: detect-private-key
+  # This repository has no ruff gate in CI and no [tool.ruff] configuration, so
+  # ruff 0.17.0 falls back to its (now broad) default rule set, which reports 55
+  # pre-existing findings. Gating on that would force a mass rewrite, so the
+  # gate runs the same pinned ruff on its correctness tier (syntax errors and
+  # undefined names) instead, which the tree already satisfies. Still
+  # check-only: no --fix.
+  - repo: local
+    hooks:
+      - id: ruff
+        name: ruff check (correctness tier; no CI ruff gate in this repo)
+        entry: ruff check --force-exclude --select E9,F63,F7,F82
+        language: python
+        types_or: [python, pyi]
+        additional_dependencies: ["ruff==0.17.0"]
+        require_serial: true
