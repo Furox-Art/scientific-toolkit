@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+type: software
+title: "Scientific Toolkit MCP: an allowlisted MCP gateway for scientific CLIs"
+abstract: >-
+  A single MCP server that exposes a fixed catalog of scientific CLIs behind
+  validated adapters. Every call runs an allowlisted console script or module
+  with explicit input and output limits, a bounded execution timeout, and the
+  upstream return code preserved in the response. The gateway ships local
+  stdio and authenticated HTTP transports and never evaluates arbitrary
+  commands or Python code.
+authors:
+  - family-names: "Furox"
+    given-names: "Art"
+license: Apache-2.0
+repository-code: "https://github.com/Furox-Art/scientific-toolkit"
+url: "https://github.com/Furox-Art/scientific-toolkit"
+keywords:
+  - mcp
+  - model context protocol
+  - scientific computing
+  - gateway
+  - reproducibility
+  - agent tools

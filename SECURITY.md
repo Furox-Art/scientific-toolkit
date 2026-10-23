@@ -9,12 +9,13 @@ packaging in this repository, not the nine upstream projects.
 
 | Version | Supported |
 | --- | --- |
-| `0.3.x` | Yes |
+| `0.4.x` | Yes |
+| `0.3.x` | Yes, until 0.4.0 is published |
 | `< 0.3` | No |
 
-Security fixes target the `0.3.x` release line. Reproduce a report against the
-latest `0.3.x` release before submitting it. The upstream packages have their
-own release and security policies.
+Security fixes target the `0.4.x` release line. Reproduce a report against the
+latest release of the affected line before submitting it. The upstream packages
+have their own release and security policies.
 
 ## Reporting a vulnerability
 

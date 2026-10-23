@@ -1,0 +1,39 @@
+version: 2
+updates:
+  # Every workflow pins actions to an immutable 40-hex commit SHA, so a moved
+  # tag cannot silently change what CI executes.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    open-pull-requests-limit: 2
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "ci"
+    groups:
+      routine-actions:
+        applies-to: version-updates
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
+
+  # The gateway has no runtime dependencies, but its dev and SDK extras pin
+  # tooling that CI executes verbatim, so a vulnerable or yanked entry still
+  # needs a pull request.
+  - package-ecosystem: "pip"
+    directory: "/"
+    open-pull-requests-limit: 2
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "python"
+    commit-message:
+      prefix: "deps"
+    groups:
+      development-dependencies:
+        dependency-type: "development"

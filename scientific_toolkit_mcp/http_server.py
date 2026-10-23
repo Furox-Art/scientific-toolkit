@@ -9,6 +9,7 @@ from __future__ import annotations
 from collections import defaultdict, deque
 import contextlib
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+import ipaddress
 import json
 import os
 import re
@@ -66,6 +67,28 @@ def _record_rate_hit(client: str, now: float) -> bool:
         return False
     times.append(now)
     return True
+
+
+def _rate_key(client_ip: str, forwarded: list[str] | None) -> str:
+    """Identify the throttled client, honoring a trusted reverse proxy.
+
+    X-Forwarded-For is client-controlled unless the proxy appends to it, so
+    the header is read only when SCITOOL_TRUST_PROXY=1 and only when exactly
+    one header line is present. The rightmost valid address is the hop the
+    trusted proxy added; reading left-to-right would let a client pick its
+    own bucket and reset the quota on every request.
+    """
+    if os.environ.get("SCITOOL_TRUST_PROXY") != "1":
+        return client_ip
+    if not forwarded or len(forwarded) != 1:
+        return client_ip
+    for part in reversed(forwarded[0].split(",")):
+        candidate = part.strip()
+        try:
+            return str(ipaddress.ip_address(candidate))
+        except ValueError:
+            continue
+    return client_ip
 
 
 def _accepts_mcp(accept_headers: list[str]) -> bool:
@@ -302,7 +325,10 @@ class Handler(BaseHTTPRequestHandler):
         if not 0 < length <= MAX_REQUEST:
             self._reply(413, {'error': 'body must be between 1 and 131072 bytes'})
             return
-        client = self.client_address[0]
+        client = _rate_key(
+            self.client_address[0],
+            self.headers.get_all('X-Forwarded-For', []),
+        )
         now = time.monotonic()
         with _lock:
             admitted = _record_rate_hit(client, now)

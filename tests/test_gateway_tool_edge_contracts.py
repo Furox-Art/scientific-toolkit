@@ -69,6 +69,18 @@ def test_module_provider_discovery_detects_file_and_package(
     ]
 
 
+def test_empty_sys_path_entry_means_the_working_directory(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    (tmp_path / "shadowed_module").mkdir()
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(tools.sys, "path", [""])
+    assert tools.module_providers("shadowed_module") == [
+        str(Path.cwd() / "shadowed_module"),
+    ]
+
+
 def test_missing_pinned_distribution_and_explicit_pin_are_rejected(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -90,6 +102,7 @@ def test_subprocess_results_preserve_truncation_and_missing_json(
     monkeypatch.setattr(tools, "MAX_OUTPUT", 12)
 
     def run(*args, **kwargs):
+        assert kwargs["stdin"] is subprocess.DEVNULL
         return SimpleNamespace(
             stdout='{"incomplete": x' + "extra",
             stderr="diagnostic\n",
@@ -125,6 +138,74 @@ def test_subprocess_faults_are_reported_not_swallowed(
     monkeypatch.setattr(tools.subprocess, "run", fail)
     with pytest.raises(tools.ToolFailure, match=expected):
         tools._call("cds", ["stats", "1,2"], seconds=1)
+
+
+def test_stats_forwards_values_without_rounding_them(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    observed = {}
+
+    def fake_call(key, argv, *, seconds=30):
+        observed.update(key=key, argv=argv, seconds=seconds)
+        return {"status": "COMMAND_SUCCEEDED"}
+
+    monkeypatch.setattr(tools, "_call", fake_call)
+    tools._stats({"values": [0.1, 0.30000000000000004]}, "cds2")
+    assert observed == {
+        "key": "cds2",
+        "argv": ["stats", "0.1,0.30000000000000004"],
+        "seconds": 90,
+    }
+
+
+def test_stats_rejects_integers_beyond_float_range() -> None:
+    with pytest.raises(tools.ToolFailure, match=r"values\[1\] must be finite"):
+        tools._stats({"values": [1, 10**400]}, "cds")
+
+
+def test_doctor_reports_pin_resolution_and_shadowing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("SCITOOL_PIN_AXIOMIZE", "1.14.2")
+    monkeypatch.setattr(tools.metadata, "version", lambda name: "1.14.2")
+    monkeypatch.setattr(
+        tools, "module_providers", lambda module: ["/one/axiomize", "/two/axiomize"],
+    )
+    info = tools._doctor({})["commands"]["axiomize"]["pinned_distribution"]
+    assert info == {
+        "module": "axiomize",
+        "pin_env": "SCITOOL_PIN_AXIOMIZE",
+        "pin": "1.14.2",
+        "resolved": "1.14.2",
+        "providers": ["/one/axiomize", "/two/axiomize"],
+        "shadowed": True,
+        "pin_satisfied": True,
+    }
+
+
+def test_doctor_reports_an_absent_pinned_distribution(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("SCITOOL_PIN_AXIOMIZE", raising=False)
+    monkeypatch.setattr(tools, "module_providers", lambda module: [])
+
+    def missing(name):
+        raise tools.metadata.PackageNotFoundError(name)
+
+    monkeypatch.setattr(tools.metadata, "version", missing)
+    info = tools._doctor({})["commands"]["axiomize"]["pinned_distribution"]
+    assert info["pin"] is None
+    assert info["resolved"] is None
+    assert info["shadowed"] is False
+    assert info["pin_satisfied"] is True
+
+
+def test_doctor_reports_a_pin_mismatch(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("SCITOOL_PIN_AXIOMIZE", "9.9.9")
+    monkeypatch.setattr(tools.metadata, "version", lambda name: "1.14.2")
+    monkeypatch.setattr(tools, "module_providers", lambda module: ["/one/axiomize"])
+    info = tools._doctor({})["commands"]["axiomize"]["pinned_distribution"]
+    assert info["pin_satisfied"] is False
 
 
 @pytest.mark.parametrize("seconds", [True, 0, -1, 100000, 1.2])

@@ -96,10 +96,23 @@ def _str(value: Any, label: str, limit: int = 4000) -> str:
 def _number(value: Any, label: str) -> float:
     if isinstance(value, bool) or not isinstance(value, (float, int)):
         raise ToolFailure(f"INVALID_ARGUMENT: {label} must be numeric")
-    n = float(value)
+    try:
+        n = float(value)
+    except OverflowError:
+        raise ToolFailure(f"INVALID_ARGUMENT: {label} must be finite") from None
     if not math.isfinite(n):
         raise ToolFailure(f"INVALID_ARGUMENT: {label} must be finite")
     return n
+
+
+def _number_text(value: Any, label: str) -> str:
+    """Render a validated number exactly as the caller sent it.
+
+    ``str`` for integers and ``repr`` for floats keep the exact value;
+    ``.12g`` silently rounded the sample before the upstream tool saw it.
+    """
+    _number(value, label)
+    return str(value) if isinstance(value, int) else repr(value)
 
 
 def _unit(value: Any, label: str) -> float:
@@ -140,10 +153,11 @@ def module_providers(module: str) -> list[str]:
     """
     providers: list[str] = []
     for entry in sys.path:
-        if not entry:
-            continue
-        package = Path(entry) / module
-        single = Path(entry) / f"{module}.py"
+        # An empty entry means the current working directory; skipping it would
+        # hide exactly the shadowing this check exists to detect.
+        base = Path.cwd() if not entry else Path(entry)
+        package = base / module
+        single = base / f"{module}.py"
         if package.is_dir():
             providers.append(str(package))
         elif single.is_file():
@@ -190,6 +204,7 @@ def _call(key: str, argv: list[str], *, seconds: int = DEFAULT_CALL_TIMEOUT) -> 
         completed = subprocess.run(
             [program, *argv], capture_output=True, text=True, encoding="utf-8",
             errors="replace", timeout=seconds, check=False,
+            stdin=subprocess.DEVNULL,
         )
     except subprocess.TimeoutExpired as exc:
         raise ToolFailure(f"TIMEOUT: {key} exceeded {seconds}s") from exc
@@ -382,7 +397,7 @@ def _stats(args: dict, key: str) -> dict:
     values = args.get("values")
     if not isinstance(values, list) or not 2 <= len(values) <= 1000:
         raise ToolFailure("INVALID_ARGUMENT: values must be an array of 2..1000 numbers")
-    csv = ",".join(format(_number(x, f"values[{i}]"), ".12g") for i, x in enumerate(values))
+    csv = ",".join(_number_text(x, f"values[{i}]") for i, x in enumerate(values))
     # NumPy/SciPy cold imports can exceed 30s on the 0.1-CPU Render Free tier.
     # This is an execution timeout only; no scientific acceptance criteria change.
     return _call(key, ["stats", csv], seconds=90 if key == "cds2" else 30)
@@ -439,6 +454,26 @@ def _eq_route(args: dict) -> dict:
     return _call("eq-layer", ["route", "--intent-mode", mode, "--messages-json", encoded])
 
 
+def _pin_status(distribution: str) -> dict[str, Any]:
+    module = PINNED_DISTRIBUTIONS[distribution]
+    env = f"SCITOOL_PIN_{distribution.upper().replace('-', '_')}"
+    pin = os.environ.get(env, "").strip() or None
+    try:
+        resolved = metadata.version(distribution)
+    except metadata.PackageNotFoundError:
+        resolved = None
+    providers = module_providers(module)
+    return {
+        "module": module,
+        "pin_env": env,
+        "pin": pin,
+        "resolved": resolved,
+        "providers": providers,
+        "shadowed": len(providers) > 1,
+        "pin_satisfied": pin is None or resolved == pin,
+    }
+
+
 def _doctor(_args: dict) -> dict:
     commands: dict[str, dict] = {}
     for key, (env, default) in BINS.items():
@@ -462,6 +497,8 @@ def _doctor(_args: dict) -> dict:
             "override": env,
             "module": module,
         }
+    for key, distribution in PINNED_DISTRIBUTIONS.items():
+        commands[key]["pinned_distribution"] = _pin_status(distribution)
     return {
         "status": "AVAILABLE_TOOLS_REQUIRE_INSTALLED_UPSTREAM_PACKAGES",
         "repositories": len(catalog()),

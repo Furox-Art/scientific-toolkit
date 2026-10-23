@@ -17,11 +17,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A bounded stdlib MCP stdio client that keeps stdin open until every expected
   response arrives, so a server that stops reading at EOF cannot drop replies.
 - `toolkit_doctor` reports module-based servers and their import names.
+- `toolkit_doctor` reports, for every pinned distribution, the resolved
+  version, the configured `SCITOOL_PIN_*` value, and each `sys.path` provider
+  that could shadow it.
 
 ### Changed
 
 - The gateway now requires Python 3.11 or newer; `literature-evidence-mcp`
   declares the same floor.
+
+### Fixed
+
+- `cds_stats` forwards the caller's numbers without the `.12g` rounding that
+  silently changed the sample before the upstream statistics ran on it.
+- Upstream CLIs run with stdin connected to `os.devnull`, so they cannot
+  consume the gateway's input or block waiting for data.
+- Pinned-distribution lookup treats an empty `sys.path` entry as the working
+  directory instead of skipping it, which is where the interpreter would
+  import from.
+
+### Security
+
+- HTTP rate limiting can key on the real client address behind a reverse
+  proxy when `SCITOOL_TRUST_PROXY=1`. Only a single `X-Forwarded-For` header
+  is accepted and its rightmost valid address is used, so a client cannot
+  choose its own bucket and reset the quota. Without the switch the socket
+  peer is used, as before.
 
 ## [0.3.0] - 2026-10-20
 
