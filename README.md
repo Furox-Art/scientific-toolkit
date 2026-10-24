@@ -18,7 +18,7 @@ spellings. They all refer to this one gateway.
 | PyPI project | `scientific-toolkit-mcp` |
 | Python import | `scientific_toolkit_mcp` |
 | Console script | `scientific-toolkit-mcp` |
-| Current source version | 0.4.0 (PyPI still serves 0.3.0 until the release is published) |
+| Current version | 0.4.0 (published on PyPI) |
 
 PyPI project names cannot be renamed after publication, so this table, the
 `[project]` block in `pyproject.toml` and `SKILL.md` are the authoritative
@@ -321,8 +321,8 @@ be advertised as active without a real IdP and app-specific authentication test.
 ## Python package and PyPI publishing
 
 The gateway's Python distribution is named [`scientific-toolkit-mcp`](https://pypi.org/project/scientific-toolkit-mcp/)
-(version `0.3.0` is the latest published release; the source tree is `0.4.0`
-until that release is published), with import name `scientific_toolkit_mcp`.
+(version `0.4.0` is the latest published release and matches the source tree),
+with import name `scientific_toolkit_mcp`.
 
 ```sh
 python -m pip install scientific-toolkit-mcp
