@@ -10,7 +10,7 @@ packaging in this repository, not the nine upstream projects.
 | Version | Supported |
 | --- | --- |
 | `0.4.x` | Yes |
-| `0.3.x` | Yes, until 0.4.0 is published |
+| `0.3.x` | No |
 | `< 0.3` | No |
 
 Security fixes target the `0.4.x` release line. Reproduce a report against the
