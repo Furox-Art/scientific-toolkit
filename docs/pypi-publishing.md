@@ -10,7 +10,7 @@ importable module is `scientific_toolkit_mcp`, and the installed executable is
 ## Trusted Publisher
 
 The `scientific-toolkit-mcp` project was created on PyPI on 2026-10-20, and
-release `0.3.0` is published. Its GitHub Actions Trusted Publisher is
+release `0.4.0` is published. Its GitHub Actions Trusted Publisher is
 registered with these exact values:
 
 | PyPI field | Value |
