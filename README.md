@@ -287,11 +287,12 @@ pins. A Render rebuild therefore reflects registry state at build time, while th
 full-stack workflow is reproducible against the recorded commits.
 
 The [full-stack installation workflow](https://github.com/Furox-Art/scientific-toolkit/actions/workflows/full-stack-install.yml)
-checks nine real adapter invocations in one CI environment. That does not prove all
+checks eight real adapter invocations plus a fail-closed plan-auditor smoke check in one CI
+environment. That does not prove all
 dependencies fit the Render Free 512 MB runtime limit or that production has
 installed them: inspect Render build logs and run authenticated calls separately.
 If the host runs out of memory, use separate workers or a larger instance rather
-than claiming all nine are running.
+than claiming all nine upstream tools are running.
 
 ## Optional OAuth 2.1 resource-server support
 
