@@ -1,6 +1,7 @@
 """Atheris harness for the fail-closed MCP wire JSON decoder."""
 
 import sys
+from contextlib import suppress
 
 import atheris
 
@@ -13,10 +14,8 @@ def TestOneInput(data: bytes) -> None:
         payload = fdp.ConsumeBytes(4096)
     else:
         payload = fdp.ConsumeUnicodeNoSurrogates(4096)
-    try:
+    with suppress(UnicodeDecodeError, ValueError):
         loads(payload)
-    except (UnicodeDecodeError, ValueError):
-        pass
 
 
 atheris.Setup(sys.argv, TestOneInput)
