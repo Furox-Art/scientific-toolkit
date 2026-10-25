@@ -61,6 +61,15 @@ class ToolTests(unittest.TestCase):
         self.assertFalse(r["isError"])
         self.assertEqual(json.loads(r["content"][0]["text"])["count"], 9)
 
+    def test_catalog_returns_isolated_copies(self):
+        first = catalog()
+        first[0]["name"] = "mutated"
+        first[0]["tools"].append("mutated_tool")
+        fresh = catalog()
+        self.assertEqual(fresh[0]["name"], "axiomize")
+        self.assertNotIn("mutated_tool", fresh[0]["tools"])
+        self.assertEqual(fresh[0]["tools"], ["axiomize_intake", "axiomize_model"])
+
     def test_unknown_tool_is_protocol_error(self):
         r = handle({"jsonrpc": "2.0", "id": 7, "method": "tools/call", "params": {"name": "nope"}})
         self.assertEqual(r["error"]["code"], -32602)

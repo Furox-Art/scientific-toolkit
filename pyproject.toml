@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "scientific-toolkit-mcp"
-version = "0.4.0"
+version = "0.4.1"
 description = "Provider-neutral local and remote MCP hub for nine Furox-Art public research tools"
 keywords = ["model-context-protocol", "mcp", "scientific-computing", "ai-agents", "research-tools", "python"]
 readme = "README.md"
