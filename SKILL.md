@@ -3,7 +3,7 @@ name: scientific-toolkit
 description: "Use when a task needs one MCP entry point to nine Furox scientific tools (axiomize, cds, cds2, plan-auditor, quantum-reasoning, axiomize-reason, eq-layer, literature-evidence-mcp, nomosguard), locally over stdio or remotely over authenticated Streamable HTTP. It is an integration gateway, not a new scientific engine. Installed from PyPI as `scientific-toolkit-mcp`."
 argument-hint: "<scientific workflow, repository, or upstream tool to invoke>"
 metadata:
-  version: "0.4.0"
+  version: "0.4.1"
 ---
 
 # Furox Scientific Toolkit — MCP Gateway
@@ -20,7 +20,7 @@ histories; this repository is an integration hub, not a merged source tree.
 | PyPI project | `scientific-toolkit-mcp` |
 | Import | `scientific_toolkit_mcp` |
 | CLI | `scientific-toolkit-mcp` |
-| Version | 0.4.0 (published on PyPI) |
+| Version | 0.4.1 (source tree; 0.4.0 is the latest PyPI release) |
 
 `pip install scientific-toolkit-mcp` installs the `scientific-toolkit-mcp`
 command. No PyPI project is named `scientific-toolkit`. The former

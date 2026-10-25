@@ -18,7 +18,7 @@ spellings. They all refer to this one gateway.
 | PyPI project | `scientific-toolkit-mcp` |
 | Python import | `scientific_toolkit_mcp` |
 | Console script | `scientific-toolkit-mcp` |
-| Current version | 0.4.0 (published on PyPI) |
+| Current version | 0.4.1 (source tree; 0.4.0 is the latest PyPI release) |
 
 PyPI project names cannot be renamed after publication, so this table, the
 `[project]` block in `pyproject.toml` and `SKILL.md` are the authoritative
@@ -35,7 +35,7 @@ publishes only `status` and `transport`, not a version or tool inventory, so it
 cannot attest which release is deployed. CI checks that endpoint and the
 anonymous-401 refusal of MCP calls on every run; those checks prove deployment
 plumbing, **not** scientific correctness or external Claude/ChatGPT client login.
-The 0.4.0 nine-repository source has not been confirmed on that service. OAuth
+The 0.4.1 nine-repository source has not been confirmed on that service. OAuth
 issuer/JWKS remains **not configured**.
 
 ## Nine upstream repositories
@@ -252,7 +252,7 @@ Three CI suites provide progressively stronger, but limited, verification:
 in one environment. The live Render `/health` route proves only that the service
 answers with `status: ok` and `transport: streamable-http`, and that an anonymous
 MCP call receives HTTP 401; neither check reveals the deployed version or the
-installed tool set. The 0.4.0 probe contract expects nine upstream tools and
+installed tool set. The 0.4.1 probe contract expects nine upstream tools and
 thirteen remote tools.
 No external ChatGPT/Claude OAuth sign-in was tested. The optional OAuth
 resource verifier is implemented, but a trusted authorization server
@@ -322,7 +322,8 @@ be advertised as active without a real IdP and app-specific authentication test.
 ## Python package and PyPI publishing
 
 The gateway's Python distribution is named [`scientific-toolkit-mcp`](https://pypi.org/project/scientific-toolkit-mcp/)
-(version `0.4.0` is the latest published release and matches the source tree),
+(version `0.4.0` is the latest published release; the source tree here is
+`0.4.1` and has not been published),
 with import name `scientific_toolkit_mcp`.
 
 ```sh

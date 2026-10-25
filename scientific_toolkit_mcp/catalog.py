@@ -1,5 +1,7 @@
 """Explicit catalog: original repositories remain independent and unchanged."""
 
+from copy import deepcopy
+
 REPOSITORIES = (
     {
         "name": "axiomize",
@@ -59,4 +61,7 @@ REPOSITORIES = (
 
 
 def catalog() -> list[dict]:
-    return [dict(item, url=f"https://github.com/Furox-Art/{item['name']}") for item in REPOSITORIES]
+    # A shallow dict() would share the nested "tools" lists with REPOSITORIES,
+    # so one caller appending to a returned entry would change later responses.
+    return [{**deepcopy(item), "url": f"https://github.com/Furox-Art/{item['name']}"}
+            for item in REPOSITORIES]
