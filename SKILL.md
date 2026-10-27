@@ -20,7 +20,7 @@ histories; this repository is an integration hub, not a merged source tree.
 | PyPI project | `scientific-toolkit-mcp` |
 | Import | `scientific_toolkit_mcp` |
 | CLI | `scientific-toolkit-mcp` |
-| Version | 0.4.1 (source tree; 0.4.0 is the latest PyPI release) |
+| Version | 0.4.1 (latest PyPI release) |
 
 `pip install scientific-toolkit-mcp` installs the `scientific-toolkit-mcp`
 command. No PyPI project is named `scientific-toolkit`. The former
