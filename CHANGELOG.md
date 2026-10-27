@@ -5,6 +5,16 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### CI
+
+- The determinism workload now exercises the MCP protocol engine and wire
+  decoder: initialize/ping/tools-list responses, notification suppression,
+  JSON-RPC error codes, duplicate-key and non-finite rejection, and HTTP
+  content negotiation. The workload fails when any recorded contract value
+  changes, so a uniform regression cannot pass the three-OS matrix.
+
 ## [0.4.1] - 2026-10-25
 
 ### Fixed
