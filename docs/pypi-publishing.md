@@ -10,7 +10,7 @@ importable module is `scientific_toolkit_mcp`, and the installed executable is
 ## Trusted Publisher
 
 The `scientific-toolkit-mcp` project was created on PyPI on 2026-10-20, and
-release `0.4.0` is published. Its GitHub Actions Trusted Publisher is
+releases up to `0.4.1` are published. Its GitHub Actions Trusted Publisher is
 registered with these exact values:
 
 | PyPI field | Value |
@@ -40,7 +40,7 @@ branches/tags if the repository's plan supports it.
    `scientific_toolkit_mcp/__init__.py`'s `__version__` together.
 2. Verify the full test suite and the distribution build in CI.
 3. On GitHub, create and **publish a release** with tag `v<version>` (for example,
-   `v0.4.0` for version `0.4.0`), targeting the reviewed commit on `main`.
+   `v0.4.1` for version `0.4.1`), targeting the reviewed commit on `main`.
 4. The release workflow checks that the tag, distribution name, and package version
    match (the tag `v<version>` against `project.version` and
    `__version__`). It also refuses commits that are not on `main` and skips
