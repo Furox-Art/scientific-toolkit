@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "scientific-toolkit-mcp"
 version = "0.4.1"
 description = "Provider-neutral local and remote MCP hub for nine Furox-Art public research tools"
-keywords = ["model-context-protocol", "mcp", "scientific-computing", "ai-agents", "research-tools", "python"]
+keywords = ["model-context-protocol", "mcp", "mcp-server", "mcp-gateway", "scientific-computing", "ai-agents", "research-tools", "python", "interoperability", "agent-skills"]
 readme = "README.md"
 requires-python = ">=3.11"
 authors = [{name = "Furox-Art"}]
@@ -43,6 +43,7 @@ Homepage = "https://github.com/Furox-Art/scientific-toolkit"
 Issues = "https://github.com/Furox-Art/scientific-toolkit/issues"
 Documentation = "https://github.com/Furox-Art/scientific-toolkit/blob/main/README.md"
 Source = "https://github.com/Furox-Art/scientific-toolkit"
+Repository = "https://github.com/Furox-Art/scientific-toolkit"
 
 [tool.setuptools.packages.find]
 include = ["scientific_toolkit_mcp*"]
