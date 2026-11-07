@@ -53,3 +53,10 @@ include = ["scientific_toolkit_mcp*"]
 # their `packages` list includes the whole package tree.
 [tool.setuptools.package-data]
 scientific_toolkit_mcp = ["py.typed"]
+
+[tool.coverage.report]
+# `coverage run --source=scientific_toolkit_mcp -m pytest` reports 943
+# statements, 0 missed on this tree. Recording the floor makes a plain
+# `coverage report` enforce it instead of leaving it as an observation.
+# Branch coverage is not enabled: it was never measured.
+fail_under = 100
