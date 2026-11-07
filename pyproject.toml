@@ -47,3 +47,9 @@ Repository = "https://github.com/Furox-Art/scientific-toolkit"
 
 [tool.setuptools.packages.find]
 include = ["scientific_toolkit_mcp*"]
+
+# setuptools only ships .py files by default, so the PEP 561 marker needs an
+# explicit entry. The hatchling-based repositories get it for free because
+# their `packages` list includes the whole package tree.
+[tool.setuptools.package-data]
+scientific_toolkit_mcp = ["py.typed"]
