@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- The availability-report unit test is now hermetic. It previously probed the
+  host environment, so real upstream CLIs on `PATH` (with their distributions
+  unregistered in the test interpreter) flipped records to `verified` while
+  the verdict stayed `KNOWN_GAP`, failing six subtests on machines that had
+  upstream tools installed. The report is now regenerated inside an isolated
+  environment: empty `PATH` and working directory, every `SCITOOL_*` override
+  removed and re-pointed at a nonexistent sentinel program, `PYTHONPATH`
+  cleared, and package metadata stubbed to "nothing registered". The test
+  pins that scenario (nine unverified KNOWN GAPs, nine in-process fail-closed
+  refusals), reaches no upstream subprocess or network call, and passes
+  identically on a bare host, a developer machine full of upstream CLIs, and
+  CI. Real-machine capture stays with `scripts/availability_report.py` and
+  `tests/e2e`.
+
 ### CI
 
 - The determinism workload now exercises the MCP protocol engine and wire

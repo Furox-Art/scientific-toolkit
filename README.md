@@ -230,6 +230,21 @@ transport. The fake executable tests validate the **integration plumbing**;
 actual upstream numerical correctness remains the responsibility of each
 repository's own tests and a future cross-package integration suite.
 
+The availability-report unit test (`tests/test_availability_report.py`) is
+**hermetic**: it regenerates the report inside a fixed synthetic environment
+where nothing upstream is installed — an empty `PATH` and working directory,
+every `SCITOOL_*` variable removed and each executable override pointed at a
+nonexistent sentinel program (this also neutralises the module-server
+`sys.executable` default), `PYTHONPATH` cleared, and the report's package
+metadata handle stubbed so no distribution looks registered. Real upstream
+CLIs present on the host — or overrides exported by CI — therefore cannot
+change the outcome: all nine upstream records must be unverified KNOWN GAPs
+and all nine fail-closed checks must still refuse in-process with their
+documented markers. No upstream subprocess or network call is reached.
+Capturing *real-machine* availability remains the job of
+`scripts/availability_report.py` and of `tests/e2e`, which deliberately drive
+the installed tools.
+
 ## Independent integration evidence
 
 Three CI suites provide progressively stronger, but limited, verification:
