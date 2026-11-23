@@ -26,9 +26,11 @@ from typing import Any
 
 from . import __version__
 from .catalog import catalog
+from .strict_json import loads as load_strict_json
 
 MAX_INPUT_BYTES = 65536
 MAX_OUTPUT = 32768
+MAX_MANUSCRIPT_CHARS = 12000
 
 # Every upstream subprocess runs with an explicit, bounded execution timeout.
 # The bound is absolute: a heavier upstream can never stall a request without a
@@ -52,6 +54,7 @@ BINS = {
     "axiomize-reason": ("SCITOOL_REASON_BIN", "axiomize-reason"),
     "eq-layer": ("SCITOOL_EQ_BIN", "eq-layer"),
     "literature-evidence": ("SCITOOL_LIT_EVIDENCE_BIN", "literature-evidence-mcp"),
+    "sra": ("SCITOOL_SRA_BIN", "sra"),
 }
 
 # Upstreams that ship an MCP stdio server but no console script are started as
@@ -565,6 +568,32 @@ def _lit_verify(args: dict) -> dict:
     )
 
 
+def _sra_audit_manuscript(args: dict[str, Any]) -> dict[str, Any]:
+    content = _str(args.get("content"), "content", MAX_MANUSCRIPT_CHARS)
+    with tempfile.TemporaryDirectory(prefix="scitool_sra_") as directory:
+        workspace = Path(directory)
+        source = workspace / "manuscript.md"
+        prefix = workspace / "audit"
+        source.write_text(content, encoding="utf-8")
+        result = _call("sra", ["audit", str(source), "--out", str(prefix)])
+        if result["exit_code"] != 0:
+            return result
+        try:
+            with prefix.with_suffix(".json").open("rb") as report_file:
+                encoded = report_file.read(MAX_OUTPUT + 1)
+            if len(encoded) > MAX_OUTPUT:
+                raise ToolFailure("UPSTREAM_ERROR: SRA report exceeds the output limit")
+            report = load_strict_json(encoded)
+        except (OSError, ValueError, RecursionError) as exc:
+            raise ToolFailure("UPSTREAM_ERROR: SRA did not return a valid audit report") from exc
+        if not isinstance(report, dict) or not isinstance(report.get("findings"), list):
+            raise ToolFailure("UPSTREAM_ERROR: SRA report has no findings list")
+        report["source"] = source.name
+        result["json"] = report
+        result["stdout"] = result["stdout"].replace(f"{directory}{os.sep}", "")
+        return result
+
+
 def _nomos_decide(args: dict) -> dict:
     claims = args.get("claims")
     fallback = args.get("fallback", "BLOCK")
@@ -613,6 +642,7 @@ TOOL_ROUTES: dict[str, tuple[frozenset[str], Any]] = {
     "literature_evidence_search": (frozenset({"query", "limit_per_source"}), _lit_search),
     "literature_evidence_verify_quote": (frozenset({"quote", "source_text", "source_id"}), _lit_verify),
     "nomosguard_decide": (frozenset({"claims", "fallback"}), _nomos_decide),
+    "sra_audit_manuscript": (frozenset({"content"}), _sra_audit_manuscript),
 }
 
 
