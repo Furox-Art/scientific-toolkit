@@ -42,16 +42,16 @@ async def exercise(url, token):
         )
         tools = await session.list_tools()
         names = {tool.name for tool in tools.tools}
-        assert len(names) == 13, names
+        assert len(names) == 14, names
         assert "toolkit_catalog" in names
         assert "plan_auditor_inspect" in names
         assert "plan_auditor_audit" not in names
         response = await session.call_tool("toolkit_catalog", {})
         assert not response.is_error, response
         catalog = json.loads(response.content[0].text)
-        assert catalog["count"] == 9, catalog
-        print("PASS official MCP SDK initialize, list_tools (13), call_tool "
-              "(9 project catalog), remote plan inspection only; audit blocked")
+        assert catalog["count"] == 13, catalog
+        print("PASS official MCP SDK initialize, list_tools (14), call_tool "
+              "(13 project catalog), remote plan inspection only; audit blocked")
 
 
 def main():
