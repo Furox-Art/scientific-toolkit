@@ -1,0 +1,22 @@
+{
+  "name": "scientific-toolkit-mcp",
+  "version": "0.5.0",
+  "description": "CLI wrapper for the Furox Scientific Toolkit MCP server",
+  "license": "Apache-2.0",
+  "bin": {
+    "scientific-toolkit-mcp": "npm/bin/scientific-toolkit-mcp.cjs"
+  },
+  "files": [
+    "npm/bin/scientific-toolkit-mcp.cjs"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Furox-Art/scientific-toolkit.git"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
