@@ -128,7 +128,7 @@ class AvailabilityReportTests(unittest.TestCase):
 
     def test_every_upstream_record_splits_listed_from_verified(self):
         records = self.report["upstream_tools"]
-        self.assertEqual(len(records), 9)
+        self.assertEqual(len(records), 10)
         for record in records:
             with self.subTest(repository=record["repository"]):
                 self.assertIsInstance(record["listed"], bool)
@@ -159,9 +159,9 @@ class AvailabilityReportTests(unittest.TestCase):
                          [r["repository"] for r in records if r["verified"]])
         self.assertEqual(summary["available"] + summary["known_gaps"], len(records))
         # Hermetic scenario: nothing upstream resolves, so the summary must
-        # report nine known gaps and zero verifications on every machine.
+        # report ten known gaps and zero verifications on every machine.
         self.assertEqual(summary["available"], 0)
-        self.assertEqual(summary["known_gaps"], 9)
+        self.assertEqual(summary["known_gaps"], 10)
         self.assertEqual(summary["verified"], 0)
         self.assertEqual(summary["verified_repositories"], [])
 

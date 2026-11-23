@@ -69,7 +69,7 @@ def test_registry_is_byte_identical_across_hash_seeds() -> None:
 
 def test_workload_covers_the_whole_registry() -> None:
     payload = json.loads(_run_with_hash_seed("0"))
-    assert len(payload["catalog"]) == 9
+    assert len(payload["catalog"]) == 13
     assert len(payload["tools"]) == len(payload["routes"])
     names = [tool["name"] for tool in payload["tools"]]
     assert sorted(names) == sorted(payload["routes"])

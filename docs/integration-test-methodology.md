@@ -84,9 +84,9 @@ subprocess result: the program name, the real exit code, the
 `COMMAND_SUCCEEDED` status, and content that could only come from that upstream
 CLI. Nothing is mocked.
 
-- `test_doctor_reports_nine_commands`, `test_catalog_lists_nine_distinct_repositories`,
-  `test_gateway_exposes_fourteen_local_tools` — the gateway advertises nine
-  repositories and fourteen local tools.
+- `test_doctor_reports_ten_commands`, `test_catalog_lists_repositories_and_their_adapter_availability`,
+  `test_gateway_exposes_fifteen_local_tools` — the gateway advertises 13
+  projects and fifteen local tools.
 - `test_each_of_nine_repositories_has_installed_executable` — every upstream
   executable or module server resolves through the same lookup the gateway uses.
 - `test_each_of_nine_repositories_has_installed_distribution` — every upstream
@@ -147,7 +147,7 @@ crashes the gateway.
   checked **before** the opt-in flag, so a misconfigured deployment cannot run
   project commands.
 - A missing dependency reports `NOT_INSTALLED`, never a fabricated result. All
-  all nine upstream adapters are verified to report `NOT_INSTALLED` when absent.
+  all ten upstream adapters are verified to report `NOT_INSTALLED` when absent.
 - Invalid JSON-RPC frames never raise; the server returns an error instead.
 
 ### `RemoteHttpSecurityTests` — the remote transport is a separate boundary
@@ -173,7 +173,7 @@ Run against a real `ThreadingHTTPServer` instance.
 ### `SdkClientInteropTests` — a real third-party MCP client
 
 A real official MCP Python SDK client connects to a real authenticated HTTP
-server, negotiates a session, enumerates the thirteen remote-safe tools, and calls
+server, negotiates a session, enumerates the fourteen remote-safe tools, and calls
 `toolkit_catalog` plus a real `cds_stats` CLI execution.
 
 The suite is written against the current SDK generation and stays compatible
@@ -196,7 +196,7 @@ installed.
   credential that must never be committed.
 - **OAuth 2.1 sign-in** with an external identity provider, since no trusted
   authorization server is configured.
-- That all nine dependencies fit a constrained host's memory limit.
+- That all ten upstream dependencies fit a constrained host's memory limit.
 
 ## The availability report
 
@@ -213,7 +213,7 @@ python scripts/availability_report.py \
 The committed `tests/e2e/results/availability.json` is a **generated artifact**.
 It is never hand-edited: it carries its own `generated_by`,
 `regenerate_command` and `generated_artifact_note` markers, and the
-`full-stack-install` workflow regenerates a fresh copy (with all nine tools
+`full-stack-install` workflow regenerates a fresh copy (with all ten upstream adapters
 installed) as a build artifact on every run. `tests/test_availability_report.py`
 regenerates the report into a temporary directory and asserts the schema, so the
 producer cannot drift from what the file promises.
@@ -227,9 +227,9 @@ The report contains, all read back from real subprocess calls:
 
 - the environment (Python version, platform, gateway version, UTC timestamp,
   and the `sys.path` providers of each pinned distribution module);
-- the gateway inventory (protocol version, server name, fourteen tool names);
+- the gateway inventory (protocol version, server name, fifteen tool names);
 - the full `toolkit_doctor` output;
-- for each of the nine repositories: the installed distribution version, the
+- for each of the ten adapters: the installed distribution version, the
   resolved executable path and its override variable, the CLI's own
   self-reported version (or, for a module server, why it has none), and the
   result of a real gateway capability call;

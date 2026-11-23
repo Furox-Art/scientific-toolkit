@@ -57,6 +57,30 @@ REPOSITORIES = (
         "interface": "python -m nomosguard.mcp_stdio; deterministic, no model calls",
         "tools": ["nomosguard_decide"],
     },
+    {
+        "name": "scientific-reasoning-auditor",
+        "role": "Scientific manuscript reasoning and evidence-graph screening",
+        "interface": "sra CLI; offline audit of inline Markdown",
+        "tools": ["sra_audit_manuscript"],
+    },
+    {
+        "name": "polyglot-python",
+        "role": "Deterministic translation of localized Python keywords",
+        "interface": "Independent polyglot-python CLI",
+        "tools": [],
+    },
+    {
+        "name": "polyglot-code-guard",
+        "role": "Build and test evidence verification for local projects",
+        "interface": "Independent polyguard CLI",
+        "tools": [],
+    },
+    {
+        "name": "repocraft",
+        "role": "Deterministic Python project scaffolding from validated specifications",
+        "interface": "Independent repocraft CLI",
+        "tools": [],
+    },
 )
 
 

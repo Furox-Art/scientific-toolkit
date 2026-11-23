@@ -14,6 +14,8 @@ CASES = {
     "scientific-computing-system": ("cds", "cds_stats", {"values":[1,2,3,4,5]}),
     "scientific-computing-system-2.0": ("cds2", "cds2_stats", {"values":[1,2,3,4,5]}),
     "plan-auditor": ("plan-auditor", None, None),
+    "scientific-reasoning-auditor": ("sra", "sra_audit_manuscript",
+                                     {"content": "# Results\n\nThe sample included 12 observations."}),
     "quantum-reasoning-skill": ("quantum-reasoning", "quantum_skill_validate", {}),
     "axiomize-quantum-skills-2.0": ("axiomize-reason", "axiomize_reason_score",
                                   {"evidence":0.75,"verification":0.8}),
@@ -75,6 +77,8 @@ def main():
         print("No sealed scientific plan or completion verdict was tested.")
     else:
         output = request(tool, args)
+        if profile == "scientific-reasoning-auditor":
+            assert isinstance(output["json"]["findings"], list), output
         if "stdout" in output:
             print(f"PASS: {profile}, {tool}, real process exit {output['exit_code']}, "
                   f"output chars {len(output['stdout'])}")

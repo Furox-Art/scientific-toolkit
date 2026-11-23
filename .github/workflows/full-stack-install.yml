@@ -1,4 +1,4 @@
-name: Full stack build and nine real package checks
+name: Full stack build and ten real package checks
 on:
   workflow_dispatch:
   push:
@@ -34,9 +34,9 @@ jobs:
           cache-dependency-path: pyproject.toml
       - run: bash scripts/render-build.sh
       # The committed availability.json is a generated artifact; regenerate it
-      # here, where all nine upstream tools are genuinely installed, and publish it as
+      # here, where all ten upstream tools are genuinely installed, and publish it as
       # this run's evidence. It is never hand-edited.
-      - name: Regenerate the availability report with all nine upstream tools
+      - name: Regenerate the availability report with all ten upstream tools
         env:
           SCITOOL_REASON_BIN: ${{ github.workspace }}/.reason-env/bin/axiomize-reason
         run: python scripts/availability_report.py --output tests/e2e/results/availability.json
@@ -46,19 +46,19 @@ jobs:
           name: availability-report
           path: tests/e2e/results/availability.json
           if-no-files-found: error
-      - name: Smoke-test nine installed upstream tools
-        # Eight profiles execute a real adapter call. plan-auditor is limited to
+      - name: Smoke-test ten installed upstream tools
+        # Nine profiles execute a real adapter call. plan-auditor is limited to
         # CLI help plus a fail-closed disabled audit: executing a sealed plan
         # requires a trusted workspace and is deliberately not done here.
         env:
           SCITOOL_REASON_BIN: ${{ github.workspace }}/.reason-env/bin/axiomize-reason
         run: |
-          for profile in axiomize scientific-computing-system scientific-computing-system-2.0 plan-auditor quantum-reasoning-skill axiomize-quantum-skills-2.0 eq-layer literature-evidence-mcp nomosguard; do
+          for profile in axiomize scientific-computing-system scientific-computing-system-2.0 plan-auditor quantum-reasoning-skill axiomize-quantum-skills-2.0 eq-layer literature-evidence-mcp nomosguard scientific-reasoning-auditor; do
             python scripts/upstream_smoke.py "$profile"
           done
       - name: Verify authenticated live-process MCP adapters with CI-only token
         run: python scripts/verify_production_probe.py
       - name: Install test prerequisites from the package test extra
         run: python -m pip install -e ".[test]"
-      - name: Test nine adapter profiles with full coverage
+      - name: Test ten adapter profiles with full coverage
         run: python -m pytest -q -rs tests/ --cov=scientific_toolkit_mcp --cov-branch --cov-report=term-missing --cov-fail-under=100

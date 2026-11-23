@@ -1,4 +1,4 @@
-"""End-to-end integration tests for the nine-tool MCP gateway.
+"""End-to-end integration tests for the scientific toolkit MCP gateway.
 
 These tests exercise the gateway the way a real client does, over both
 transports, and they require the upstream packages to actually be installed.
@@ -7,7 +7,7 @@ here: every subprocess call below reaches a real installed program.
 
 What this suite proves
 ----------------------
-* Each of the nine upstream tools is genuinely installed and usable. A missing
+* Each of the ten upstream tools is genuinely installed and usable. A missing
   tool is reported as a KNOWN GAP; it is never skipped silently.
 * Real cross-tool data flow works: one tool's own output becomes the next
   tool's own input.
@@ -51,7 +51,7 @@ TOKEN = "e2e-local-test-token"
 
 MEASUREMENTS = [12.04, 11.97, 12.11, 12.02, 11.95, 12.08, 12.06, 11.99, 12.03, 12.10]
 
-# The nine upstream repositories mapped to the gateway executable they depend on.
+# The ten upstream repositories mapped to the gateway executable they depend on.
 UPSTREAM_TOOLS = {
     "axiomize": "axiomize",
     "scientific-computing-system": "cds",
@@ -62,6 +62,7 @@ UPSTREAM_TOOLS = {
     "eq-layer": "eq-layer",
     "literature-evidence-mcp": "literature-evidence",
     "nomosguard": "nomosguard",
+    "scientific-reasoning-auditor": "sra",
 }
 
 
@@ -217,13 +218,13 @@ def _clean_environment() -> dict:
 
 
 class UpstreamAvailabilityTests(unittest.TestCase):
-    """Prove each of the nine upstream tools is actually installed and usable."""
+    """Prove each of the ten upstream tools is actually installed and usable."""
 
-    def test_doctor_reports_nine_commands(self):
+    def test_doctor_reports_ten_commands(self):
         doctor = payload_of(call("toolkit_doctor"))
-        self.assertEqual(len(doctor.get("commands", {})), 9)
+        self.assertEqual(len(doctor.get("commands", {})), 10)
 
-    def test_each_of_nine_repositories_has_installed_executable(self):
+    def test_each_adapter_repository_has_installed_executable(self):
         doctor = payload_of(call("toolkit_doctor"))
         gaps = [key for key, info in doctor["commands"].items()
                 if not info.get("installed")]
@@ -233,7 +234,7 @@ class UpstreamAvailabilityTests(unittest.TestCase):
             f"Install them (see README) or record them as known gaps. "
             f"The gateway returns NOT_INSTALLED rather than fabricating output.")
 
-    def test_each_of_nine_repositories_has_installed_distribution(self):
+    def test_each_adapter_repository_has_installed_distribution(self):
         """Each upstream distribution must be importable through *some* real path.
 
         ``axiomize-quantum-skills-2.0`` bundles the Axiomize variant and is
@@ -259,18 +260,20 @@ class UpstreamAvailabilityTests(unittest.TestCase):
             missing, [],
             f"KNOWN GAP: these upstream distributions are not installed: {missing}")
 
-    def test_catalog_lists_nine_distinct_repositories(self):
+    def test_catalog_lists_repositories_and_their_adapter_availability(self):
         catalog = payload_of(call("toolkit_catalog"))
-        self.assertEqual(catalog["count"], 9)
-        self.assertEqual(len({item["name"] for item in catalog["repositories"]}), 9)
-        for item in catalog["repositories"]:
-            self.assertIn(item["name"], UPSTREAM_TOOLS,
-                          f"{item['name']} is not covered by the availability checks")
+        self.assertEqual(catalog["count"], 13)
+        repositories = catalog["repositories"]
+        self.assertEqual(len({item["name"] for item in repositories}), 13)
+        self.assertEqual({item["name"] for item in repositories if item["tools"]},
+                         set(UPSTREAM_TOOLS))
+        self.assertEqual({item["name"] for item in repositories if not item["tools"]},
+                         {"polyglot-python", "polyglot-code-guard", "repocraft"})
 
-    def test_gateway_exposes_fourteen_local_tools(self):
+    def test_gateway_exposes_fifteen_local_tools(self):
         listing = handle({"jsonrpc": "2.0", "id": 1, "method": "tools/list",
                           "params": {}})
-        self.assertEqual(len(listing["result"]["tools"]), 14)
+        self.assertEqual(len(listing["result"]["tools"]), 15)
         self.assertEqual({t["name"] for t in TOOLS}, {t["name"] for t in
                                                       listing["result"]["tools"]})
 
@@ -579,9 +582,9 @@ class CrossToolWorkflowTests(unittest.TestCase):
         # Six responses: the notification correctly gets none.
         self.assertEqual(len(lines), 6)
         self.assertEqual(lines[0]["result"]["protocolVersion"], "2025-06-18")
-        self.assertEqual(len(lines[1]["result"]["tools"]), 14)
+        self.assertEqual(len(lines[1]["result"]["tools"]), 15)
         doctor = json.loads(lines[2]["result"]["content"][0]["text"])
-        self.assertEqual(doctor["repositories"], 9)
+        self.assertEqual(doctor["repositories"], 13)
         for response in lines[3:]:
             self.assertFalse(response["result"]["isError"], response)
 
@@ -835,7 +838,7 @@ class RemoteHttpSecurityTests(unittest.TestCase):
             code, body = self.post({"jsonrpc": "2.0", "id": 1, "method": "tools/list"})
         self.assertEqual(code, 200)
         names = {tool["name"] for tool in body["result"]["tools"]}
-        self.assertEqual(len(names), 13, "remote inventory must hide the audit tool")
+        self.assertEqual(len(names), 14, "remote inventory must hide the audit tool")
         self.assertIn("plan_auditor_inspect", names)
         self.assertNotIn("plan_auditor_audit", names)
 
@@ -857,7 +860,7 @@ class RemoteHttpSecurityTests(unittest.TestCase):
         self.assertEqual(code, 200)
         payload = json.loads(body["result"]["content"][0]["text"])
         self.assertFalse(body["result"]["isError"])
-        self.assertEqual(payload["count"], 9)
+        self.assertEqual(payload["count"], 13)
 
     def test_remote_cds_stats_executes_a_real_upstream_cli(self):
         with patch.dict(os.environ, {"SCITOOL_MCP_BEARER_TOKEN": TOKEN}):
@@ -871,14 +874,14 @@ class RemoteHttpSecurityTests(unittest.TestCase):
         self.assertEqual(payload["exit_code"], 0)
         self.assertIn("mean", payload["stdout"])
 
-    def test_remote_doctor_reports_nine_commands(self):
+    def test_remote_doctor_reports_ten_commands(self):
         with patch.dict(os.environ, {"SCITOOL_MCP_BEARER_TOKEN": TOKEN}):
             code, body = self.post({"jsonrpc": "2.0", "id": 1, "method": "tools/call",
                                     "params": {"name": "toolkit_doctor",
                                                "arguments": {}}})
         self.assertEqual(code, 200)
         payload = json.loads(body["result"]["content"][0]["text"])
-        self.assertEqual(len(payload["commands"]), 9)
+        self.assertEqual(len(payload["commands"]), 10)
 
     def test_remote_inspect_requires_a_configured_workspace(self):
         with patch.dict(os.environ, {"SCITOOL_MCP_BEARER_TOKEN": TOKEN}, clear=True):
@@ -1097,14 +1100,14 @@ class SdkClientInteropTests(unittest.TestCase):
     def test_official_sdk_client_enumerates_thirteen_remote_tools(self):
         listing, _, _ = self._session()
         names = {tool.name for tool in listing.tools}
-        self.assertEqual(len(names), 13)
+        self.assertEqual(len(names), 14)
         self.assertNotIn("plan_auditor_audit", names)
         self.assertIn("plan_auditor_inspect", names)
 
     def test_official_sdk_client_calls_catalog_and_a_real_cli(self):
         _, catalog, stats = self._session()
         catalog_text = catalog.content[0].text
-        self.assertEqual(json.loads(catalog_text)["count"], 9)
+        self.assertEqual(json.loads(catalog_text)["count"], 13)
         stats_text = stats.content[0].text
         self.assertFalse(self._tool_error(stats), stats_text)
         payload = json.loads(stats_text)

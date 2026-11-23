@@ -11,7 +11,7 @@ import sys
 from typing import Any
 
 from . import __version__
-from .tools import ToolFailure, dispatch
+from .tools import MAX_MANUSCRIPT_CHARS, ToolFailure, dispatch
 from .strict_json import loads as strict_json_loads
 
 PROTO = "2025-06-18"
@@ -34,7 +34,7 @@ NUMBERS = {"type": "array", "minItems": 2, "maxItems": 1000,
 UNIT = {"type": "number", "minimum": 0, "maximum": 1}
 
 TOOLS = [
-    spec("toolkit_catalog", "List the nine original, public Furox-Art repositories and their exact roles."),
+    spec("toolkit_catalog", "List the 13 public projects in the Furox-Art catalog and their MCP tool availability."),
     spec("toolkit_doctor", "Check local upstream CLI and MCP server availability; does not run scientific computations."),
     spec("axiomize_intake", "Axiomize: clarify a scientific modeling idea using the upstream intake CLI.",
          {"idea": {"type": "string", "minLength": 1, "maxLength": 6000}}, ["idea"]),
@@ -67,6 +67,9 @@ TOOLS = [
           "source_text": {"type": "string", "minLength": 1, "maxLength": 50000},
           "source_id": {"type": "string", "minLength": 1, "maxLength": 500}},
          ["quote", "source_text", "source_id"]),
+    spec("sra_audit_manuscript", "Scientific Reasoning Auditor: screen inline Markdown for reasoning and evidence issues. Findings are advisory. Uses local computation with no network, model, or caller-supplied paths.",
+         {"content": {"type": "string", "minLength": 1, "maxLength": MAX_MANUSCRIPT_CHARS}},
+         ["content"]),
     spec("nomosguard_decide", "NomosGuard: assert evidenced claims, derive paths, and run the deterministic fail-closed policy gate. No model is consulted at the decision boundary.",
          {"claims": {"type": "array", "minItems": 1, "maxItems": 20,
                      "items": {"type": "object", "properties": {
@@ -106,7 +109,7 @@ def handle(msg: Any) -> dict | None:
             "protocolVersion": PROTO,
             "capabilities": {"tools": {"listChanged": False}},
             "serverInfo": {"name": "furox-scientific-toolkit", "version": __version__},
-            "instructions": "Nine public repositories. Execute only installed local tools; tools report actual exit codes. Audit execution requires explicit opt-in.",
+            "instructions": "Thirteen public projects and ten installed adapter profiles. Execute only installed local tools; tools report actual exit codes. Audit execution requires explicit opt-in.",
         })
     if method == "ping":
         return response(request_id, result={})

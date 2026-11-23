@@ -1,4 +1,4 @@
-"""Real availability probe for the nine upstream tools behind the MCP gateway.
+"""Real availability probe for the ten upstream tools behind the MCP gateway.
 
 This script performs no computation of its own about tool status. Every field in
 the generated report is read back from a real subprocess call: the installed
@@ -135,6 +135,14 @@ UPSTREAM = (
             "The NomosGuard MCP stdio module asserts a claim, derives paths, and "
             "applies its fail-closed gate without calling a model."
         ),
+    },
+    {
+        "repository": "scientific-reasoning-auditor",
+        "distribution": "scientific-reasoning-auditor",
+        "cli_key": "sra",
+        "gateway_tool": "sra_audit_manuscript",
+        "arguments": {"content": "# Results\n\nThe sample included 12 observations."},
+        "proves": "The installed SRA CLI returns a local Markdown audit report.",
     },
 )
 

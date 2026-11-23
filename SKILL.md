@@ -1,14 +1,14 @@
 ---
 name: scientific-toolkit
-description: "Use when a task needs one MCP entry point to nine Furox scientific tools (axiomize, cds, cds2, plan-auditor, quantum-reasoning, axiomize-reason, eq-layer, literature-evidence-mcp, nomosguard), locally over stdio or remotely over authenticated Streamable HTTP. It is an integration gateway, not a new scientific engine. Installed from PyPI as `scientific-toolkit-mcp`."
+description: "Use when a task needs one MCP entry point to ten Furox scientific tools (axiomize, cds, cds2, plan-auditor, quantum-reasoning, axiomize-reason, eq-layer, literature-evidence-mcp, nomosguard, sra), locally over stdio or remotely over authenticated Streamable HTTP. It is an integration gateway, not a new scientific engine. Installed from PyPI as `scientific-toolkit-mcp`."
 argument-hint: "<scientific workflow, repository, or upstream tool to invoke>"
 metadata:
-  version: "0.4.1"
+  version: "0.5.0"
 ---
 
 # Furox Scientific Toolkit — MCP Gateway
 
-A provider-neutral MCP gateway that exposes nine independent Furox-Art projects
+A provider-neutral MCP gateway that exposes adapters for ten independent Furox-Art projects
 through one server. Upstream packages keep their own names, versions, and release
 histories; this repository is an integration hub, not a merged source tree.
 
@@ -20,7 +20,7 @@ histories; this repository is an integration hub, not a merged source tree.
 | PyPI project | `scientific-toolkit-mcp` |
 | Import | `scientific_toolkit_mcp` |
 | CLI | `scientific-toolkit-mcp` |
-| Version | 0.4.1 (latest PyPI release) |
+| Source version | 0.5.0 |
 
 `pip install scientific-toolkit-mcp` installs the `scientific-toolkit-mcp`
 command. No PyPI project is named `scientific-toolkit`. The former
@@ -29,7 +29,7 @@ command. No PyPI project is named `scientific-toolkit`. The former
 ## When to use this skill
 
 - You want one MCP client configuration for several scientific and verification
-  tools instead of installing nine separate servers.
+  tools instead of configuring each upstream separately.
 - You need to discover which upstream executables and module servers are installed before running anything.
 - You want local stdio by default, or authenticated Streamable HTTP for a trusted
   remote deployment.
@@ -66,7 +66,7 @@ environment's `axiomize-reason` executable.
 }
 ```
 
-Start with `toolkit_catalog` to list the nine repositories and `toolkit_doctor`
+Start with `toolkit_catalog` to list the 13 catalog projects and `toolkit_doctor`
 to see which upstream executables and module servers are available. Missing packages return explicit
 `NOT_INSTALLED` errors; they never produce fabricated results.
 
@@ -83,6 +83,7 @@ to see which upstream executables and module servers are available. Missing pack
 | eq-layer | Response control and intent routing | `eq_layer_route` |
 | literature-evidence-mcp | Literature search and evidence-provenance checks | `literature_evidence_search`, `literature_evidence_verify_quote` |
 | nomosguard | Deterministic security reasoning and fail-closed policy gate | `nomosguard_decide` |
+| scientific-reasoning-auditor | Local Markdown manuscript screening | `sra_audit_manuscript` |
 
 Axiomize tools are not registered twice when the bundled quantum package is used.
 `quantum-reasoning-skill` is a skill protocol, not a quantum computer, and EQ-Layer
@@ -93,7 +94,7 @@ is communication-control infrastructure, not a scientific data validator.
 Each variable takes an executable path only, never a command with arguments:
 `SCITOOL_AXIOMIZE_BIN`, `SCITOOL_CDS_BIN`, `SCITOOL_CDS2_BIN`,
 `SCITOOL_AUDITOR_BIN`, `SCITOOL_QUANTUM_BIN`, `SCITOOL_REASON_BIN`,
-`SCITOOL_EQ_BIN`, `SCITOOL_LIT_EVIDENCE_BIN`, `SCITOOL_NOMOSGUARD_BIN`.
+`SCITOOL_EQ_BIN`, `SCITOOL_LIT_EVIDENCE_BIN`, `SCITOOL_SRA_BIN`, `SCITOOL_NOMOSGUARD_BIN`.
 The NomosGuard override names the interpreter that runs `-m nomosguard.mcp_stdio`.
 
 ## Remote HTTP
@@ -109,7 +110,7 @@ not a scientific limitation. OAuth issuer/JWKS is not configured in this project
 Remote safeguards: `plan_auditor_audit` can execute project code and is
 local-only; `plan_auditor_inspect` is available remotely only after the
 administrator sets `SCITOOL_WORKSPACE_DIR` to a trusted project directory.
-Thirteen of the fourteen tools are available remotely.
+Fourteen of the fifteen tools are available remotely.
 
 ## Working rules
 

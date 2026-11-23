@@ -1,6 +1,6 @@
 # Scientific Toolkit
 
-A unified open-source scientific toolkit integrating nine research and AI software projects through the Model Context Protocol (MCP). Published on PyPI as scientific-toolkit-mcp.
+A unified open-source scientific toolkit integrating ten research and AI software projects through the Model Context Protocol (MCP). Published on PyPI as scientific-toolkit-mcp.
 
 The repository README is the authoritative description of this project:
 

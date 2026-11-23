@@ -44,6 +44,8 @@ jobs:
             repository: Furox-Art/literature-evidence-mcp
           - profile: nomosguard
             repository: Furox-Art/nomosguard
+          - profile: scientific-reasoning-auditor
+            repository: Furox-Art/scientific-reasoning-auditor
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
