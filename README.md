@@ -1,6 +1,6 @@
 # Furox Scientific Toolkit — MCP Gateway
 
-**Provider-neutral Model Context Protocol gateway for nine existing Furox-Art public repositories.**
+**Provider-neutral Model Context Protocol gateway with 10 adapters and a catalog of 13 public Furox-Art projects.**
 The upstream packages stay independent, with their original names and version histories.
 This repository is an integration hub, not a merge of source trees.
 
@@ -18,7 +18,7 @@ spellings. They all refer to this one gateway.
 | PyPI project | `scientific-toolkit-mcp` |
 | Python import | `scientific_toolkit_mcp` |
 | Console script | `scientific-toolkit-mcp` |
-| Current version | 0.4.1 (latest PyPI release) |
+| Source version | 0.5.0 |
 
 PyPI project names cannot be renamed after publication, so this table, the
 `[project]` block in `pyproject.toml` and `SKILL.md` are the authoritative
@@ -35,10 +35,10 @@ publishes only `status` and `transport`, not a version or tool inventory, so it
 cannot attest which release is deployed. CI checks that endpoint and the
 anonymous-401 refusal of MCP calls on every run; those checks prove deployment
 plumbing, **not** scientific correctness or external Claude/ChatGPT client login.
-The 0.4.1 nine-repository source has not been confirmed on that service. OAuth
+The 0.5.0 source is awaiting deployment verification on that service. OAuth
 issuer/JWKS remains **not configured**.
 
-## Nine upstream repositories
+## Public projects and MCP adapters
 
 | Public repository | Role | MCP tool(s) |
 | --- | --- | --- |
@@ -51,13 +51,20 @@ issuer/JWKS remains **not configured**.
 | [eq-layer](https://github.com/Furox-Art/eq-layer) | Response-control and intent routing | `eq_layer_route` |
 | [literature-evidence-mcp](https://github.com/Furox-Art/literature-evidence-mcp) | Literature search and evidence-provenance checks over MCP stdio | `literature_evidence_search`, `literature_evidence_verify_quote` |
 | [nomosguard](https://github.com/Furox-Art/nomosguard) | Deterministic security reasoning, evidence ledger and fail-closed policy gate | `nomosguard_decide` |
+| [scientific-reasoning-auditor](https://github.com/Furox-Art/scientific-reasoning-auditor) | Offline Markdown manuscript and evidence screening | `sra_audit_manuscript` |
+| [polyglot-python](https://github.com/Furox-Art/polyglot-python) | Localized Python keywords | Independent CLI |
+| [polyglot-code-guard](https://github.com/Furox-Art/polyglot-code-guard) | Local build and test verification | Independent CLI |
+| [repocraft](https://github.com/Furox-Art/repocraft) | Python project scaffolding from validated specs | Independent CLI |
 
 `axiomize-quantum-skills-2.0` already packages Axiomize, so this hub does **not**
 register its Axiomize MCP tools a second time. `quantum-reasoning-skill` is a skill
 protocol, not a quantum computer or a validated performance improvement. EQ-Layer is
 communication-control infrastructure, not a scientific data validator. The two MCP-native
 upstreams are driven over stdio by the gateway; `literature_evidence_search` needs
-network access, while quote verification and NomosGuard decisions run locally.
+network access. Quote verification, NomosGuard decisions, and manuscript audits run locally.
+For manuscript audits, send inline Markdown in the `content` field (up to 12,000 characters).
+The audit returns advisory findings with evidence references. The three independent
+developer CLIs are listed in the catalog and installed separately.
 
 ## Local installation
 
@@ -71,7 +78,7 @@ python -m pip install scientific-toolkit-mcp
 python -m pip install axiomize scientific-computing-system
 python -m pip install scientific-computing-system-2.0
 python -m pip install plan-auditor quantum-reasoning-skill eq-layer
-python -m pip install literature-evidence-mcp nomosguard
+python -m pip install literature-evidence-mcp nomosguard scientific-reasoning-auditor
 # The bundled Axiomize/quantum package may replace the standalone
 # Axiomize CLI. Install it in a separate environment (below).
 python -m scientific_toolkit_mcp
@@ -99,13 +106,17 @@ configuration (adjust `python` or use the absolute path to the correct venv Pyth
 }
 ```
 
-In a running MCP client, call `toolkit_catalog` to see all nine repos, and
+In a running MCP client, call `toolkit_catalog` to see all 13 projects, and
 `toolkit_doctor` to check which upstream executables and module servers are installed. Missing packages
 produce explicit `NOT_INSTALLED` errors rather than fabricated data.
 
+The npm package provides a command for the matching Python install. Install the
+Python package in an active environment, then install the Node command with
+`npm install -g scientific-toolkit-mcp`. Set `SCITOOL_PYTHON` to select a Python executable.
+
 ## Remote MCP: provider-neutral Streamable HTTP
 
-The 9-repository catalog is available through compatible remote MCP clients using
+The 13-project catalog is available through compatible remote MCP clients using
 `POST /mcp` (stateless JSON-RPC), when authenticated. `GET /health` is public.
 A Render deployment currently serves `https://scientific-toolkit.onrender.com/mcp`;
 use the private credential configured in Render and **never publish that token**.
@@ -136,11 +147,11 @@ Some clients require OAuth discovery/registration instead and therefore **cannot
 connect directly** to this bearer-only server without an OAuth-compatible proxy.
 This is a client capability distinction, not a Claude/ChatGPT/Cursor restriction.
 
-The `toolkit_catalog` covers all nine repositories. Authenticated HTTP clients
+The `toolkit_catalog` covers all 13 projects. Authenticated HTTP clients
 may call the **read-only** `plan_auditor_inspect` only after the administrator
 configures `SCITOOL_WORKSPACE_DIR` to a trusted existing project directory.
 `plan_auditor_audit` can execute arbitrary project verification code and therefore
-remains **local-only** (13 remote tools out of 14 local tools). Setting
+remains **local-only** (14 remote tools out of 15 local tools). Setting
 `SCITOOL_ALLOW_AUDIT_EXECUTION=1` does **not** override this HTTP safeguard. Missing upstream CLI packages return
 `NOT_INSTALLED`, never a fabricated PASS. Install the desired upstream packages
 in your deployment and use isolated environments for colliding Axiomize CLIs.
@@ -170,6 +181,7 @@ paths only**, not commands with arguments:
 | `SCITOOL_REASON_BIN` | `axiomize-reason` |
 | `SCITOOL_EQ_BIN` | `eq-layer` |
 | `SCITOOL_LIT_EVIDENCE_BIN` | `literature-evidence-mcp` |
+| `SCITOOL_SRA_BIN` | `sra` |
 | `SCITOOL_NOMOSGUARD_BIN` | the running Python interpreter (`python -m nomosguard.mcp_stdio`) |
 
 ### Upstream distribution pins
@@ -224,7 +236,7 @@ python -m pytest -q -rs tests/
 The `test` extra is declared in `pyproject.toml` and matches the CI install
 (pytest, pytest-cov, `mcp>=2,<3` and setuptools).
 
-CI exercises JSON-RPC initialization, list/call, nine-repository catalog,
+CI exercises JSON-RPC initialization, list/call, 13-project catalog,
 input validation, fail-closed audit defaults, upstream failures, and fake-CLI
 transport. The fake executable tests validate the **integration plumbing**;
 actual upstream numerical correctness remains the responsibility of each
@@ -238,7 +250,7 @@ nonexistent sentinel program (this also neutralises the module-server
 `sys.executable` default), `PYTHONPATH` cleared, and the report's package
 metadata handle stubbed so no distribution looks registered. Real upstream
 CLIs present on the host — or overrides exported by CI — therefore cannot
-change the outcome: all nine upstream records must be unverified KNOWN GAPs
+change the outcome: all ten upstream records must be unverified KNOWN GAPs
 and all nine fail-closed checks must still refuse in-process with their
 documented markers. No upstream subprocess or network call is reached.
 Capturing *real-machine* availability remains the job of
@@ -253,28 +265,27 @@ Three CI suites provide progressively stronger, but limited, verification:
    check stdio and authenticated HTTP handling, argument validation, safe defaults,
    and fail-closed errors. Fake CLI tests are plumbing tests, not scientific evidence.
 2. [Upstream source smoke checks](https://github.com/Furox-Art/scientific-toolkit/actions/workflows/real-upstream.yml)
-   install all nine projects from GitHub source separately and invoke their real
+   install all ten adapter projects from GitHub source separately and invoke their real
    adapters (CLIs or MCP stdio servers) through the gateway. The Plan Auditor profile checks the installed CLI and refusal
    to audit an unconfigured plan, *not* successful verification of research.
    This workflow also checks the live Render `/health` route and ensures that
    unauthenticated MCP tool calls receive HTTP 401.
 3. [Official SDK interoperability](https://github.com/Furox-Art/scientific-toolkit/actions/workflows/sdk-client.yml)
    starts a temporary authenticated HTTP server, connects with the official MCP
-   Python client, negotiates a session, enumerates the thirteen remote-safe tools,
+   Python client, negotiates a session, enumerates the fourteen remote-safe tools,
    and calls `toolkit_catalog`. A generated CI-only token is used.
 
-**Deployment scope:** CI tests both isolated packages and all nine tools installed
+**Deployment scope:** CI tests both isolated packages and all ten adapters installed
 in one environment. The live Render `/health` route proves only that the service
 answers with `status: ok` and `transport: streamable-http`, and that an anonymous
 MCP call receives HTTP 401; neither check reveals the deployed version or the
-installed tool set. The 0.4.1 probe contract expects nine upstream tools and
-thirteen remote tools.
+installed tool set. The 0.5.0 probe expects ten upstream adapters and fourteen remote tools.
 No external ChatGPT/Claude OAuth sign-in was tested. The optional OAuth
 resource verifier is implemented, but a trusted authorization server
 must still be connected before OAuth-based clients can log in. Never
 publish or transmit the production bearer secret in GitHub or screenshots.
 
-## Deploy all nine upstream packages on Render
+## Deploy the ten upstream adapter packages on Render
 
 The currently published Render service originally installed only the MCP gateway
 with `pip install -e .`. This repository now includes a separate installation
@@ -307,7 +318,7 @@ environment. That does not prove all
 dependencies fit the Render Free 512 MB runtime limit or that production has
 installed them: inspect Render build logs and run authenticated calls separately.
 If the host runs out of memory, use separate workers or a larger instance rather
-than claiming all nine upstream tools are running.
+than claiming all ten upstream adapters are running.
 
 ## Optional OAuth 2.1 resource-server support
 
@@ -337,7 +348,7 @@ be advertised as active without a real IdP and app-specific authentication test.
 ## Python package and PyPI publishing
 
 The gateway's Python distribution is named [`scientific-toolkit-mcp`](https://pypi.org/project/scientific-toolkit-mcp/)
-(version `0.4.1` is the latest published release),
+at source version `0.5.0`,
 with import name `scientific_toolkit_mcp`.
 
 ```sh
@@ -354,7 +365,7 @@ building, metadata validation, and an installed-wheel smoke test. See
 [PyPI publishing setup](docs/pypi-publishing.md) for the exact publisher fields
 and release procedure.
 
-Installing the gateway does not install the nine upstream scientific tools:
+Installing the gateway does not install the ten upstream adapters:
 use `toolkit_doctor` to distinguish available programs from missing ones.
 
 ## Related projects
@@ -377,7 +388,7 @@ Part of the Furox scientific-computing portfolio: independently versioned projec
 Project: https://github.com/Furox-Art/scientific-toolkit
 
 The MCP gateway is licensed under **Apache License 2.0**, as recorded in the
-repository root `LICENSE`. The nine upstream repositories retain their own
+repository root `LICENSE`. The public upstream repositories retain their own
 independent licenses, names and version histories. Public Render health and
 anonymous access controls have been checked by CI; authorized production calls
 against upstream scientific programs have not yet been confirmed.
