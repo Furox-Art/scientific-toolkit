@@ -497,5 +497,5 @@ def test_doctor_counts_all_catalogued_repositories(monkeypatch: pytest.MonkeyPat
     monkeypatch.delenv("SCITOOL_NOMOSGUARD_BIN", raising=False)
     monkeypatch.setattr(tools.importlib.util, "find_spec", lambda name: object())
     report = tools._doctor({})
-    assert report["repositories"] == 9
+    assert report["repositories"] == 13
     assert report["commands"]["nomosguard"]["installed"] is True
