@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-# Render build: eight stand-alone distributions plus an isolated bundled Axiomize.
+# Render build: nine stand-alone distributions plus an isolated bundled Axiomize.
 # Render installs the released distributions from PyPI. GitHub Actions must not:
 # every CI fetch of one of these projects counts toward its public download
 # statistics, so CI installs the sibling repositories from GitHub source
@@ -27,6 +27,8 @@ if [[ "${GITHUB_ACTIONS:-}" == "true" ]]; then
     "git+https://github.com/Furox-Art/literature-evidence-mcp.git@b9c90f5e11bf18bba87bb5abfc8e240923424640"
     # nomosguard v0.7.10 (d0d9de518bd7a7d6155a8eb83054f30eaff3c965)
     "git+https://github.com/Furox-Art/nomosguard.git@d0d9de518bd7a7d6155a8eb83054f30eaff3c965"
+    # scientific-reasoning-auditor v0.11.0
+    "git+https://github.com/Furox-Art/scientific-reasoning-auditor.git@2771d12d78739d6ae852846c6304ad886b42b395"
     # PyYAML 6.0.3 (the version the full-stack CI run resolves today)
     "PyYAML==6.0.3"
   )
@@ -34,7 +36,7 @@ if [[ "${GITHUB_ACTIONS:-}" == "true" ]]; then
   reason_spec="git+https://github.com/Furox-Art/axiomize-quantum-skills-2.0.git@74df0190a77c2b65540aace89b1f9d2c505ec894"
 else
   pip_cache_flag=(--no-cache-dir)
-  upstream_specs=(axiomize scientific-computing-system scientific-computing-system-2.0 plan-auditor quantum-reasoning-skill eq-layer literature-evidence-mcp nomosguard "PyYAML==6.0.3")
+  upstream_specs=(axiomize scientific-computing-system scientific-computing-system-2.0 plan-auditor quantum-reasoning-skill eq-layer literature-evidence-mcp nomosguard scientific-reasoning-auditor "PyYAML==6.0.3")
   reason_spec=axiomize-quantum-skills-2.0
 fi
 python -m pip install "${pip_cache_flag[@]}" -e '.[oauth]'
@@ -62,9 +64,9 @@ from pathlib import Path
 import importlib.util
 import shutil
 for name in ('axiomize','cds','cds2','plan-auditor','quantum-reasoning','eq-layer',
-             'literature-evidence-mcp'):
+             'literature-evidence-mcp', 'sra'):
     assert shutil.which(name), f'Missing CLI: {name}'
 assert importlib.util.find_spec('nomosguard.mcp_stdio'), 'Missing module: nomosguard.mcp_stdio'
 assert Path('.reason-env/bin/axiomize-reason').is_file()
-print('All nine upstream tools present, pending real adapter smoke tests')
+print('All ten upstream tools present, pending real adapter smoke tests')
 PY
