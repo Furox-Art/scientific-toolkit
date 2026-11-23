@@ -18,7 +18,7 @@ jobs:
       fail-fast: false
       matrix:
         # literature-evidence-mcp requires Python >=3.11, so the full
-        # nine-adapter suite is exercised on 3.11 and newer.
+        # ten-adapter suite is exercised on 3.11 and newer.
         python-version: ['3.11', '3.12', '3.13']
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -29,7 +29,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
           cache-dependency-path: pyproject.toml
-      # The e2e suite drives the nine real upstream tools, so CI installs the
+      # The e2e suite drives the ten real upstream tools, so CI installs the
       # sibling repositories from source (see scripts/render-build.sh; Render
       # itself installs the released distributions from PyPI).
       - run: bash scripts/render-build.sh
