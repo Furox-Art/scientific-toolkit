@@ -40,10 +40,10 @@ def fake_cli(directory, name, source):
 
 
 class ToolTests(unittest.TestCase):
-    def test_catalog_has_nine_distinct_original_repos(self):
+    def test_catalog_lists_thirteen_distinct_projects(self):
         items = catalog()
-        self.assertEqual(len(items), 9)
-        self.assertEqual(len({i["name"] for i in items}), 9)
+        self.assertEqual(len(items), 13)
+        self.assertEqual(len({i["name"] for i in items}), 13)
         self.assertTrue(all(i["url"].startswith("https://github.com/Furox-Art/") for i in items))
         self.assertEqual(set().union(*(set(i["tools"]) for i in items)) | {"toolkit_catalog", "toolkit_doctor"},
                          {t["name"] for t in TOOLS})
@@ -59,7 +59,59 @@ class ToolTests(unittest.TestCase):
     def test_catalog_tool(self):
         r = call("toolkit_catalog")
         self.assertFalse(r["isError"])
-        self.assertEqual(json.loads(r["content"][0]["text"])["count"], 9)
+        self.assertEqual(json.loads(r["content"][0]["text"])["count"], 13)
+
+    def test_sra_audit_uses_bounded_inline_content_and_returns_report(self):
+        content = "# Results\n\nThe sample included 12 observations."
+
+        def upstream(key, argv):
+            self.assertEqual(key, "sra")
+            self.assertEqual(argv[0], "audit")
+            self.assertEqual(argv[2], "--out")
+            source, destination = Path(argv[1]), Path(argv[3]).with_suffix(".json")
+            self.assertEqual(source.name, "manuscript.md")
+            self.assertEqual(source.read_text(encoding="utf-8"), content)
+            self.assertEqual(source.parent, destination.parent)
+            report = {"source": str(source), "findings": []}
+            destination.write_text(json.dumps(report), encoding="utf-8")
+            return {"status": "COMMAND_SUCCEEDED", "exit_code": 0,
+                    "stdout": f"JSON: {destination}"}
+
+        with patch.object(tools, "_call", side_effect=upstream):
+            result = call("sra_audit_manuscript", {"content": content})
+        self.assertFalse(result["isError"], result)
+        payload = json.loads(result["content"][0]["text"])
+        self.assertEqual(payload["json"], {"source": "manuscript.md", "findings": []})
+        self.assertEqual(payload["stdout"], "JSON: audit.json")
+
+    def test_sra_audit_rejects_unsafe_or_invalid_inputs(self):
+        with patch.object(tools, "_call") as upstream:
+            for arguments in ({}, {"content": ""}, {"content": "x" * 12001},
+                              {"content": "# Results", "path": "/tmp/input.md"}):
+                with self.subTest(arguments=list(arguments)):
+                    result = call("sra_audit_manuscript", arguments)
+                    self.assertTrue(result["isError"])
+                    self.assertIn("INVALID_ARGUMENT", result["content"][0]["text"])
+            upstream.assert_not_called()
+
+    def test_sra_audit_rejects_missing_invalid_or_oversized_report(self):
+        for data in (None, "invalid", "[]", "{}", "x" * (tools.MAX_OUTPUT + 1)):
+            with self.subTest(data=repr(data)[:16]):
+                def upstream(key, argv):
+                    if data is not None:
+                        Path(argv[3]).with_suffix(".json").write_text(data, encoding="utf-8")
+                    return {"status": "COMMAND_SUCCEEDED", "exit_code": 0, "stdout": ""}
+
+                with patch.object(tools, "_call", side_effect=upstream):
+                    result = call("sra_audit_manuscript", {"content": "# Results"})
+                self.assertTrue(result["isError"])
+                self.assertIn("UPSTREAM_ERROR", result["content"][0]["text"])
+
+    def test_sra_audit_returns_an_upstream_command_failure(self):
+        failure = {"status": "COMMAND_FAILED", "exit_code": 2, "stdout": ""}
+        with patch.object(tools, "_call", return_value=failure):
+            result = call("sra_audit_manuscript", {"content": "# Results"})
+        self.assertEqual(json.loads(result["content"][0]["text"]), failure)
 
     def test_catalog_returns_isolated_copies(self):
         first = catalog()
@@ -209,8 +261,8 @@ class ToolTests(unittest.TestCase):
         self.assertEqual(p.stderr, "")
         lines = [json.loads(line) for line in p.stdout.splitlines()]
         self.assertEqual(len(lines), 3)
-        self.assertEqual(len(lines[1]["result"]["tools"]), 14)
-        self.assertEqual(json.loads(lines[2]["result"]["content"][0]["text"])["count"], 9)
+        self.assertEqual(len(lines[1]["result"]["tools"]), 15)
+        self.assertEqual(json.loads(lines[2]["result"]["content"][0]["text"])["count"], 13)
 
 
 class ToolRoutingTests(unittest.TestCase):
@@ -438,9 +490,9 @@ class DocumentedInventoryTests(unittest.TestCase):
     def test_documented_tool_counts_match_the_code(self):
         local = len(TOOLS)
         remote = local - 1  # plan_auditor_audit is local-only by design
-        self.assertEqual(local, 14)
-        self.assertEqual(remote, 13)
-        self.assertEqual(len(catalog()), 9)
+        self.assertEqual(local, 15)
+        self.assertEqual(remote, 14)
+        self.assertEqual(len(catalog()), 13)
         readme = (Path(__file__).resolve().parents[1] / "README.md").read_text(
             encoding="utf-8")
         self.assertIn(f"{remote} remote tools out of {local} local tools", readme)
@@ -448,8 +500,8 @@ class DocumentedInventoryTests(unittest.TestCase):
     def test_methodology_documents_the_same_inventory(self):
         docs = (Path(__file__).resolve().parents[1] / "docs"
                 / "integration-test-methodology.md").read_text(encoding="utf-8")
-        self.assertIn("fourteen tool names", docs)
-        self.assertIn("thirteen remote-safe tools", docs)
+        self.assertIn("fifteen tool names", docs)
+        self.assertIn("fourteen remote-safe tools", docs)
 
 
 if __name__ == "__main__":
