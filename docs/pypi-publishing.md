@@ -91,7 +91,7 @@ python -m pip install scientific-toolkit-mcp
 python -c "import importlib.metadata as m; import scientific_toolkit_mcp; print(m.version('scientific-toolkit-mcp'))"
 ```
 
-This installs the **gateway**, not all nine upstream scientific packages.
+This installs the **gateway**, not all ten upstream adapter packages.
 Install upstream packages separately and use `toolkit_doctor` to report what is
 actually available. The default transport is local stdio; use
 `python -m scientific_toolkit_mcp` only inside a configured MCP client.
