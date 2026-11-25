@@ -10,7 +10,7 @@ keywords = ["model-context-protocol", "mcp", "mcp-server", "mcp-gateway", "scien
 readme = "README.md"
 requires-python = ">=3.11"
 authors = [{name = "Furox-Art"}]
-license = "Apache-2.0"
+license = "MIT"
 dependencies = []
 classifiers = [
     "Development Status :: 3 - Alpha",

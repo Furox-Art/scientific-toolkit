@@ -387,8 +387,9 @@ Part of the Furox scientific-computing portfolio: independently versioned projec
 
 Project: https://github.com/Furox-Art/scientific-toolkit
 
-The MCP gateway is licensed under **Apache License 2.0**, as recorded in the
-repository root `LICENSE`. The public upstream repositories retain their own
+The MCP gateway is licensed under **MIT License**, as recorded in the
+repository root `LICENSE`. Previously published releases retain their original
+licenses. The public upstream repositories retain their own
 independent licenses, names and version histories. Public Render health and
 anonymous access controls have been checked by CI; authorized production calls
 against upstream scientific programs have not yet been confirmed.

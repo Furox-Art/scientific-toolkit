@@ -127,5 +127,5 @@ vulnerability is not yet fixed.
 
 ## License
 
-The gateway is licensed under the Apache License 2.0. Contributions are accepted
+The gateway is licensed under the MIT License. Contributions are accepted
 under that license.

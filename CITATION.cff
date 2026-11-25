@@ -12,7 +12,7 @@ abstract: >-
 authors:
   - family-names: "Furox"
     given-names: "Art"
-license: Apache-2.0
+license: MIT
 version: 0.4.1
 date-released: "2026-10-27"
 repository-code: "https://github.com/Furox-Art/scientific-toolkit"
