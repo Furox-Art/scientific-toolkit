@@ -1,4 +1,4 @@
-# Furox Scientific Toolkit — MCP Gateway
+﻿# Furox Scientific Toolkit ÔÇö MCP Gateway
 
 **Provider-neutral Model Context Protocol gateway with 10 adapters and a catalog of 13 public Furox-Art projects.**
 The upstream packages stay independent, with their original names and version histories.
@@ -50,11 +50,11 @@ issuer/JWKS remains **not configured**.
 | [axiomize-quantum-skills-2.0](https://github.com/Furox-Art/axiomize-quantum-skills-2.0) | Bundled modeling + branch-scoring controller | `axiomize_reason_score` |
 | [eq-layer](https://github.com/Furox-Art/eq-layer) | Response-control and intent routing | `eq_layer_route` |
 | [literature-evidence-mcp](https://github.com/Furox-Art/literature-evidence-mcp) | Literature search and evidence-provenance checks over MCP stdio | `literature_evidence_search`, `literature_evidence_verify_quote` |
-| [nomosguard](https://github.com/Furox-Art/nomosguard) | Deterministic security reasoning, evidence ledger and fail-closed policy gate | `nomosguard_decide` |
+| [nomosguard](https://github.com/Furox-Art/evidence-ledger-policy-gate) | Deterministic security reasoning, evidence ledger and fail-closed policy gate | `nomosguard_decide` |
 | [scientific-reasoning-auditor](https://github.com/Furox-Art/scientific-reasoning-auditor) | Offline Markdown manuscript and evidence screening | `sra_audit_manuscript` |
 | [polyglot-python](https://github.com/Furox-Art/polyglot-python) | Localized Python keywords | Independent CLI |
 | [polyglot-code-guard](https://github.com/Furox-Art/polyglot-code-guard) | Local build and test verification | Independent CLI |
-| [repocraft](https://github.com/Furox-Art/repocraft) | Python project scaffolding from validated specs | Independent CLI |
+| [repocraft](https://github.com/Furox-Art/deterministic-recipe-scaffolder) | Python project scaffolding from validated specs | Independent CLI |
 
 `axiomize-quantum-skills-2.0` already packages Axiomize, so this hub does **not**
 register its Axiomize MCP tools a second time. `quantum-reasoning-skill` is a skill
@@ -244,12 +244,12 @@ repository's own tests and a future cross-package integration suite.
 
 The availability-report unit test (`tests/test_availability_report.py`) is
 **hermetic**: it regenerates the report inside a fixed synthetic environment
-where nothing upstream is installed — an empty `PATH` and working directory,
+where nothing upstream is installed ÔÇö an empty `PATH` and working directory,
 every `SCITOOL_*` variable removed and each executable override pointed at a
 nonexistent sentinel program (this also neutralises the module-server
 `sys.executable` default), `PYTHONPATH` cleared, and the report's package
 metadata handle stubbed so no distribution looks registered. Real upstream
-CLIs present on the host — or overrides exported by CI — therefore cannot
+CLIs present on the host ÔÇö or overrides exported by CI ÔÇö therefore cannot
 change the outcome: all ten upstream records must be unverified KNOWN GAPs
 and all nine fail-closed checks must still refuse in-process with their
 documented markers. No upstream subprocess or network call is reached.
@@ -372,16 +372,16 @@ use `toolkit_doctor` to distinguish available programs from missing ones.
 
 Part of the Furox scientific-computing portfolio: independently versioned projects that pair agent-facing interfaces (MCP servers and Agent Skills) with deterministic, fail-closed verification.
 
-- [scientific-computing-system](https://github.com/Furox-Art/scientific-computing-system) — zero-dependency Python numerics with run manifests.
-- [scientific-computing-system-2.0](https://github.com/Furox-Art/scientific-computing-system-2.0) — NumPy/SciPy/pandas build with replayable fit records.
-- [axiomize](https://github.com/Furox-Art/axiomize) — unit-checked modeling engine with SBML, CellML and Modelica export.
-- [axiomize-quantum-skills-2.0](https://github.com/Furox-Art/axiomize-quantum-skills-2.0) — modeling engine plus quantum-inspired reasoning bundle.
-- [quantum-reasoning-skill](https://github.com/Furox-Art/quantum-reasoning-skill) — agent skill that keeps competing hypotheses alive.
-- [plan-auditor](https://github.com/Furox-Art/plan-auditor) — evidence-based completion gate for coding agents.
-- [nomosguard](https://github.com/Furox-Art/nomosguard) — deterministic security decision layer with a hash-chained ledger.
-- [eq-layer](https://github.com/Furox-Art/eq-layer) — interaction-policy layer that decides how an agent speaks.
-- [literature-evidence-mcp](https://github.com/Furox-Art/literature-evidence-mcp) — literature MCP server with a hash-chained evidence ledger.
-- [repocraft](https://github.com/Furox-Art/repocraft) — byte-deterministic project scaffolding.
+- [scientific-computing-system](https://github.com/Furox-Art/scientific-computing-system) ÔÇö zero-dependency Python numerics with run manifests.
+- [scientific-computing-system-2.0](https://github.com/Furox-Art/scientific-computing-system-2.0) ÔÇö NumPy/SciPy/pandas build with replayable fit records.
+- [axiomize](https://github.com/Furox-Art/axiomize) ÔÇö unit-checked modeling engine with SBML, CellML and Modelica export.
+- [axiomize-quantum-skills-2.0](https://github.com/Furox-Art/axiomize-quantum-skills-2.0) ÔÇö modeling engine plus quantum-inspired reasoning bundle.
+- [quantum-reasoning-skill](https://github.com/Furox-Art/quantum-reasoning-skill) ÔÇö agent skill that keeps competing hypotheses alive.
+- [plan-auditor](https://github.com/Furox-Art/plan-auditor) ÔÇö evidence-based completion gate for coding agents.
+- [nomosguard](https://github.com/Furox-Art/evidence-ledger-policy-gate) ÔÇö deterministic security decision layer with a hash-chained ledger.
+- [eq-layer](https://github.com/Furox-Art/eq-layer) ÔÇö interaction-policy layer that decides how an agent speaks.
+- [literature-evidence-mcp](https://github.com/Furox-Art/literature-evidence-mcp) ÔÇö literature MCP server with a hash-chained evidence ledger.
+- [repocraft](https://github.com/Furox-Art/deterministic-recipe-scaffolder) ÔÇö byte-deterministic project scaffolding.
 
 ## Repository and license
 
@@ -393,3 +393,4 @@ licenses. The public upstream repositories retain their own
 independent licenses, names and version histories. Public Render health and
 anonymous access controls have been checked by CI; authorized production calls
 against upstream scientific programs have not yet been confirmed.
+
