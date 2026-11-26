@@ -1,4 +1,4 @@
-﻿# Furox Scientific Toolkit ÔÇö MCP Gateway
+# Furox Scientific Toolkit — MCP Gateway
 
 **Provider-neutral Model Context Protocol gateway with 10 adapters and a catalog of 13 public Furox-Art projects.**
 The upstream packages stay independent, with their original names and version histories.
@@ -245,12 +245,12 @@ repository's own tests and a future cross-package integration suite.
 
 The availability-report unit test (`tests/test_availability_report.py`) is
 **hermetic**: it regenerates the report inside a fixed synthetic environment
-where nothing upstream is installed ÔÇö an empty `PATH` and working directory,
+where nothing upstream is installed — an empty `PATH` and working directory,
 every `SCITOOL_*` variable removed and each executable override pointed at a
 nonexistent sentinel program (this also neutralises the module-server
 `sys.executable` default), `PYTHONPATH` cleared, and the report's package
 metadata handle stubbed so no distribution looks registered. Real upstream
-CLIs present on the host ÔÇö or overrides exported by CI ÔÇö therefore cannot
+CLIs present on the host — or overrides exported by CI — therefore cannot
 change the outcome: all ten upstream records must be unverified KNOWN GAPs
 and all nine fail-closed checks must still refuse in-process with their
 documented markers. No upstream subprocess or network call is reached.
@@ -373,16 +373,16 @@ use `toolkit_doctor` to distinguish available programs from missing ones.
 
 Part of the Furox scientific-computing portfolio: independently versioned projects that pair agent-facing interfaces (MCP servers and Agent Skills) with deterministic, fail-closed verification.
 
-- [scientific-computing-system](https://github.com/Furox-Art/scientific-computing-system) ÔÇö zero-dependency Python numerics with run manifests.
-- [scientific-computing-system-2.0](https://github.com/Furox-Art/scientific-computing-system-2.0) ÔÇö NumPy/SciPy/pandas build with replayable fit records.
-- [axiomize](https://github.com/Furox-Art/axiomize) ÔÇö unit-checked modeling engine with SBML, CellML and Modelica export.
-- [axiomize-quantum-skills-2.0](https://github.com/Furox-Art/axiomize-quantum-skills-2.0) ÔÇö modeling engine plus quantum-inspired reasoning bundle.
-- [quantum-reasoning-skill](https://github.com/Furox-Art/quantum-reasoning-skill) ÔÇö agent skill that keeps competing hypotheses alive.
-- [plan-auditor](https://github.com/Furox-Art/plan-auditor) ÔÇö evidence-based completion gate for coding agents.
-- [evidence-ledger-policy-gate](https://github.com/Furox-Art/evidence-ledger-policy-gate) ÔÇö deterministic security decision layer with a hash-chained ledger.
-- [eq-layer](https://github.com/Furox-Art/eq-layer) ÔÇö interaction-policy layer that decides how an agent speaks.
-- [literature-evidence-mcp](https://github.com/Furox-Art/literature-evidence-mcp) ÔÇö literature MCP server with a hash-chained evidence ledger.
-- [deterministic-recipe-scaffolder](https://github.com/Furox-Art/deterministic-recipe-scaffolder) ÔÇö byte-deterministic project scaffolding.
+- [scientific-computing-system](https://github.com/Furox-Art/scientific-computing-system) — zero-dependency Python numerics with run manifests.
+- [scientific-computing-system-2.0](https://github.com/Furox-Art/scientific-computing-system-2.0) — NumPy/SciPy/pandas build with replayable fit records.
+- [axiomize](https://github.com/Furox-Art/axiomize) — unit-checked modeling engine with SBML, CellML and Modelica export.
+- [axiomize-quantum-skills-2.0](https://github.com/Furox-Art/axiomize-quantum-skills-2.0) — modeling engine plus quantum-inspired reasoning bundle.
+- [quantum-reasoning-skill](https://github.com/Furox-Art/quantum-reasoning-skill) — agent skill that keeps competing hypotheses alive.
+- [plan-auditor](https://github.com/Furox-Art/plan-auditor) — evidence-based completion gate for coding agents.
+- [evidence-ledger-policy-gate](https://github.com/Furox-Art/evidence-ledger-policy-gate) — deterministic security decision layer with a hash-chained ledger.
+- [eq-layer](https://github.com/Furox-Art/eq-layer) — interaction-policy layer that decides how an agent speaks.
+- [literature-evidence-mcp](https://github.com/Furox-Art/literature-evidence-mcp) — literature MCP server with a hash-chained evidence ledger.
+- [deterministic-recipe-scaffolder](https://github.com/Furox-Art/deterministic-recipe-scaffolder) — byte-deterministic project scaffolding.
 
 ## Repository and license
 
