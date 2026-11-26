@@ -1,9 +1,11 @@
 {
-  "name": "scientific-toolkit-mcp",
+  "name": "scientific-toolkit",
   "version": "0.5.0",
   "description": "CLI wrapper for the Furox Scientific Toolkit MCP server",
   "license": "MIT",
   "bin": {
+    "scientific-toolkit": "npm/bin/scientific-toolkit-mcp.cjs",
+    "scientific-toolkit": "npm/bin/scientific-toolkit-mcp.cjs",
     "scientific-toolkit-mcp": "npm/bin/scientific-toolkit-mcp.cjs"
   },
   "files": [

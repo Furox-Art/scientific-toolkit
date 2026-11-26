@@ -5,7 +5,7 @@ The upstream packages stay independent, with their original names and version hi
 This repository is an integration hub, not a merge of source trees.
 
 Project website: [Furox Scientific Toolkit](https://www.furoxscientifictoolkit.lovie.me/).
-Published Python package: [scientific-toolkit-mcp on PyPI](https://pypi.org/project/scientific-toolkit-mcp/).
+Published Python package: [scientific-toolkit on PyPI](https://pypi.org/project/scientific-toolkit/).
 
 ## Names
 
@@ -15,17 +15,18 @@ spellings. They all refer to this one gateway.
 | Surface | Name |
 | --- | --- |
 | GitHub repository | `scientific-toolkit` |
-| PyPI project | `scientific-toolkit-mcp` |
+| PyPI project | `scientific-toolkit` |
 | Python import | `scientific_toolkit_mcp` |
-| Console script | `scientific-toolkit-mcp` |
+| Console script | `scientific-toolkit` |
+| Legacy console script | `scientific-toolkit-mcp` |
 | Source version | 0.5.0 |
 
-PyPI project names cannot be renamed after publication, so this table, the
-`[project]` block in `pyproject.toml` and `SKILL.md` are the authoritative
-mapping. There is no PyPI project named `scientific-toolkit`.
+The distribution is published as `scientific-toolkit`. The legacy
+`scientific-toolkit-mcp` project remains available for existing installs;
+both point to the same import module `scientific_toolkit_mcp`.
 
 The earlier `furox-scientific-toolkit-mcp` project was removed from PyPI and is
-no longer installable; `scientific-toolkit-mcp` replaces it with the same import
+no longer installable; `scientific-toolkit` replaces it with the same import
 name and console script.
 
 **Status:** local stdio and authenticated stateless Streamable HTTP transports
@@ -50,18 +51,18 @@ issuer/JWKS remains **not configured**.
 | [axiomize-quantum-skills-2.0](https://github.com/Furox-Art/axiomize-quantum-skills-2.0) | Bundled modeling + branch-scoring controller | `axiomize_reason_score` |
 | [eq-layer](https://github.com/Furox-Art/eq-layer) | Response-control and intent routing | `eq_layer_route` |
 | [literature-evidence-mcp](https://github.com/Furox-Art/literature-evidence-mcp) | Literature search and evidence-provenance checks over MCP stdio | `literature_evidence_search`, `literature_evidence_verify_quote` |
-| [nomosguard](https://github.com/Furox-Art/evidence-ledger-policy-gate) | Deterministic security reasoning, evidence ledger and fail-closed policy gate | `nomosguard_decide` |
+| [evidence-ledger-policy-gate](https://github.com/Furox-Art/evidence-ledger-policy-gate) | Deterministic security reasoning, evidence ledger and fail-closed policy gate | `nomosguard_decide` |
 | [scientific-reasoning-auditor](https://github.com/Furox-Art/scientific-reasoning-auditor) | Offline Markdown manuscript and evidence screening | `sra_audit_manuscript` |
 | [polyglot-python](https://github.com/Furox-Art/polyglot-python) | Localized Python keywords | Independent CLI |
 | [polyglot-code-guard](https://github.com/Furox-Art/polyglot-code-guard) | Local build and test verification | Independent CLI |
-| [repocraft](https://github.com/Furox-Art/deterministic-recipe-scaffolder) | Python project scaffolding from validated specs | Independent CLI |
+| [deterministic-recipe-scaffolder](https://github.com/Furox-Art/deterministic-recipe-scaffolder) | Python project scaffolding from validated specs | Independent CLI |
 
 `axiomize-quantum-skills-2.0` already packages Axiomize, so this hub does **not**
 register its Axiomize MCP tools a second time. `quantum-reasoning-skill` is a skill
 protocol, not a quantum computer or a validated performance improvement. EQ-Layer is
 communication-control infrastructure, not a scientific data validator. The two MCP-native
 upstreams are driven over stdio by the gateway; `literature_evidence_search` needs
-network access. Quote verification, NomosGuard decisions, and manuscript audits run locally.
+network access. Quote verification, evidence-ledger-policy-gate decisions, and manuscript audits run locally.
 For manuscript audits, send inline Markdown in the `content` field (up to 12,000 characters).
 The audit returns advisory findings with evidence references. The three independent
 developer CLIs are listed in the catalog and installed separately.
@@ -72,13 +73,13 @@ Requires **Python 3.11+**. Install the published MCP gateway from PyPI,
 or install it in editable mode from a source checkout for development:
 
 ```sh
-python -m pip install scientific-toolkit-mcp
+python -m pip install scientific-toolkit
 # For a source checkout instead: python -m pip install -e .
 # Select upstream packages you actually need:
 python -m pip install axiomize scientific-computing-system
 python -m pip install scientific-computing-system-2.0
 python -m pip install plan-auditor quantum-reasoning-skill eq-layer
-python -m pip install literature-evidence-mcp nomosguard scientific-reasoning-auditor
+python -m pip install literature-evidence-mcp evidence-ledger-policy-gate scientific-reasoning-auditor
 # The bundled Axiomize/quantum package may replace the standalone
 # Axiomize CLI. Install it in a separate environment (below).
 python -m scientific_toolkit_mcp
@@ -112,7 +113,7 @@ produce explicit `NOT_INSTALLED` errors rather than fabricated data.
 
 The npm package provides a command for the matching Python install. Install the
 Python package in an active environment, then install the Node command with
-`npm install -g scientific-toolkit-mcp`. Set `SCITOOL_PYTHON` to select a Python executable.
+`npm install -g scientific-toolkit`. Set `SCITOOL_PYTHON` to select a Python executable.
 
 ## Remote MCP: provider-neutral Streamable HTTP
 
@@ -352,7 +353,7 @@ at source version `0.5.0`,
 with import name `scientific_toolkit_mcp`.
 
 ```sh
-python -m pip install scientific-toolkit-mcp
+python -m pip install scientific-toolkit
 ```
 
 Publishing the MCP gateway does not by itself verify integration with Claude
@@ -378,10 +379,10 @@ Part of the Furox scientific-computing portfolio: independently versioned projec
 - [axiomize-quantum-skills-2.0](https://github.com/Furox-Art/axiomize-quantum-skills-2.0) ÔÇö modeling engine plus quantum-inspired reasoning bundle.
 - [quantum-reasoning-skill](https://github.com/Furox-Art/quantum-reasoning-skill) ÔÇö agent skill that keeps competing hypotheses alive.
 - [plan-auditor](https://github.com/Furox-Art/plan-auditor) ÔÇö evidence-based completion gate for coding agents.
-- [nomosguard](https://github.com/Furox-Art/evidence-ledger-policy-gate) ÔÇö deterministic security decision layer with a hash-chained ledger.
+- [evidence-ledger-policy-gate](https://github.com/Furox-Art/evidence-ledger-policy-gate) ÔÇö deterministic security decision layer with a hash-chained ledger.
 - [eq-layer](https://github.com/Furox-Art/eq-layer) ÔÇö interaction-policy layer that decides how an agent speaks.
 - [literature-evidence-mcp](https://github.com/Furox-Art/literature-evidence-mcp) ÔÇö literature MCP server with a hash-chained evidence ledger.
-- [repocraft](https://github.com/Furox-Art/deterministic-recipe-scaffolder) ÔÇö byte-deterministic project scaffolding.
+- [deterministic-recipe-scaffolder](https://github.com/Furox-Art/deterministic-recipe-scaffolder) ÔÇö byte-deterministic project scaffolding.
 
 ## Repository and license
 

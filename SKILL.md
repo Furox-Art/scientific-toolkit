@@ -1,6 +1,6 @@
 ---
 name: scientific-toolkit
-description: "Use when a task needs one MCP entry point to ten Furox scientific tools (axiomize, cds, cds2, plan-auditor, quantum-reasoning, axiomize-reason, eq-layer, literature-evidence-mcp, nomosguard, sra), locally over stdio or remotely over authenticated Streamable HTTP. It is an integration gateway, not a new scientific engine. Installed from PyPI as `scientific-toolkit-mcp`."
+description: "Use when a task needs one MCP entry point to ten Furox scientific tools (axiomize, cds, cds2, plan-auditor, quantum-reasoning, axiomize-reason, eq-layer, literature-evidence-mcp, evidence-ledger-policy-gate, sra), locally over stdio or remotely over authenticated Streamable HTTP. It is an integration gateway, not a new scientific engine. Installed from PyPI as `scientific-toolkit`."
 argument-hint: "<scientific workflow, repository, or upstream tool to invoke>"
 metadata:
   version: "0.5.0"
@@ -17,13 +17,14 @@ histories; this repository is an integration hub, not a merged source tree.
 | Surface | Name |
 | --- | --- |
 | Repository | `scientific-toolkit` |
-| PyPI project | `scientific-toolkit-mcp` |
+| PyPI project | `scientific-toolkit` |
 | Import | `scientific_toolkit_mcp` |
-| CLI | `scientific-toolkit-mcp` |
+| CLI | `scientific-toolkit` |
+| Legacy CLI | `scientific-toolkit-mcp` |
 | Source version | 0.5.0 |
 
-`pip install scientific-toolkit-mcp` installs the `scientific-toolkit-mcp`
-command. No PyPI project is named `scientific-toolkit`. The former
+`pip install scientific-toolkit` installs the `scientific-toolkit`
+command. The former
 `furox-scientific-toolkit-mcp` project was removed and is no longer installable.
 
 ## When to use this skill
@@ -39,14 +40,14 @@ command. No PyPI project is named `scientific-toolkit`. The former
 Requires Python 3.11+.
 
 ```bash
-pip install scientific-toolkit-mcp
+pip install scientific-toolkit
 # or from a source checkout: pip install -e .
 
 # Install only the upstream packages you need:
 pip install axiomize scientific-computing-system
 pip install scientific-computing-system-2.0
 pip install plan-auditor quantum-reasoning-skill eq-layer
-pip install literature-evidence-mcp nomosguard
+pip install literature-evidence-mcp evidence-ledger-policy-gate
 ```
 
 The bundled `axiomize-quantum-skills-2.0` may replace the standalone Axiomize CLI;
@@ -82,7 +83,7 @@ to see which upstream executables and module servers are available. Missing pack
 | axiomize-quantum-skills-2.0 | Bundled modeling and branch scoring | `axiomize_reason_score` |
 | eq-layer | Response control and intent routing | `eq_layer_route` |
 | literature-evidence-mcp | Literature search and evidence-provenance checks | `literature_evidence_search`, `literature_evidence_verify_quote` |
-| nomosguard | Deterministic security reasoning and fail-closed policy gate | `nomosguard_decide` |
+| evidence-ledger-policy-gate | Deterministic security reasoning and fail-closed policy gate | `nomosguard_decide` |
 | scientific-reasoning-auditor | Local Markdown manuscript screening | `sra_audit_manuscript` |
 
 Axiomize tools are not registered twice when the bundled quantum package is used.
